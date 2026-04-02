@@ -4,8 +4,6 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
-from xhtml2pdf import pisa
-
 
 def _render_template(first_name: str, last_name: str) -> str:
     """Đọc mẫu, thay thế tên/mã nhân viên/ngày tháng và triển khai các biến CSS."""
@@ -35,6 +33,13 @@ def _render_template(first_name: str, last_name: str) -> str:
 
 def generate_teacher_pdf(first_name: str, last_name: str) -> bytes:
     """Tạo dữ liệu byte của tài liệu PDF chứng nhận giáo viên."""
+    try:
+        from xhtml2pdf import pisa
+    except ImportError as exc:
+        raise RuntimeError(
+            "Cần cài đặt xhtml2pdf, hoặc lỗi GTK3/Cairo trên Windows. Vui lòng cài GTK3-Runtime hoặc dùng pip uninstall rlPyCairo cairocffi"
+        ) from exc
+
     html = _render_template(first_name, last_name)
 
     output = BytesIO()

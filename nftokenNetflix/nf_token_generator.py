@@ -24,43 +24,55 @@ PAYLOAD = {
     },
 }
 
-# Các giá trị cookie tối thiểu cần thiết để Netflix chấp nhận yêu cầu tạo token.
-REQUIRED_COOKIES = ("NetflixId", "SecureNetflixId", "nfvdid")
+# Các giá trị cookie cốt lõi bắt buộc phải có
+REQUIRED_COOKIES = ("NetflixId", "SecureNetflixId")
 
 
 def extract_cookie_dict(text: str) -> dict:
     """
     Chuẩn hóa bất kỳ nội dung nào thành một dict cookie.
-    Hỗ trợ: định dạng Netscape, JSON, hoặc chuỗi cookie thô.
+    Hỗ trợ: định dạng JSON (list hoặc dict), Netscape, bảng (tab-separated từ devtools), hoặc chuỗi cookie thô.
     """
     cookie_dict = {}
 
-    # Thử định dạng JSON trước
+    # 1. Thử định dạng JSON trước (ví dụ: xuất từ EditThisCookie là một list các dict)
     try:
         data = json.loads(text)
-        if isinstance(data, dict):
-            for key in (*REQUIRED_COOKIES, "OptanonConsent"):
-                if key in data and isinstance(data[key], str):
-                    cookie_dict[key] = data[key]
-            if any(name in cookie_dict for name in REQUIRED_COOKIES):
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict) and 'name' in item and 'value' in item:
+                    cookie_dict[item['name']] = str(item['value'])
+            if cookie_dict:
+                return cookie_dict
+        elif isinstance(data, dict):
+            for key, value in data.items():
+                if isinstance(value, (str, int, float, bool)):
+                    cookie_dict[key] = str(value)
+            if cookie_dict:
                 return cookie_dict
     except json.JSONDecodeError:
-        pass  # Không phải JSON, tiếp tục thử các định dạng khác
+        pass  # Không phải JSON, tiếp tục xử lý dưới dạng văn bản
 
-    # Thử định dạng chuỗi cookie (key=value;) hoặc Netscape
-    # Sử dụng regex để tìm các cặp key=value hoặc các trường trong định dạng Netscape
-    for key in (*REQUIRED_COOKIES, "OptanonConsent"):
-        # Regex cho key=value;
-        match = re.search(rf'{re.escape(key)}=([^;]+)', text)
-        if match:
-            cookie_dict[key] = match.group(1).strip()
-            continue
+    # 2. Xử lý chuỗi cookie thô (ví dụ: key1=value1; key2=value2;)
+    for match in re.finditer(r'([a-zA-Z0-9_.-]+)=([^;\s]+)', text):
+        cookie_dict[match.group(1)] = match.group(2)
 
-        # Regex cho định dạng Netscape (tìm key ở cột 5 và value ở cột 6)
-        # Ví dụ: .netflix.com	TRUE	/	TRUE	...	NetflixId	...
-        match = re.search(rf'(\s|^){re.escape(key)}\s+([^\s]+)', text)
-        if match:
-            cookie_dict[key] = match.group(2).strip()
+    # 3. Xử lý định dạng bảng phân tách bằng khoảng trắng/tab (Netscape hoặc DevTools)
+    # Vì Telegram đôi khi biến dấu Tab thành khoảng trắng, nên việc cắt theo cột rất dễ lỗi.
+    # Giải pháp: Cắt toàn bộ văn bản bằng khoảng trắng, tìm từ khóa đã biết, giá trị của nó sẽ nằm ngay sát sau!
+    tokens = text.split()
+    known_keys = {
+        "NetflixId", "SecureNetflixId", "nfvdid", "OptanonConsent", 
+        "OptanonAlertBoxClosed", "gsid", "dsca", "OTSessionTracking", 
+        "memclid", "netflix-sans-bold-3-loaded", "netflix-sans-normal-3-loaded"
+    }
+    
+    for i, token in enumerate(tokens):
+        if token in known_keys:
+            if i + 1 < len(tokens):
+                # Đảm bảo giá trị tiếp theo không phải là một từ khóa khác (tránh lỗi lấy nhầm)
+                if tokens[i+1] not in known_keys:
+                    cookie_dict[token] = tokens[i+1]
 
     return cookie_dict
 
@@ -79,11 +91,10 @@ def validate_netflix_cookie(text: str) -> tuple:
     if missing:
         return (
             False,
-            f"❌ Cookie thiếu các trường bắt buộc: <code>{', '.join(missing)}</code>\n\n"
-            f"Cookie Netflix hợp lệ phải có đủ:\n"
+            f"❌ Cookie thiếu các trường cốt lõi bắt buộc: <code>{', '.join(missing)}</code>\n\n"
+            f"Đảm bảo bạn đã copy đủ thông tin chứa ít nhất:\n"
             f"• <code>NetflixId</code>\n"
-            f"• <code>SecureNetflixId</code>\n"
-            f"• <code>nfvdid</code>",
+            f"• <code>SecureNetflixId</code>",
         )
 
     return True, ""

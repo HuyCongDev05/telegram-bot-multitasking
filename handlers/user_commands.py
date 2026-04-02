@@ -51,7 +51,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
     if message_text:
         final_message_parts.append(message_text)
 
-    final_message_parts.append(f"💰 Số dư của bạn: {balance} điểm.")
+    final_message_parts.append(f"🪙 Số dư của bạn: {balance} điểm.")
     final_message_parts.append("Vui lòng chọn một chức năng:")
 
     final_message_text = "\n\n".join(final_message_parts)
@@ -186,7 +186,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     elif action == 'checkin':
         if db.checkin(user_id):
             user = db.get_user(user_id)
-            await query.message.reply_text(f"✅ Điểm danh thành công! +1 điểm\nĐiểm hiện tại: {user['balance']}")
+            await query.message.reply_text(f"✅ Điểm danh thành công! +1 điểm\n🪙 Số dư hiện tại: {user['balance']} điểm.")
         else:
             await query.message.reply_text("❌ Hôm nay bạn đã điểm danh rồi.")
 
@@ -333,7 +333,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         else:
             user = db.get_user(user_id)
             await update.message.reply_text(
-                f"Sử dụng mã thẻ thành công! +{result} điểm.\nĐiểm hiện tại: {user['balance']}")
+                f"Sử dụng mã thẻ thành công! +{result} điểm.\n🪙 Số dư hiện tại: {user['balance']} điểm.")
 
         await context.bot.send_message(chat_id=user_id, text="Đã quay về menu chính.",
                                        reply_markup=get_welcome_keyboard(is_admin))
@@ -448,7 +448,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
     user_balance = db.get_user(user_id)['balance']
     if user_balance < cost:
         await update.message.reply_text(
-            f"❌ Bạn không đủ {cost} điểm để thực hiện chức năng này. Số dư hiện tại: {user_balance} điểm.")
+            f"❌ Bạn không đủ {cost} điểm để thực hiện chức năng này. 🪙 Số dư hiện tại: {user_balance} điểm.")
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
             try:
@@ -470,7 +470,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
         await show_main_menu(update, context, db, "Trừ điểm thất bại.")
         return
     await update.message.reply_text(
-        f"Đã trừ {cost} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm. Đang xử lý yêu cầu...")
+        f"Đã trừ {cost} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm. Đang xử lý yêu cầu...")
 
     import requests as _requests
     import importlib.util
@@ -491,7 +491,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
     if not is_valid:
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu cookie không hợp lệ
         await update.message.reply_text(
-            f"{error_msg}\nĐã hoàn lại {cost} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
+            f"{error_msg}\nĐã hoàn lại {cost} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
             parse_mode='HTML')
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
@@ -527,7 +527,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu API request thất bại
         logger.warning(f"Netflix API request failed: {e}")
         await processing_msg.edit_text(
-            f"❌ Không thể kết nối tới Netflix. Vui lòng thử lại sau.\nĐã hoàn lại {cost} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.")
+            f"❌ Không thể kết nối tới Netflix. Vui lòng thử lại sau.\nĐã hoàn lại {cost} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.")
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
             try:
@@ -538,7 +538,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
     except ValueError as e:
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu có lỗi giá trị
         await processing_msg.edit_text(
-            f"{str(e)}\nĐã hoàn lại {cost} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
+            f"{str(e)}\nĐã hoàn lại {cost} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
             parse_mode='HTML')
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:

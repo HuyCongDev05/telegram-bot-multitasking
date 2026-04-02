@@ -47,7 +47,7 @@ def get_verify_menu_message() -> str:
     """Lấy tin nhắn cho menu xác thực"""
     return (
         "Chọn một dịch vụ bạn muốn xác thực bên dưới.\n\n"
-        f"Lưu ý: Mỗi lần xác thực thành công sẽ tốn {VERIFY_COST} điểm."
+        f"Lưu ý: Mỗi lần xác thực thành công sẽ tốn 🪙 {VERIFY_COST} điểm."
     )
 
 
@@ -97,14 +97,14 @@ def get_help_message() -> str:
     return (
         "📖 Hướng dẫn xác thực:\n\n"
         "Nhấn nút '🔍 Xác thực SheerID' ở menu chính, chọn dịch vụ và gửi liên kết:\n"
-        f"• ChatGPT Teacher K12 - <liên kết> (-{VERIFY_COST} điểm)\n"
-        f"• Spotify Student - <liên kết> (-{VERIFY_COST} điểm)\n"
-        f"• Bolt new Teacher - <liên kết> (-{VERIFY_COST} điểm)\n"
-        f"• YouTube Premium Student - <liên kết> (-{VERIFY_COST} điểm)\n"
-        f"• Gemini One Pro - <liên kết> (-{VERIFY_COST} điểm)\n\n"
+        f"• ChatGPT Teacher K12 - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
+        f"• Spotify Student - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
+        f"• Bolt new Teacher - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
+        f"• YouTube Premium Student - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
+        f"• Gemini One Pro - <liên kết> (-🪙 {VERIFY_COST} điểm)\n\n"
         "📖 Hướng dẫn lấy url đăng nhập app netflix:\n\n"
         "Nhấn nút '📺 Chuyển đổi url login app netflix' ở menu chính:\n"
-        f"• Nhập cookie netflix vào để chuyển đổi (-{VERIFY_COST} điểm)\n\n"
+        f"• Nhập cookie netflix vào để chuyển đổi (-🪙 {VERIFY_COST} điểm)\n\n"
         "💬 Mọi thắc mắc liên hệ @hcongdev"
     )
 
@@ -112,7 +112,7 @@ def get_help_message() -> str:
 def get_insufficient_balance_message(current_balance: int) -> str:
     """Lấy tin nhắn số dư không đủ"""
     return (
-        f"Số dư không đủ! Cần {VERIFY_COST} điểm, hiện có {current_balance} điểm.\n\n"
+        f"Số dư không đủ! Cần 🪙 {VERIFY_COST} điểm, hiện có 🪙 {current_balance} điểm.\n\n"
         "Cách nhận điểm:\n"
         "- Điểm danh hằng ngày\n"
         "- Mời bạn bè\n"

@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Thiết lập thư mục làm việc
 WORKDIR /app
 
-# Cài đặt các phụ thuộc hệ thống (Cần thiết cho Playwright)
+# Cài đặt các phụ thuộc hệ thống (Cần thiết cho Playwright và WeasyPrint/xhtml2pdf cairo)
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -28,7 +28,20 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 \
     libxrandr2 \
     xdg-utils \
-    build-essential gcc pkg-config libcairo2-dev libpango1.0-dev libgdk-pixbuf-2.0-dev libffi-dev python3-dev \
+    build-essential \
+    gcc \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libgdk-pixbuf-2.0-dev \
+    libffi-dev \
+    python3-dev \
+    # Thêm các thư viện C/C++ bổ sung cho Cairo và WeasyPrint
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 # Sao chép tệp yêu cầu

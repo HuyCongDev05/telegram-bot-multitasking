@@ -50,7 +50,7 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
             if update.effective_message:
                 await update.effective_message.reply_text(
                     f"✅ Thành công cộng {amount} điểm cho người dùng {target_user_id}.\n"
-                    f"Số điểm hiện tại: {user['balance']}"
+                    f"🪙 Số điểm hiện tại: {user['balance']}"
                 )
         else:
             if update.effective_message:
@@ -226,7 +226,7 @@ async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
             msg = (
                 "✅ Tạo mã thẻ thành công!\n\n"
                 f"Mã thẻ：<code>{key_code}</code>\n"
-                f"Số điểm：{balance}\n"
+                f"🪙 Số điểm：{balance}\n"
                 f"Số lần dùng：{max_uses} lần\n"
             )
             if expire_days:
@@ -269,7 +269,7 @@ async def listkeys_command(update: Update, context: ContextTypes.DEFAULT_TYPE, d
     msg = "📋 Danh sách mã thẻ：\n\n"
     for key in keys[:20]:  # Chỉ hiển thị 20 mã đầu tiên
         msg += f"Mã thẻ：<code>{key['key_code']}</code>\n"
-        msg += f"Số điểm：{key['balance']}\n"
+        msg += f"🪙 Số điểm：{key['balance']}\n"
         msg += f"Số lần dùng：{key['current_uses']}/{key['max_uses']}\n"
 
         if key["expire_at"]:

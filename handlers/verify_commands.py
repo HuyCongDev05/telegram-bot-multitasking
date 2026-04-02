@@ -84,7 +84,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
     processing_msg = await update.message.reply_text(
         f"Bắt đầu xử lý xác thực ChatGPT Teacher K12...\n"
         f"ID xác thực: {verification_id}\n"
-        f"Đã trừ {VERIFY_COST} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
+        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
         "Vui lòng đợi, quá trình này có thể mất 1-2 phút..."
     )
 
@@ -109,7 +109,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
-            result_msg += f"\n💰 Số dư hiện tại của bạn: {updated_balance} điểm."
+            result_msg += f"\n🪙 Số dư hiện tại của bạn: {updated_balance} điểm."
 
             await processing_msg.edit_text(result_msg)
         else:
@@ -118,7 +118,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
             updated_balance = updated_user['balance'] if updated_user else 0
             await processing_msg.edit_text(
                 f"❌ Xác thực thất bại：{result.get('message', 'Lỗi không xác định')}\n\n"
-                f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+                f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
             )
     except Exception as e:
         logger.error("Lỗi trong quá trình xác thực: %s", e)
@@ -127,7 +127,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
         updated_balance = updated_user['balance'] if updated_user else 0
         await processing_msg.edit_text(
             f"❌ Đã xảy ra lỗi trong quá trình xử lý：{str(e)}\n\n"
-            f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+            f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
         )
 
 
@@ -187,7 +187,7 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 
     processing_msg = await update.message.reply_text(
         f"🎵 Bắt đầu xử lý xác thực Spotify Student...\n"
-        f"Đã trừ {VERIFY_COST} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
+        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
         "📝 Đang tạo thông tin sinh viên...\n"
         "🎨 Đang tạo thẻ sinh viên PNG...\n"
         "📤 Đang gửi tài liệu..."
@@ -219,7 +219,7 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
-            result_msg += f"\n💰 Số dư hiện tại của bạn: {updated_balance} điểm."
+            result_msg += f"\n🪙 Số dư hiện tại của bạn: {updated_balance} điểm."
 
             await processing_msg.edit_text(result_msg)
         else:
@@ -228,7 +228,7 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
             updated_balance = updated_user['balance'] if updated_user else 0
             await processing_msg.edit_text(
                 f"❌ Xác thực thất bại：{result.get('message', 'Lỗi không xác định')}\n\n"
-                f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+                f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
             )
     except Exception as e:
         logger.error("Lỗi trong quá trình xác thực Spotify: %s", e)
@@ -237,7 +237,7 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
         updated_balance = updated_user['balance'] if updated_user else 0
         await processing_msg.edit_text(
             f"❌ Đã xảy ra lỗi trong quá trình xử lý：{str(e)}\n\n"
-            f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+            f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
         )
 
 
@@ -299,7 +299,7 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
 
     processing_msg = await update.message.reply_text(
         f"🚀 Bắt đầu xử lý xác thực Bolt.new Teacher...\n"
-        f"Đã trừ {VERIFY_COST} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
+        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
         "📤 Đang gửi tài liệu..."
     )
 
@@ -319,7 +319,7 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
             updated_balance = updated_user['balance'] if updated_user else 0
             await processing_msg.edit_text(
                 f"❌ Gửi tài liệu thất bại：{result.get('message', 'Lỗi không xác định')}\n\n"
-                f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+                f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
             )
             return
 
@@ -330,7 +330,7 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
             updated_balance = updated_user['balance'] if updated_user else 0
             await processing_msg.edit_text(
                 f"❌ Không lấy được ID xác thực\n\n"
-                f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+                f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
             )
             return
 
@@ -359,7 +359,7 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
-            result_msg += f"\n💰 Số dư hiện tại của bạn: {updated_balance} điểm."
+            result_msg += f"\n🪙 Số dư hiện tại của bạn: {updated_balance} điểm."
 
             await processing_msg.edit_text(result_msg)
 
@@ -400,7 +400,7 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
         updated_balance = updated_user['balance'] if updated_user else 0
         await processing_msg.edit_text(
             f"❌ Đã xảy ra lỗi trong quá trình xử lý：{str(e)}\n\n"
-            f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+            f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
         )
 
 
@@ -519,7 +519,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
 
     processing_msg = await update.message.reply_text(
         f"📺 Bắt đầu xử lý xác thực YouTube Student Premium...\n"
-        f"Đã trừ {VERIFY_COST} điểm. Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
+        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
         "📝 Đang tạo thông tin sinh viên...\n"
         "🎨 Đang tạo thẻ sinh viên PNG...\n"
         "📤 Đang gửi tài liệu..."
@@ -551,7 +551,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
-            result_msg += f"\n💰 Số dư hiện tại của bạn: {updated_balance} điểm."
+            result_msg += f"\n🪙 Số dư hiện tại của bạn: {updated_balance} điểm."
 
             await processing_msg.edit_text(result_msg)
         else:
@@ -560,7 +560,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
             updated_balance = updated_user['balance'] if updated_user else 0
             await processing_msg.edit_text(
                 f"❌ Xác thực thất bại：{result.get('message', 'Lỗi không xác định')}\n\n"
-                f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+                f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
             )
     except Exception as e:
         logger.error("Lỗi trong quá trình xác thực YouTube: %s", e)
@@ -569,7 +569,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
         updated_balance = updated_user['balance'] if updated_user else 0
         await processing_msg.edit_text(
             f"❌ Đã xảy ra lỗi trong quá trình xử lý：{str(e)}\n\n"
-            f"Đã hoàn trả {VERIFY_COST} điểm. Số dư hiện tại: {updated_balance} điểm."
+            f"Đã hoàn trả {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {updated_balance} điểm."
         )
 
 
