@@ -1,0 +1,35 @@
+services:
+  tgbot:
+    build: .
+    container_name: sheerid-tgbot
+    restart: unless-stopped
+
+    # Biến môi trường
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - PYTHONUNBUFFERED=1
+      # Cấu hình Telegram Bot
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CHANNEL_USERNAME=${CHANNEL_USERNAME:-pk_oa}
+      - CHANNEL_URL=${CHANNEL_URL:-https://t.me/pk_oa}
+      - ADMIN_USER_ID=${ADMIN_USER_ID}
+      # Cấu hình MySQL
+      - MYSQL_HOST=${MYSQL_HOST:-localhost}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-12345678}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-telegram-bot-verify}
+
+    # Lưu trữ dữ liệu lâu dài
+    volumes:
+      - ./logs:/app/logs
+
+    # Cấu hình nhật ký (Logs)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Chế độ mạng
+    network_mode: bridge

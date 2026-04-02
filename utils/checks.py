@@ -1,0 +1,72 @@
+"""Công cụ kiểm tra và xác thực quyền hạn"""
+import logging
+
+from telegram import Update
+from telegram.error import TelegramError
+from telegram.ext import ContextTypes
+
+from config import CHANNEL_USERNAME
+
+logger = logging.getLogger(__name__)
+
+
+def is_group_chat(update: Update) -> bool:
+    """Kiểm tra xem có phải là trò chuyện nhóm không"""
+    chat = update.effective_chat
+    return chat and chat.type in ("group", "supergroup")
+
+
+async def reject_group_command(update: Update) -> bool:
+    """Hạn chế nhóm: Chỉ cho phép các lệnh /verify /verify2 /verify3 /verify4 /verify5 /qd"""
+    if is_group_chat(update):
+        if update.effective_message:
+            await update.effective_message.reply_text(
+                "Nhóm chỉ hỗ trợ /verify /verify2 /verify3 /verify4 /verify5 /qd, vui lòng nhắn tin riêng để sử dụng các lệnh khác.")
+        return True
+    return False
+
+
+async def check_channel_membership(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Kiểm tra xem người dùng đã tham gia kênh chưa"""
+    try:
+        member = await context.bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
+        return member.status in ["member", "administrator", "creator"]
+    except TelegramError as e:
+        logger.error("Kiểm tra thành viên kênh thất bại: %s", e)
+        return False
+
+
+def is_not_blocked(func):
+    """Decorator để kiểm tra xem người dùng có bị chặn không"""
+    from functools import wraps
+
+    @wraps(func)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        # Lấy db từ kwargs hoặc args
+        db = kwargs.get('db')
+        if not db:
+            for arg in args:
+                if hasattr(arg, 'get_user'):  # Giả định đây là đối tượng Database
+                    db = arg
+                    break
+
+        if not db:
+            # Nếu không tìm thấy db trong args/kwargs, thử lấy từ context nếu có (tùy cách thiết kế)
+            return await func(update, context, *args, **kwargs)
+
+        user_id = update.effective_user.id
+        if db.is_user_blocked(user_id):
+            if update.effective_message:
+                # Trả lời tin nhắn hoặc sửa tin nhắn callback
+                if update.callback_query:
+                    await update.callback_query.answer("Tài khoản của bạn đã bị khóa.", show_alert=True)
+                    await update.effective_message.edit_text(
+                        "🚫 Tài khoản của bạn đã bị khóa. Liên hệ @hcongdev để biết thêm.")
+                else:
+                    await update.effective_message.reply_text(
+                        "🚫 Tài khoản của bạn đã bị khóa. Liên hệ @hcongdev để biết thêm.")
+            return
+
+        return await func(update, context, *args, **kwargs)
+
+    return wrapper
