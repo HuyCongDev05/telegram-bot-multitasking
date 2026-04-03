@@ -165,7 +165,7 @@ class SheerIDVerifier:
                     f"{config.SHEERID_BASE_URL}/rest/v2/verification/{self.verification_id}/step/sso",
                 )
                 logger.info(f"✅ Bước 3 hoàn thành: {step3_data.get('currentStep')}")
-                current_step = step3_data.get("currentStep", current_step)
+                step3_data.get("currentStep", current_step)
 
             # Tải tài liệu lên và hoàn tất gửi
             logger.info("Bước 4/4: Yêu cầu và tải tài liệu lên...")

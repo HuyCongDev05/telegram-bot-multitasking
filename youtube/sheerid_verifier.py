@@ -114,7 +114,7 @@ class SheerIDVerifier:
 
             # Tạo thẻ sinh viên PNG
             logger.info("Bước 1/4: Tạo thẻ sinh viên PNG...")
-            img_data = generate_image(first_name, last_name, school_id)
+            img_data = generate_image(first_name, last_name)
             file_size = len(img_data)
             logger.info(f"✅ Kích thước PNG: {file_size / 1024:.2f}KB")
 

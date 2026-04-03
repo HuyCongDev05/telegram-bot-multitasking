@@ -12,13 +12,14 @@ Ngoài ra, bot còn tích hợp các tính năng quản lý người dùng, hệ
 
 ### ✨ Tính Năng Nổi Bật
 
--   🚀 **Xác thực SheerID tự động**: Hoàn tất tạo thông tin, tạo tài liệu và gửi xác thực chỉ với một lệnh cho các dịch vụ hỗ trợ.
--   🎨 **Tạo ảnh thông minh**: Tự động tạo ảnh thẻ Sinh viên/Giáo viên định dạng PNG cực kỳ chân thực.
--   📺 **Chuyển đổi Netflix Cookie**: Biến cookie Netflix thành URL đăng nhập ứng dụng tiện lợi.
--   💰 **Hệ thống điểm thưởng (Points)**: Tích hợp các tính năng điểm danh (check-in), mời bạn bè (invite) và đổi mã nạp tiền (key).
--   🔐 **An toàn & Tin cậy**: Sử dụng cơ sở dữ liệu MySQL và hỗ trợ cấu hình qua biến môi trường (.env).
--   ⚡ **Kiểm soát đồng thời**: Quản lý thông minh các yêu cầu đồng thời (Concurrency) để đảm bảo hệ thống ổn định.
--   👥 **Quản trị toàn diện**: Hệ thống quản lý người dùng và điểm thưởng mạnh mẽ cho Admin.
+- 🚀 **Xác thực SheerID tự động**: Hoàn tất tạo thông tin, tạo hồ sơ và gửi xác thực chỉ với một lệnh.
+- 🎨 **Tạo hồ sơ thông minh**: Tự động render ảnh thẻ Sinh viên/Giáo viên định dạng PNG chuyên nghiệp.
+- 🎬 **Chuyển đổi Netflix Cookie**: Biến cookie Netflix thành link đăng nhập ứng dụng cực nhanh.
+- 🃏 **Check CC Quick**: Hỗ trợ kiểm tra hàng loạt thẻ tín dụng với tốc độ và độ chính xác cao.
+- 💎 **Hệ thống điểm thưởng**: Tích hợp điểm danh hằng ngày, mời bạn bè và nạp thẻ (key).
+- 🛡️ **Bảo mật Username**: Bắt buộc người dùng phải có Telegram Username để định danh và chống spam.
+- ⚡ **Chống Spam & Dọn dẹp**: Tự động dọn dẹp tin nhắn rác và ngăn chặn hành động trùng lặp (Busy Check).
+- 🛠️ **Quản trị nâng cao**: Tìm kiếm người dùng bằng Username/ID và quản lý "một chạm" cho Admin.
 
 ---
 
@@ -26,13 +27,15 @@ Ngoài ra, bot còn tích hợp các tính năng quản lý người dùng, hệ
 
 Bot hỗ trợ xác thực cho các dịch vụ sau thông qua SheerID:
 
-| Lệnh/Chức năng                 | Dịch vụ                 | Loại xác thực | Trạng thái |
-| :----------------------------- | :---------------------- | :------------ | :--------- |
-| `/verifyChatGPTTeacherK12`     | ChatGPT Teacher K12     | Giáo viên     | ✅ Hoàn tất |
-| `/verifySpotifyStudent`        | Spotify Student         | Sinh viên     | ✅ Hoàn tất |
-| `/verifyBoltNewTeacher`        | Bolt.new Teacher        | Giáo viên     | ✅ Hoàn tất |
-| `/verifyYouTubePremiumStudent` | YouTube Premium Student | Sinh viên     | ✅ Hoàn tất |
-| `Chuyển đổi Netflix URL`       | Netflix                 | Công cụ       | ✅ Hoàn tất |
+| Lệnh/Chức năng                    | Dịch vụ                 | Loại xác thực | Trạng thái          |
+|:----------------------------------|:------------------------|:--------------|:--------------------|
+| `/verify_chatgpt_teacher_k12`     | ChatGPT Teacher K12     | Giáo viên     | ✅ Hoàn tất          |
+| `/verify_spotify_student`         | Spotify Student         | Sinh viên     | ✅ Hoàn tất          |
+| `/verify_bolt_new_teacher`        | Bolt.new Teacher        | Giáo viên     | ✅ Hoàn tất          |
+| `/verify_youtube_premium_student` | YouTube Premium Student | Sinh viên     | ✅ Hoàn tất          |
+| `/verify_gemini_one_pro`          | Gemini One Pro          | Công cụ       | 🛠️ Đang phát triển |
+| `/convert_netflix_url`            | Netflix                 | Công cụ       | ✅ Hoàn tất          |
+| `/check_cc`                       | Credit Card             | Công cụ       | ✅ Hoàn tất          |
 
 > **⚠️ Lưu ý trước khi dùng**: Các `programId` của từng module xác thực SheerID có thể thay đổi định kỳ. Nếu xác thực thất bại liên tục, hãy kiểm tra và cập nhật tệp `config.py` tương ứng (xem phần "Hướng dẫn cấu hình" bên dưới).
 
@@ -116,56 +119,62 @@ python bot.py
 
 ## 📖 Hướng Dẫn Sử Dụng
 
-### Lệnh Cho Người Dùng
+Các lệnh này có thể được truy cập thông qua Menu nút bấm hoặc gõ trực tiếp (Slash commands):
 
-Các lệnh này có thể được truy cập thông qua các nút bấm trong bot hoặc gõ trực tiếp:
+**Lệnh cơ bản:**
 
-```text
-/start              # Bắt đầu sử dụng bot và đăng ký tài khoản
-/help               # Hiển thị hướng dẫn và các lệnh có sẵn
-/balance            # Kiểm tra số dư điểm hiện tại của bạn
-/invite             # Tạo link mời bạn bè để nhận điểm thưởng
-/checkin            # Điểm danh hàng ngày để nhận điểm thưởng
-/to_up              # Sử dụng mã nạp tiền để đổi lấy điểm
+- `/start` - Bắt đầu và đăng ký tài khoản (Yêu cầu phải có Username).
+- `/help` - Xem hướng dẫn sử dụng chi tiết.
+- `/balance` - Kiểm tra số dư điểm hiện tại.
+- `/invite` - Lấy link mời bạn bè.
+- `/checkin` - Điểm danh hằng ngày.
+- `/to_up` - Nạp điểm bằng thẻ Key.
 
-# Các lệnh xác thực SheerID (yêu cầu link xác thực)
-/verifyChatGPTTeacherK12 <link>     # Xác thực ChatGPT Teacher K12
-/verifySpotifyStudent <link>        # Xác thực Spotify Student
-/verifyBoltNewTeacher <link>        # Xác thực Bolt.new Teacher
-/verifyYouTubePremiumStudent <link> # Xác thực YouTube Premium Student
-/getBoltNewTeacherCode              # Lấy mã xác thực Bolt.new (nếu không tự động lấy được)
+**Dịch vụ xác thực SheerID (Auto Verify):**
 
-# Công cụ tiện ích
-/convert_url_login_app_netflix      # Chuyển đổi cookie Netflix thành URL đăng nhập ứng dụng
-```
+- `/verify_chatgpt_teacher_k12` - Xác thực ChatGPT Giáo viên.
+- `/verify_spotify_student` - Xác thực Spotify Sinh viên.
+- `/verify_bolt_new_teacher` - Xác thực Bolt.new Giáo viên.
+- `/verify_youtube_premium_student` - Xác thực YouTube Premium.
+- `/verify_gemini_one_pro` - Xác thực Gemini Pro (Đang phát triển).
 
-### Lệnh Cho Quản Trị Viên
+**Công cụ tiện ích:**
 
-Chỉ dành cho `ADMIN_USER_ID` đã cấu hình:
+- `/convert_netflix_url` - Chuyển đổi Cookie Netflix sang Link App.
+- `/check_cc` - Kiểm tra thẻ tín dụng nhanh.
 
-```text
-/addbalance <user_id> <số_điểm>           # Cộng/trừ điểm cho người dùng (số âm để trừ)
-/block <user_id>                         # Chặn người dùng khỏi việc sử dụng bot
-/white <user_id>                         # Bỏ chặn người dùng
-/blacklist                               # Xem danh sách các người dùng bị chặn
-/genkey <mã> <điểm> [lượt] [ngày]         # Tạo mã nạp tiền tự động (lượt và ngày là tùy chọn)
-/listkeys                                # Xem danh sách các mã nạp tiền hiện có
-/broadcast <nội_dung>                    # Gửi thông báo đến toàn bộ người dùng bot
-```
+Để đảm bảo an toàn, các lệnh quản trị đã được gỡ bỏ khỏi lệnh slash công khai. Admin chỉ có thể thao tác thông qua nút
+bấm **"🛠 Quản trị viên"** sau khi xác thực danh tính bởi BOT.
+
+**Các tính năng nổi bật cho Admin:**
+
+- 🔍 **Tìm người dùng**: Tìm kiếm profile chi tiết bằng `@username` hoặc `ID`.
+- 💰 **Cộng tiền nhanh**: Các nút bấm cộng nhanh 10, 50, 100 điểm cho người dùng.
+- 🔒 **Quản lý trạng thái**: Khóa (Block) hoặc Mở khóa người dùng chỉ với 1 chạm.
+- 🗝 **Hệ thống Key**: Tạo và quản lý mã nạp điểm tự động.
+- 📣 **Broadcast**: Gửi thông báo toàn hệ thống kèm định dạng HTML.
 
 ### Quy Trình Xác Thực SheerID
 
 1.  Truy cập trang xác thực của dịch vụ bạn muốn (ví dụ: Spotify Student), bắt đầu quy trình xác minh.
 2.  Sao chép toàn bộ đường dẫn URL trên thanh địa chỉ trình duyệt (phải chứa tham số `verificationId`).
-3.  Gửi lệnh kèm link cho bot, ví dụ: `/verifySpotifyStudent https://services.sheerid.com/verify/xxx/?verificationId=yyy`
+3. Gửi lệnh kèm link cho bot, ví dụ:
+   `/verify_spotify_student https://services.sheerid.com/verify/xxx/?verificationId=yyy`
 4.  Chờ bot xử lý tự động. Quy trình duyệt tài liệu thường mất vài phút.
 
 ### Quy Trình Chuyển Đổi Netflix URL
 
-1.  Chọn chức năng "Chuyển đổi Netflix URL" từ menu bot.
+1. Chọn chức năng "Chuyển đổi Netflix URL" từ menu bot hoặc dùng lệnh `/convert_netflix_url`.
 2.  Bot sẽ yêu cầu bạn nhập cookie Netflix hoặc gửi một tệp `.txt` chứa cookie.
 3.  Gửi cookie của bạn (đảm bảo định dạng chính xác).
 4.  Bot sẽ xử lý và trả về một URL đăng nhập ứng dụng Netflix.
+
+### Quy Trình Kiểm Tra Thẻ (Check CC)
+
+1. Chọn chức năng "🃏 Check CC Quick" từ menu hoặc dùng lệnh `/check_cc`.
+2. Gửi danh sách thẻ theo định dạng `Số thẻ|Tháng|Năm|CVV` (hỗ trợ nhập văn bản trực tiếp hoặc file `.txt`).
+3. Bot sẽ kiểm tra từng thẻ (tối đa 50 thẻ/lần).
+4. Bot trả về bản tóm tắt (Live/Declined) và một file `cc.txt` chứa chi tiết kết quả.
 
 ---
 
@@ -261,8 +270,9 @@ telegram-bot-verify/
 ├── handlers/               # Chứa các module xử lý lệnh và callback của bot
 │   ├── user_commands.py    # Xử lý các lệnh và tương tác của người dùng
 │   ├── admin_commands.py   # Xử lý các lệnh quản trị viên
-│   └── verify_commands.py  # Xử lý các lệnh xác thực SheerID
-├── k12/                    # Module và cấu hình cho xác thực ChatGPT K12
+│   ├── verify_commands.py  # Xử lý các lệnh xác thực SheerID
+│   └── cc_handlers.py      # Xử lý tính năng kiểm tra thẻ tín dụng (Check CC)
+├── checkCC/                # Module xử lý logic Check CC (Stripe/Thum.io)
 ├── spotify/                # Module và cấu hình cho xác thực Spotify Student
 ├── youtube/                # Module và cấu hình cho xác thực YouTube Premium Student
 ├── Boltnew/                # Module và cấu hình cho xác thực Bolt.new Teacher
@@ -281,7 +291,7 @@ telegram-bot-verify/
 ### Chi Tiết Biến Môi Trường
 
 | Tên biến           | Bắt buộc | Mô tả                                    |
-| :----------------- | :------- | :--------------------------------------- |
+|:-------------------|:---------|:-----------------------------------------|
 | `BOT_TOKEN`        | ✅        | Token của Telegram Bot lấy từ @BotFather |
 | `ADMIN_USER_ID`    | ✅        | ID Telegram của người quản trị           |
 | `MYSQL_HOST`       | ✅        | Địa chỉ máy chủ MySQL                    |

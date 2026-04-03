@@ -82,7 +82,7 @@ def _html_to_png(html_content: str, width: int = 1200, height: int = None) -> by
 
 def generate_teacher_card_html(first_name: str, last_name: str, psu_id: str) -> str:
     """Tạo HTML cho thẻ giáo viên."""
-    timestamp = int(datetime.now().timestamp())
+    int(datetime.now().timestamp())
     name = f"{first_name} {last_name}"
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -566,7 +566,7 @@ def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
     return asyncio.run(render_all())
 
 
-def generate_images(first_name: str, last_name: str, school_id: str = '2565'):
+def generate_images(first_name: str, last_name: str):
     """
     Tạo hai ảnh PNG: Thẻ giáo viên + Giấy xác nhận công tác (phiên bản tối ưu đồng thời)
 

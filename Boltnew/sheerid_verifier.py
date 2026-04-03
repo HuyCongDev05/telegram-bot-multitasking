@@ -141,7 +141,7 @@ class SheerIDVerifier:
 
             # Tạo ảnh PNG giáo viên
             logger.info("Bước 1/5: Tạo tài liệu PNG giáo viên...")
-            assets = generate_images(first_name, last_name, school_id)
+            assets = generate_images(first_name, last_name)
             for asset in assets:
                 logger.info(
                     f"  - {asset['file_name']} kích thước: {len(asset['data']) / 1024:.2f}KB"
@@ -197,7 +197,7 @@ class SheerIDVerifier:
                     f"{config.SHEERID_BASE_URL}/rest/v2/verification/{self.verification_id}/step/sso",
                 )
                 logger.info(f"✅ Bước 3 hoàn thành: {getattr(step3_data, 'get', lambda k, d=None: d)('currentStep')}")
-                current_step = (
+                (
                     step3_data.get("currentStep", current_step) if isinstance(step3_data, dict) else current_step
                 )
 

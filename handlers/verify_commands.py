@@ -7,15 +7,13 @@ import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from Boltnew.sheerid_verifier import SheerIDVerifier as BoltnewVerifier
 from config import VERIFY_COST
 from database_mysql import Database
-from handlers.user_commands import show_main_menu  # Import show_main_menu
+from handlers.user_commands import show_main_menu, is_user_busy
 from k12.sheerid_verifier import SheerIDVerifier as K12Verifier
 from spotify.sheerid_verifier import SheerIDVerifier as SpotifyVerifier
 from utils.checks import is_not_blocked
 from utils.messages import get_insufficient_balance_message, get_verify_usage_message
-from youtube.sheerid_verifier import SheerIDVerifier as YouTubeVerifier
 
 # Thử nhập kiểm soát đồng thời, nếu thất bại sẽ sử dụng triển khai trống
 try:
@@ -30,32 +28,38 @@ logger = logging.getLogger(__name__)
 
 @is_not_blocked
 async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verifyChatGPTTeacherK12 - ChatGPT Teacher K12"""
+    """Xử lý lệnh /verify_chatgpt_teacher_k12 - ChatGPT Teacher K12"""
+    if await is_user_busy(update, context):
+        return
+
     user_id = update.effective_user.id
-
-    if not db.user_exists(user_id):
-        await update.message.reply_text("Vui lòng sử dụng /start để đăng ký trước.")
-        return
-
     if not context.args:
-        await update.message.reply_text(
-            get_verify_usage_message("/verifyChatGPTTeacherK12", "ChatGPT Teacher K12")
-        )
+        from handlers.user_commands import start_input_flow
+        prompt = get_verify_usage_message("ChatGPT Teacher K12")
+        context.user_data['action_service_type'] = 'verify_chatgpt_k12'
+        await start_input_flow(update, context, prompt, 'verify_step_1', 'cancel_to_verify_menu')
         return
+
+    from handlers.user_commands import register_cleanup_message
+    register_cleanup_message(context, update.message.message_id)
 
     url = context.args[0]
     user = db.get_user(user_id)
     if user["balance"] < VERIFY_COST:
-        await update.message.reply_text(
-            get_insufficient_balance_message(user["balance"])
-        )
-        # Xóa tin nhắn gốc của người dùng chứa URL
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa URL (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
+        await update.message.reply_text(get_insufficient_balance_message(user["balance"]), parse_mode='HTML')
+        await show_main_menu(update, context, db, "⚠️ <i>Số dư không đủ để thực hiện.</i>")
+        return
+
+    # Phân tích verificationId
+    verification_id = K12Verifier.parse_verification_id(url)
+    if not verification_id:
+        await update.message.reply_text("❌ <b>Liên kết SheerID không hợp lệ!</b>", parse_mode='HTML')
+        await show_main_menu(update, context, db, "⚠️ Link xác thực không đúng định dạng.")
+        return
+
+    if not db.deduct_balance(user_id, VERIFY_COST):
+        await update.message.reply_text("Trừ điểm thất bại.")
+        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
         return
 
     verification_id = K12Verifier.parse_verification_id(url)
@@ -70,22 +74,13 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
         await show_main_menu(update, context, db, "Liên kết SheerID không hợp lệ.")
         return
 
-    if not db.deduct_balance(user_id, VERIFY_COST):
-        await update.message.reply_text("Trừ điểm thất bại, vui lòng thử lại sau.")
-        # Xóa tin nhắn gốc của người dùng chứa URL
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa URL (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
-        return
-
     processing_msg = await update.message.reply_text(
-        f"Bắt đầu xử lý xác thực ChatGPT Teacher K12...\n"
-        f"ID xác thực: {verification_id}\n"
-        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
-        "Vui lòng đợi, quá trình này có thể mất 1-2 phút..."
+        f"⏳ <b>Đang xử lý xác thực ChatGPT K12...</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🆔 ID: <code>{verification_id}</code>\n"
+        f"🪙 Chi phí: -{VERIFY_COST} điểm\n\n"
+        f"🚀 <i>Vui lòng đợi 1-2 phút, hệ thống đang tự động xác thực...</i>",
+        parse_mode='HTML'
     )
 
     try:
@@ -101,11 +96,15 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
         )
 
         if result["success"]:
-            result_msg = "✅ Xác thực thành công!\n\n"
+            result_msg = (
+                f"✅ <b>Xác thực THÀNH CÔNG!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🎉 {service_name} của bạn đã sẵn sàng.\n"
+            )
             if result.get("pending"):
-                result_msg += "Tài liệu đã được gửi, đang chờ xem xét thủ công.\n"
+                result_msg += "✨ <i>Tài liệu đã gửi, đang chờ xét duyệt thủ công...</i>\n"
             if result.get("redirect_url"):
-                result_msg += f"Liên kết chuyển hướng：\n{result['redirect_url']}"
+                result_msg += f"🔗 <b>Link nhận quà:</b>\n{result['redirect_url']}"
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
@@ -133,32 +132,38 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
 
 @is_not_blocked
 async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verifySpotifyStudent - Spotify Student"""
+    """Xử lý lệnh /verify_spotify_student - Spotify Student"""
+    if await is_user_busy(update, context):
+        return
+
     user_id = update.effective_user.id
-
-    if not db.user_exists(user_id):
-        await update.message.reply_text("Vui lòng sử dụng /start để đăng ký trước.")
-        return
-
     if not context.args:
-        await update.message.reply_text(
-            get_verify_usage_message("/verifySpotifyStudent", "Spotify Student")
-        )
+        from handlers.user_commands import start_input_flow
+        prompt = get_verify_usage_message("Spotify Student")
+        context.user_data['action_service_type'] = 'verify_spotify_student'
+        await start_input_flow(update, context, prompt, 'verify_step_1', 'cancel_to_verify_menu')
         return
+
+    from handlers.user_commands import register_cleanup_message
+    register_cleanup_message(context, update.message.message_id)
 
     url = context.args[0]
     user = db.get_user(user_id)
     if user["balance"] < VERIFY_COST:
-        await update.message.reply_text(
-            get_insufficient_balance_message(user["balance"])
-        )
-        # Xóa tin nhắn gốc của người dùng chứa URL
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa URL (ID: {update.message.message_id}): {e}")
+        await update.message.reply_text(get_insufficient_balance_message(user["balance"]))
         await show_main_menu(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
+        return
+
+    # Phân tích verificationId
+    verification_id = SpotifyVerifier.parse_verification_id(url)
+    if not verification_id:
+        await update.message.reply_text("Liên kết SheerID không hợp lệ.")
+        await show_main_menu(update, context, db, "Liên kết SheerID không hợp lệ.")
+        return
+
+    if not db.deduct_balance(user_id, VERIFY_COST):
+        await update.message.reply_text("Trừ điểm thất bại.")
+        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
         return
 
     # Phân tích verificationId
@@ -186,11 +191,12 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
         return
 
     processing_msg = await update.message.reply_text(
-        f"🎵 Bắt đầu xử lý xác thực Spotify Student...\n"
-        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
-        "📝 Đang tạo thông tin sinh viên...\n"
-        "🎨 Đang tạo thẻ sinh viên PNG...\n"
-        "📤 Đang gửi tài liệu..."
+        f"⏳ <b>Đang xử lý xác thực Spotify Student...</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📝 <i>Đang tạo hồ sơ sinh viên...</i>\n"
+        f"🎨 <i>Đang thiết kế thẻ sinh viên...</i>\n"
+        f"🚀 <i>Đang gửi tài liệu lên SheerID...</i>",
+        parse_mode='HTML'
     )
 
     # Sử dụng semaphore để kiểm soát đồng thời
@@ -210,12 +216,14 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
         )
 
         if result["success"]:
-            result_msg = "✅ Xác thực sinh viên Spotify thành công!\n\n"
+            result_msg = (
+                f"✅ <b>Xác thực Spotify THÀNH CÔNG!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+            )
             if result.get("pending"):
-                result_msg += "✨ Tài liệu đã được gửi, chờ SheerID xét duyệt\n"
-                result_msg += "⏱️ Thời gian xét duyệt dự kiến: trong vài phút\n\n"
+                result_msg += "✨ <i>Hồ sơ đã gửi, chờ SheerID phê duyệt (vài phút).</i>\n"
             if result.get("redirect_url"):
-                result_msg += f"🔗 Liên kết chuyển hướng：\n{result['redirect_url']}"
+                result_msg += f"🔗 <b>Link kích hoạt:</b>\n{result['redirect_url']}"
 
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
@@ -243,32 +251,40 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 
 @is_not_blocked
 async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verifyBoltNewTeacher - Bolt.new Teacher (phiên bản tự động lấy mã)"""
+    """Xử lý lệnh /verify_bolt_new_teacher - Bolt.new Teacher"""
+    if await is_user_busy(update, context):
+        return
+
     user_id = update.effective_user.id
 
-    if not db.user_exists(user_id):
-        await update.message.reply_text("Vui lòng sử dụng /start để đăng ký trước.")
+    if not context.args:
+        from handlers.user_commands import start_input_flow
+        prompt = get_verify_usage_message("Bolt.new Teacher")
+        context.user_data['action_service_type'] = 'verify_bolt_teacher'
+        await start_input_flow(update, context, prompt, 'verify_step_1', 'cancel_to_verify_menu')
         return
 
-    if not context.args:
-        await update.message.reply_text(
-            get_verify_usage_message("/verifyBoltNewTeacher", "Bolt.new Teacher")
-        )
-        return
+    from handlers.user_commands import register_cleanup_message
+    register_cleanup_message(context, update.message.message_id)
 
     url = context.args[0]
     user = db.get_user(user_id)
     if user["balance"] < VERIFY_COST:
-        await update.message.reply_text(
-            get_insufficient_balance_message(user["balance"])
-        )
-        # Xóa tin nhắn gốc của người dùng chứa URL
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa URL (ID: {update.message.message_id}): {e}")
+        await update.message.reply_text(get_insufficient_balance_message(user["balance"]))
         await show_main_menu(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
+        return
+
+    # Phân tích externalUserId hoặc verificationId
+    from Boltnew.sheerid_verifier import SheerIDVerifier as BoltnewVerifier
+    verification_id = BoltnewVerifier.parse_verification_id(url)
+    if not verification_id:
+        await update.message.reply_text("Liên kết SheerID không hợp lệ.")
+        await show_main_menu(update, context, db, "Liên kết SheerID không hợp lệ.")
+        return
+
+    if not db.deduct_balance(user_id, VERIFY_COST):
+        await update.message.reply_text("Trừ điểm thất bại.")
+        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
         return
 
     # Phân tích externalUserId hoặc verificationId
@@ -298,9 +314,10 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
         return
 
     processing_msg = await update.message.reply_text(
-        f"🚀 Bắt đầu xử lý xác thực Bolt.new Teacher...\n"
-        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
-        "📤 Đang gửi tài liệu..."
+        f"⏳ <b>Đang xử lý xác thực Bolt.new Teacher...</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🚀 <i>Đang tiến hành gửi tài liệu xác thực chuyên gia...</i>",
+        parse_mode='HTML'
     )
 
     # Sử dụng semaphore để kiểm soát đồng thời
@@ -348,11 +365,9 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
         if code:
             # Lấy mã thành công
             result_msg = (
-                f"🎉 Xác thực thành công!\n\n"
-                f"✅ Tài liệu đã gửi\n"
-                f"✅ Xét duyệt đã thông qua\n"
-                f"✅ Mã xác thực đã lấy\n\n"
-                f"🎁 Mã xác thực: `{code}`\n"
+                f"✅ <b>Xác thực Bolt.new THÀNH CÔNG!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🎁 <b>Mã xác thực:</b> <code>{code}</code>\n"
             )
             if result.get("redirect_url"):
                 result_msg += f"\n🔗 Liên kết chuyển hướng:\n{result['redirect_url']}"
@@ -465,32 +480,40 @@ async def _auto_get_reward_code(
 
 @is_not_blocked
 async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verifyYouTubePremiumStudent - YouTube Student Premium"""
+    """Xử lý lệnh /verify_youtube_premium_student - YouTube Student Premium"""
+    if await is_user_busy(update, context):
+        return
+
     user_id = update.effective_user.id
 
-    if not db.user_exists(user_id):
-        await update.message.reply_text("Vui lòng sử dụng /start để đăng ký trước.")
+    if not context.args:
+        from handlers.user_commands import start_input_flow
+        prompt = get_verify_usage_message("YouTube Student Premium")
+        context.user_data['action_service_type'] = 'verify_youtube_student'
+        await start_input_flow(update, context, prompt, 'verify_step_1', 'cancel_to_verify_menu')
         return
 
-    if not context.args:
-        await update.message.reply_text(
-            get_verify_usage_message("/verifyYouTubePremiumStudent", "YouTube Student Premium")
-        )
-        return
+    from handlers.user_commands import register_cleanup_message
+    register_cleanup_message(context, update.message.message_id)
 
     url = context.args[0]
     user = db.get_user(user_id)
     if user["balance"] < VERIFY_COST:
-        await update.message.reply_text(
-            get_insufficient_balance_message(user["balance"])
-        )
-        # Xóa tin nhắn gốc của người dùng chứa URL
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa URL (ID: {update.message.message_id}): {e}")
+        await update.message.reply_text(get_insufficient_balance_message(user["balance"]))
         await show_main_menu(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
+        return
+
+    # Phân tích verificationId
+    from youtube.sheerid_verifier import SheerIDVerifier as YouTubeVerifier
+    verification_id = YouTubeVerifier.parse_verification_id(url)
+    if not verification_id:
+        await update.message.reply_text("Liên kết SheerID không hợp lệ.")
+        await show_main_menu(update, context, db, "Liên kết SheerID không hợp lệ.")
+        return
+
+    if not db.deduct_balance(user_id, VERIFY_COST):
+        await update.message.reply_text("Trừ điểm thất bại.")
+        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
         return
 
     # Phân tích verificationId
@@ -518,11 +541,11 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
         return
 
     processing_msg = await update.message.reply_text(
-        f"📺 Bắt đầu xử lý xác thực YouTube Student Premium...\n"
-        f"Đã trừ {VERIFY_COST} điểm. 🪙 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.\n\n"
-        "📝 Đang tạo thông tin sinh viên...\n"
-        "🎨 Đang tạo thẻ sinh viên PNG...\n"
-        "📤 Đang gửi tài liệu..."
+        f"⏳ <b>Đang xử lý YouTube Premium...</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🎨 <i>Đang xử lý hồ sơ và thẻ sinh viên...</i>\n"
+        f"🚀 <i>Đang gửi tài liệu xác thực lên YouTube...</i>",
+        parse_mode='HTML'
     )
 
     # Sử dụng semaphore để kiểm soát đồng thời
@@ -645,3 +668,24 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
             f"❌ Đã xảy ra lỗi trong quá trình truy vấn: {str(e)}\n\n"
             "Vui lòng thử lại sau hoặc liên hệ quản trị viên."
         )
+
+
+@is_not_blocked
+async def verifyGeminiOnePro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Xử lý lệnh /verify_gemini_one_pro - Gemini One Pro"""
+    if await is_user_busy(update, context):
+        return
+
+
+    if not context.args:
+        from handlers.user_commands import start_input_flow
+        prompt = get_verify_usage_message("Gemini One Pro")
+        context.user_data['action_service_type'] = 'verify_gemini_pro'
+        await start_input_flow(update, context, prompt, 'verify_step_1', 'cancel_to_verify_menu')
+        return
+
+    from handlers.user_commands import register_cleanup_message
+    register_cleanup_message(context, update.message.message_id)
+
+    # Placeholder logic (vì chưa có verifier cho Gemini)
+    await update.message.reply_text("Chức năng xác thực Gemini One Pro đang được phát triển. Vui lòng quay lại sau!")

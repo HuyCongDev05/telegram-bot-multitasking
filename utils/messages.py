@@ -5,15 +5,17 @@ from config import VERIFY_COST
 
 
 def get_welcome_message(full_name: str, invited_by: bool = False) -> str:
-    """Lấy tin nhắn chào mừng"""
+    """Xử lý lệnh /start"""
     msg = (
-        f"🎉 Chào mừng, {full_name}！\n"
+        f"🙋‍♂️ <b>Chào mừng, {full_name}！</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
     )
     if invited_by:
-        msg += "Cảm ơn bạn đã tham gia qua liên kết mời, người mời đã nhận được 2 điểm.\n"
+        msg += "🎁 <i>Cảm ơn bạn đã tham gia qua link mời, người mời đã được tặng <b>2 điểm</b>.</i>\n"
 
     msg += (
-        "\nVui lòng chọn một hành động từ các nút bên dưới:"
+        "\n⚡ <b>Hệ thống xác thực tự động 24/7</b>\n"
+        "Vui lòng chọn một hành động bên dưới để bắt đầu:"
     )
     return msg
 
@@ -22,23 +24,26 @@ def get_welcome_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
     """Lấy bàn phím cho tin nhắn chào mừng"""
     keyboard = [
         [
-            InlineKeyboardButton("🔍 Xác thực SheerID", callback_data='verify_menu'),
+            InlineKeyboardButton("✨ Xác thực SheerID", callback_data='verify_menu'),
         ],
         [
-            InlineKeyboardButton("📺 Chuyển đổi url login app netflix", callback_data='convert_url_login_app_netflix'),
+            InlineKeyboardButton("🎬 Chuyển đổi Netflix Cookie", callback_data='convert_url_login_app_netflix'),
         ],
         [
-            InlineKeyboardButton("🎁 Mời bạn bè", callback_data='invite'),
-            InlineKeyboardButton("📅 Điểm danh", callback_data='checkin')
+            InlineKeyboardButton("🃏 Check CC Quick", callback_data='check_cc_menu'),
+        ],
+        [
+            InlineKeyboardButton("🧧 Mời bạn bè", callback_data='invite'),
+            InlineKeyboardButton("💎 Điểm danh", callback_data='checkin')
 
         ],
         [
             InlineKeyboardButton("💳 Nạp điểm", callback_data='to_up'),
-            InlineKeyboardButton("❓ Trợ giúp", callback_data='help')
+            InlineKeyboardButton("💡 Trợ giúp", callback_data='help')
         ]
     ]
     if is_admin:
-        keyboard.append([InlineKeyboardButton("👑 Quản trị", callback_data='admin_menu')])
+        keyboard.append([InlineKeyboardButton("🛠 Quản trị viên", callback_data='admin_menu')])
 
     return InlineKeyboardMarkup(keyboard)
 
@@ -57,9 +62,9 @@ def get_verify_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("🎓 ChatGPT Teacher K12", callback_data='verify_chatgpt_k12')],
         [InlineKeyboardButton("🎵 Spotify Student", callback_data='verify_spotify_student')],
         [InlineKeyboardButton("⚡ Bolt.new Teacher", callback_data='verify_bolt_teacher')],
-        [InlineKeyboardButton("📺 YouTube Student", callback_data='verify_youtube_student')],
-        [InlineKeyboardButton("🧠 Gemini One Pro", callback_data='verify_gemini_pro')],
-        [InlineKeyboardButton("⬅️ Quay lại", callback_data='back_to_main')]
+        [InlineKeyboardButton("🎥 YouTube Premium", callback_data='verify_youtube_student')],
+        [InlineKeyboardButton("🤖 Gemini One Pro", callback_data='verify_gemini_pro')],
+        [InlineKeyboardButton("🔙 Quay lại", callback_data='back_to_main')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -73,20 +78,26 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
     """Lấy bàn phím cho menu quản trị"""
     keyboard = [
         [
-            InlineKeyboardButton("➕ Thêm điểm", callback_data='admin_add_balance'),
-            InlineKeyboardButton("🚫 Chặn", callback_data='admin_block')
+            InlineKeyboardButton("💰 Cộng tiền", callback_data='admin_add_balance'),
+            InlineKeyboardButton("🔒 Khóa User", callback_data='admin_block')
         ],
         [
-            InlineKeyboardButton("✅ Bỏ chặn", callback_data='admin_unblock'),
-            InlineKeyboardButton("📋 DS Đen", callback_data='admin_blacklist')
+            InlineKeyboardButton("🔓 Mở khóa", callback_data='admin_unblock'),
+            InlineKeyboardButton("💀 Danh sách đen", callback_data='admin_blacklist')
         ],
         [
-            InlineKeyboardButton("🔑 Tạo key", callback_data='admin_gen_key'),
-            InlineKeyboardButton("📜 DS Key", callback_data='admin_list_keys')
+            InlineKeyboardButton("🔍 Tìm người dùng", callback_data='admin_search_user'),
+            InlineKeyboardButton("🗝 Tạo mã Key", callback_data='admin_gen_key')
         ],
         [
-            InlineKeyboardButton("📢 Thông báo", callback_data='admin_broadcast'),
-            InlineKeyboardButton("⬅️ Quay lại", callback_data='back_to_main')
+            InlineKeyboardButton("📊 Lịch sử Key", callback_data='admin_list_keys'),
+            InlineKeyboardButton("📣 Gửi thông báo", callback_data='admin_broadcast')
+        ],
+        [
+            InlineKeyboardButton("💳 DS CC Live", callback_data='admin_list_live_cc')
+        ],
+        [
+            InlineKeyboardButton("🔙 Quay lại", callback_data='back_to_main')
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -95,17 +106,22 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
 def get_help_message() -> str:
     """Lấy tin nhắn trợ giúp"""
     return (
-        "📖 Hướng dẫn xác thực:\n\n"
-        "Nhấn nút '🔍 Xác thực SheerID' ở menu chính, chọn dịch vụ và gửi liên kết:\n"
-        f"• ChatGPT Teacher K12 - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
-        f"• Spotify Student - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
-        f"• Bolt new Teacher - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
-        f"• YouTube Premium Student - <liên kết> (-🪙 {VERIFY_COST} điểm)\n"
-        f"• Gemini One Pro - <liên kết> (-🪙 {VERIFY_COST} điểm)\n\n"
-        "📖 Hướng dẫn lấy url đăng nhập app netflix:\n\n"
-        "Nhấn nút '📺 Chuyển đổi url login app netflix' ở menu chính:\n"
-        f"• Nhập cookie netflix vào để chuyển đổi (-🪙 {VERIFY_COST} điểm)\n\n"
-        "💬 Mọi thắc mắc liên hệ @hcongdev"
+        "💡 HƯỚNG DẪN SỬ DỤNG\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "✨ Xác thực SheerID:\n"
+        "Nhấn nút '✨ Xác thực SheerID' và gửi link:\n"
+        f"• ChatGPT Teacher K12 (-🪙 {VERIFY_COST})\n"
+        f"• Spotify Student (-🪙 {VERIFY_COST})\n"
+        f"• Bolt new Teacher (-🪙 {VERIFY_COST})\n"
+        f"• YouTube Premium (-🪙 {VERIFY_COST})\n"
+        f"• Gemini One Pro (-🪙 {VERIFY_COST})\n\n"
+        "🃏 Check CC Quick:\n"
+        "Sử dụng lệnh <code>/check_cc</code> hoặc nút '🃏 Check CC Quick':\n"
+        f"• Gửi: <code>số thẻ|tháng|năm|cvv</code> (-🪙 {VERIFY_COST})\n\n"
+        "🎬 Chuyển đổi Netflix Cookie:\n"
+        "Nhấn nút '🎬 Chuyển đổi Netflix Cookie':\n"
+        f"• Nhập Cookie Netflix để lấy Link đăng nhập App.\n\n"
+        "💬 <i>Hỗ trợ trực tiếp: @hcongdev</i>"
     )
 
 

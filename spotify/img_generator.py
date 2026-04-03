@@ -19,7 +19,7 @@ def generate_psu_email(first_name, last_name):
     return email
 
 
-def generate_html(first_name, last_name, school_id='2565'):
+def generate_html(first_name, last_name):
     """
     Tạo HTML Penn State LionPATH
 
@@ -354,7 +354,7 @@ def generate_image(first_name, last_name, school_id='2565'):
         from playwright.sync_api import sync_playwright
 
         # Tạo HTML
-        html_content = generate_html(first_name, last_name, school_id)
+        html_content = generate_html(first_name, last_name)
 
         # Sử dụng Playwright để chụp ảnh màn hình (thay thế cho Selenium)
         with sync_playwright() as p:

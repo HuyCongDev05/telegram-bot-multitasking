@@ -249,6 +249,42 @@ class MySQLDatabase:
                 """
             )
 
+            # Bảng live_cc
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS live_cc
+                (
+                    id
+                    BIGINT
+                    AUTO_INCREMENT
+                    PRIMARY
+                    KEY,
+                    bin
+                    VARCHAR
+                (
+                    255
+                ),
+                    month VARCHAR
+                (
+                    10
+                ),
+                    year VARCHAR
+                (
+                    10
+                ),
+                    cvv VARCHAR
+                (
+                    10
+                ),
+                    status VARCHAR
+                (
+                    65
+                ),
+                    checkAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+
             conn.commit()
             logger.info("Hoàn tất khởi tạo các bảng cơ sở dữ liệu MySQL")
 
@@ -315,6 +351,32 @@ class MySQLDatabase:
 
             if row:
                 # Tạo bản sao từ điển mới và chuyển đổi datetime sang định dạng ISO string
+                result = dict(row)
+                if result.get('created_at'):
+                    result['created_at'] = result['created_at'].isoformat()
+                if result.get('last_checkin'):
+                    result['last_checkin'] = result['last_checkin'].isoformat()
+                return result
+            return None
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_user_by_username(self, username: str) -> Optional[Dict]:
+        """Lấy thông tin người dùng bằng username"""
+        # Loại bỏ dấu @ nếu có
+        if username.startswith('@'):
+            username = username[1:]
+
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+
+        try:
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            row = cursor.fetchone()
+
+            if row:
                 result = dict(row)
                 if result.get('created_at'):
                     result['created_at'] = result['created_at'].isoformat()
@@ -664,6 +726,43 @@ class MySQLDatabase:
             cursor.execute("SELECT user_id FROM users")
             rows = cursor.fetchall()
             return [row[0] for row in rows]
+        finally:
+            cursor.close()
+            conn.close()
+
+    def add_live_cc(self, bin_num: str, month: str, year: str, cvv: str, status: str) -> bool:
+        """Lưu thẻ Live hoặc Real vào database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                """
+                INSERT INTO live_cc (bin, month, year, cvv, status, checkAt)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                """,
+                (bin_num, month, year, cvv, status)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Thêm live cc thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_live_ccs(self, limit: int = 100) -> List[Dict]:
+        """Lấy danh sách CC Live"""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+        try:
+            cursor.execute(
+                "SELECT * FROM live_cc ORDER BY checkAt DESC LIMIT %s",
+                (limit,)
+            )
+            return list(cursor.fetchall())
         finally:
             cursor.close()
             conn.close()

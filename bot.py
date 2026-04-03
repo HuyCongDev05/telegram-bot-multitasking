@@ -6,21 +6,18 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 
 from config import BOT_TOKEN
 from database_mysql import Database
-from handlers.admin_commands import (
-    addbalance_command,
-    block_command,
-    white_command,
-    blacklist_command,
-    genkey_command,
-    listkeys_command,
-    broadcast_command,
-)
+from handlers.cc_handlers import checkCC_command
 from handlers.user_commands import (
     start_command,
     help_command,
     button_callback,
     handle_text_input,
     handle_file_input,
+    convertNetflixUrl_command,
+    invite_command,
+    checkin_command,
+    balance_command,
+    to_up_command,
 )
 from handlers.verify_commands import (
     verifyChatGPTTeacherK12_command,
@@ -28,6 +25,7 @@ from handlers.verify_commands import (
     verifyBoltNewTeacher_command,
     verifyYouTubePremiumStudent_command,
     getBoltNewTeacherCode_command,
+    verifyGeminiOnePro_command,
 )
 
 # Cấu hình logging
@@ -38,7 +36,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def error_handler(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Xử lý lỗi toàn cục"""
     logger.error("Exception while handling an update:", exc_info=context.error)
 
@@ -72,21 +70,26 @@ def main():
     application.add_handler(MessageHandler(filters.REPLY & filters.Document.ALL, partial(handle_file_input, db=db)))
 
     # Đăng ký các lệnh xác thực (vẫn giữ lại để dùng trực tiếp nếu cần)
-    application.add_handler(CommandHandler("verifyChatGPTTeacherK12", partial(verifyChatGPTTeacherK12_command, db=db)))
-    application.add_handler(CommandHandler("verifySpotifyStudent", partial(verifySpotifyStudent_command, db=db)))
-    application.add_handler(CommandHandler("verifyBoltNewTeacher", partial(verifyBoltNewTeacher_command, db=db)))
     application.add_handler(
-        CommandHandler("verifyYouTubePremiumStudent", partial(verifyYouTubePremiumStudent_command, db=db)))
+        CommandHandler("verify_chatgpt_teacher_k12", partial(verifyChatGPTTeacherK12_command, db=db)))
+    application.add_handler(CommandHandler("verify_spotify_student", partial(verifySpotifyStudent_command, db=db)))
+    application.add_handler(CommandHandler("verify_bolt_new_teacher", partial(verifyBoltNewTeacher_command, db=db)))
+    application.add_handler(
+        CommandHandler("verify_youtube_premium_student", partial(verifyYouTubePremiumStudent_command, db=db)))
     application.add_handler(CommandHandler("getBoltNewTeacherCode", partial(getBoltNewTeacherCode_command, db=db)))
+    application.add_handler(CommandHandler("verify_gemini_one_pro", partial(verifyGeminiOnePro_command, db=db)))
 
-    # Đăng ký các lệnh admin (vẫn giữ lại để dùng trực tiếp nếu cần)
-    application.add_handler(CommandHandler("addbalance", partial(addbalance_command, db=db)))
-    application.add_handler(CommandHandler("block", partial(block_command, db=db)))
-    application.add_handler(CommandHandler("white", partial(white_command, db=db)))
-    application.add_handler(CommandHandler("blacklist", partial(blacklist_command, db=db)))
-    application.add_handler(CommandHandler("genkey", partial(genkey_command, db=db)))
-    application.add_handler(CommandHandler("listkeys", partial(listkeys_command, db=db)))
-    application.add_handler(CommandHandler("broadcast", partial(broadcast_command, db=db)))
+    # Đăng ký các lệnh tiện ích khác
+    application.add_handler(CommandHandler("invite", partial(invite_command, db=db)))
+    application.add_handler(CommandHandler("checkin", partial(checkin_command, db=db)))
+    application.add_handler(CommandHandler("balance", partial(balance_command, db=db)))
+    application.add_handler(CommandHandler("toUp", partial(to_up_command, db=db)))
+
+    # Đăng ký lệnh Check CC
+    application.add_handler(CommandHandler("check_cc", partial(checkCC_command, db=db)))
+
+    # Đăng ký lệnh Chuyển đổi Netflix URL
+    application.add_handler(CommandHandler("convert_netflix_url", partial(convertNetflixUrl_command, db=db)))
 
     # Đăng ký trình xử lý lỗi
     application.add_error_handler(error_handler)

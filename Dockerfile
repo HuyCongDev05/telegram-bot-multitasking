@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf-2.0-dev \
     libffi-dev \
     python3-dev \
-    # Thêm các thư viện C/C++ bổ sung cho Cairo và WeasyPrint
+    # Thêm các thư viện C/C++ bổ sung cho Cairo và WeasyPrint \
     libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \

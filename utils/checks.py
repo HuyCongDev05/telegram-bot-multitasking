@@ -65,7 +65,7 @@ def is_not_blocked(func):
                 else:
                     await update.effective_message.reply_text(
                         "🚫 Tài khoản của bạn đã bị khóa. Liên hệ @hcongdev để biết thêm.")
-            return
+            return None
 
         return await func(update, context, *args, **kwargs)
 

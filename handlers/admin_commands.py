@@ -1,6 +1,7 @@
 """Trình xử lý lệnh quản trị (admin)"""
 import asyncio
 import logging
+import io
 from datetime import datetime
 
 from telegram import Update
@@ -158,7 +159,7 @@ async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
             await update.effective_message.reply_text("Định dạng tham số sai, vui lòng nhập User ID hợp lệ.")
 
 
-async def blacklist_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
+async def blacklist_command(update: Update, db: Database):
     """Xử lý lệnh /blacklist - Xem danh sách đen"""
     if await reject_group_command(update):
         return
@@ -247,7 +248,7 @@ async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
         return False
 
 
-async def listkeys_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
+async def listkeys_command(update: Update, db: Database):
     """Xử lý lệnh /listkeys - Admin xem danh sách mã thẻ"""
     if await reject_group_command(update):
         return
@@ -291,6 +292,57 @@ async def listkeys_command(update: Update, context: ContextTypes.DEFAULT_TYPE, d
 
     if update.effective_message:
         await update.effective_message.reply_text(msg, parse_mode='HTML')
+
+
+async def list_live_cc_command(update: Update, db: Database):
+    """Xử lý lệnh xem danh sách CC live"""
+    if await reject_group_command(update):
+        return
+
+    user_id = update.effective_user.id
+    if user_id != ADMIN_USER_ID:
+        if update.effective_message:
+            await update.effective_message.reply_text("Bạn không có quyền sử dụng lệnh này.")
+        return
+
+    live_ccs = db.get_live_ccs(limit=1000)
+
+    if not live_ccs:
+        if update.effective_message:
+            await update.effective_message.reply_text("Hiện chưa có thẻ Live nào.")
+        return
+
+    msg = "📋 Danh sách CC Live:\n\n"
+
+    output_content = ""
+    for cc in live_ccs:
+        # Nếu cc['bin'] rỗng hoặc không có, có thể hiển thị N/A
+        bin_num = cc.get('bin', 'N/A')
+        month = cc.get('month', 'xx')
+        year = cc.get('year', 'xxxx')
+        cvv = cc.get('cvv', 'xxx')
+        status = cc.get('status', 'Unknown')
+        check_at = cc.get('checkAt', '')
+        
+        # Nếu checkAt là kiểu datetime, ta chuyển thành string, nếu là string thì cứ để nguyên
+        if isinstance(check_at, datetime):
+            check_at = check_at.strftime('%Y-%m-%d %H:%M:%S')
+
+        output_content += f"{bin_num}|{month}|{year}|{cvv} - [{status.upper()}] - {check_at}\n"
+
+    if len(live_ccs) <= 20:
+        # Nếu ít thì gửi dạng text
+        if update.effective_message:
+            await update.effective_message.reply_text(f"Danh sách CC Live:\n<code>{output_content}</code>", parse_mode='HTML')
+    else:
+        # Nhiều thì gửi dạng file
+        file_stream = io.BytesIO(output_content.encode('utf-8'))
+        file_stream.name = "live_cc.txt"
+        if update.effective_message:
+            await update.effective_message.reply_document(
+                document=file_stream,
+                caption=f"Danh sách {len(live_ccs)} CC Live mới nhất."
+            )
 
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
