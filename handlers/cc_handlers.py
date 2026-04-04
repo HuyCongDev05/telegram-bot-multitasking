@@ -4,14 +4,14 @@ import logging
 import re
 from datetime import datetime
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from checkCC.api_client import check_card_quick
 from checkCC.bin_lookup import format_bin_info
 from config import VERIFY_COST
 from database_mysql import Database
-from handlers.user_commands import register_cleanup_message, is_user_busy
+from handlers.user_commands import is_user_busy
 
 logger = logging.getLogger(__name__)
 
@@ -36,47 +36,22 @@ async def checkCC_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     # Nếu không có đối số, hiển thị thông báo hướng dẫn (có ForceReply)
     
     prompt_text = (
-        "🪙 <b>Check CC</b>\n\n"
+        "💳 <b>Check CC</b>\n\n"
         "Vui lòng nhập danh sách CC vào tin nhắn trả lời bên dưới (hoặc gửi file .txt).\n"
         "Định dạng: <code>Số thẻ|Tháng|Năm|CVV</code>\n"
-        f"Lưu ý: Phí mỗi lần check là 🪙 {VERIFY_COST} điểm (tối đa {MAX_CC_PER_REQUEST} CC)."
+        f"Lưu ý: Phí mỗi lần check là 💎 {VERIFY_COST} điểm (tối đa {MAX_CC_PER_REQUEST} CC)."
     )
-    
-    context.user_data['action_next_step'] = 'check_cc_step_1'
-    
-    # Nếu là callback, đăng ký xóa tin nhắn menu hiện tại
-    if update.callback_query:
-        register_cleanup_message(context, update.callback_query.message.message_id)
 
-    # Hiển thị thông báo hướng dẫn (có ForceReply)
-    if update.message:
-        prompt_msg = await update.message.reply_text(
-            text=prompt_text,
-            reply_markup=ForceReply(selective=True),
-            parse_mode='HTML'
-        )
-    else:
-        prompt_msg = await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=prompt_text,
-            reply_markup=ForceReply(selective=True),
-            parse_mode='HTML'
-        )
-        
-    context.user_data['prompt_message_id'] = prompt_msg.message_id
-    register_cleanup_message(context, prompt_msg.message_id)
-
-    cancel_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("❌ Hủy thao tác", callback_data='cancel_to_main')]])
-    cancel_msg = await context.bot.send_message(
-        chat_id=update.effective_chat.id, 
-        text="💡 <i>Hoặc nhấn nút bên dưới để hủy bỏ lượt check này:</i>",
-        reply_markup=cancel_keyboard,
-        parse_mode='HTML'
-    )
-    register_cleanup_message(context, cancel_msg.message_id)
+    from handlers.user_commands import start_input_flow
+    await start_input_flow(update, context, prompt_text, 'check_cc_step_1', 'cancel_to_main')
 
 async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, cc_text: str):
     """Hàm xử lý chính cho yêu cầu check CC"""
+    # Kiểm tra bảo trì
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'check_cc'):
+        return
+
     user_id = update.effective_user.id
     
     # Hàm để reply message (tùy thuộc vào source)
@@ -214,7 +189,7 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"💎 Live: {len(lives)}\n"
         f"💳 Real (Declined): {len(real_cards)}\n"
         f"❌ Sai định dạng: {len(invalid_format)}\n"
-        f"🪙 Số dư còn lại: {db.get_user(user_id)['balance']} điểm."
+        f"💎 Số dư còn lại: {db.get_user(user_id)['balance']} điểm."
     )
     
     # Hiển thị lại Menu kèm nút "Quay lại" bên dưới tài liệu

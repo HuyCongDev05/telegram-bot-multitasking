@@ -1,10 +1,10 @@
 """Trình xử lý lệnh quản trị (admin)"""
 import asyncio
-import logging
 import io
+import logging
 from datetime import datetime
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from config import ADMIN_USER_ID
@@ -51,7 +51,7 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
             if update.effective_message:
                 await update.effective_message.reply_text(
                     f"✅ Thành công cộng {amount} điểm cho người dùng {target_user_id}.\n"
-                    f"🪙 Số điểm hiện tại: {user['balance']}"
+                    f"💎 Số điểm hiện tại: {user['balance']}"
                 )
         else:
             if update.effective_message:
@@ -227,7 +227,7 @@ async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
             msg = (
                 "✅ Tạo mã thẻ thành công!\n\n"
                 f"Mã thẻ：<code>{key_code}</code>\n"
-                f"🪙 Số điểm：{balance}\n"
+                f"💎 Số điểm：{balance}\n"
                 f"Số lần dùng：{max_uses} lần\n"
             )
             if expire_days:
@@ -270,7 +270,7 @@ async def listkeys_command(update: Update, db: Database):
     msg = "📋 Danh sách mã thẻ：\n\n"
     for key in keys[:20]:  # Chỉ hiển thị 20 mã đầu tiên
         msg += f"Mã thẻ：<code>{key['key_code']}</code>\n"
-        msg += f"🪙 Số điểm：{key['balance']}\n"
+        msg += f"💎 Số điểm：{key['balance']}\n"
         msg += f"Số lần dùng：{key['current_uses']}/{key['max_uses']}\n"
 
         if key["expire_at"]:
@@ -392,3 +392,48 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
     if status_msg:
         await status_msg.edit_text(f"✅ Phát sóng hoàn tất!\nThành công：{success}\nThất bại：{failed}")
+
+
+async def handle_admin_search_result(update: Update, context: ContextTypes.DEFAULT_TYPE, user_info: dict):
+    """Hiển thị thông tin người dùng cho Admin và cung cấp các nút thao tác nhanh."""
+    uid = user_info['user_id']
+    username = user_info.get('username', 'N/A')
+    full_name = user_info.get('full_name', 'N/A')
+    balance = user_info.get('balance', 0)
+    is_blocked = user_info.get('is_blocked', 0)
+    created_at = user_info.get('created_at', 'N/A')
+
+    status_text = "🔴 Bị chặn" if is_blocked else "🟢 Hoạt động"
+
+    text = (
+        f"👤 <b>THÔNG TIN NGƯỜI DÙNG</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🆔 ID: <code>{uid}</code>\n"
+        f"👤 Username: @{username}\n"
+        f"📛 Tên: {full_name}\n"
+        f"💎 Số dư: <b>{balance} điểm</b>\n"
+        f"🚦 Trạng thái: {status_text}\n"
+        f"📅 Ngày tham gia: {created_at}\n"
+    )
+
+    keyboard = [
+        [
+            InlineKeyboardButton("💰 +10đ", callback_data=f"admin_q_add:{uid}:10"),
+            InlineKeyboardButton("💰 +50đ", callback_data=f"admin_q_add:{uid}:50"),
+            InlineKeyboardButton("💰 +100đ", callback_data=f"admin_q_add:{uid}:100")
+        ]
+    ]
+
+    if is_blocked:
+        keyboard.append([InlineKeyboardButton("🔓 Mở khóa", callback_data=f"admin_q_unblock:{uid}")])
+    else:
+        keyboard.append([InlineKeyboardButton("🔒 Khóa", callback_data=f"admin_q_block:{uid}")])
+
+    keyboard.append([InlineKeyboardButton("🔙 Quay lại Admin", callback_data='cancel_to_admin_menu')])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode='HTML')
+    else:
+        await update.message.reply_text(text=text, reply_markup=reply_markup, parse_mode='HTML')

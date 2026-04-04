@@ -285,6 +285,37 @@ class MySQLDatabase:
                 """
             )
 
+            # Bảng dịch vụ bảo trì
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS services_maintenance
+                (
+                    service_id
+                    VARCHAR
+                (
+                    100
+                ) PRIMARY KEY,
+                    is_maintenance TINYINT
+                (
+                    1
+                ) DEFAULT 0,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+
+            # Khởi tạo các dịch vụ mặc định (nếu chưa có)
+            default_services = [
+                'verify_chatgpt_k12', 'verify_spotify_student', 'verify_bolt_teacher',
+                'verify_youtube_student', 'verify_gemini_pro', 'convert_url_login_app_netflix',
+                'check_cc', 'discord_quest_auto'
+            ]
+            for service in default_services:
+                cursor.execute(
+                    "INSERT IGNORE INTO services_maintenance (service_id, is_maintenance) VALUES (%s, 0)",
+                    (service,)
+                )
+
             conn.commit()
             logger.info("Hoàn tất khởi tạo các bảng cơ sở dữ liệu MySQL")
 
@@ -763,6 +794,58 @@ class MySQLDatabase:
                 (limit,)
             )
             return list(cursor.fetchall())
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_all_service_status(self) -> Dict[str, bool]:
+        """Lấy trạng thái bảo trì của tất cả dịch vụ"""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+        try:
+            cursor.execute("SELECT service_id, is_maintenance FROM services_maintenance")
+            rows = cursor.fetchall()
+            return {row['service_id']: bool(row['is_maintenance']) for row in rows}
+        finally:
+            cursor.close()
+            conn.close()
+
+    def toggle_service_maintenance(self, service_id: str) -> Optional[bool]:
+        """Đảo ngược trạng thái bảo trì của dịch vụ và trả về trạng thái mới"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            # Lấy trạng thái hiện tại
+            cursor.execute("SELECT is_maintenance FROM services_maintenance WHERE service_id = %s", (service_id,))
+            row = cursor.fetchone()
+            if row is None:
+                # Nếu chưa có, thêm mới với trạng thái 1
+                cursor.execute("INSERT INTO services_maintenance (service_id, is_maintenance) VALUES (%s, 1)",
+                               (service_id,))
+                new_status = True
+            else:
+                new_status = not bool(row[0])
+                cursor.execute("UPDATE services_maintenance SET is_maintenance = %s WHERE service_id = %s",
+                               (int(new_status), service_id))
+
+            conn.commit()
+            return new_status
+        except Exception as e:
+            logger.error(f"Lỗi khi toggle bảo trì cho {service_id}: {e}")
+            conn.rollback()
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+
+    def is_service_maintenance(self, service_id: str) -> bool:
+        """Kiểm tra dịch vụ có đang bảo trì không"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT is_maintenance FROM services_maintenance WHERE service_id = %s", (service_id,))
+            row = cursor.fetchone()
+            return bool(row[0]) if row else False
         finally:
             cursor.close()
             conn.close()

@@ -1,15 +1,16 @@
 """Trình xử lý Discord Quest Auto"""
 import asyncio
 import logging
-from telegram import Update, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup
+
+from telegram import Update
 from telegram.ext import ContextTypes
 
 from config import DISCORD_QUEST_COST
 from database_mysql import Database
-from handlers.user_commands import show_main_menu, is_user_busy, register_cleanup_message, clear_user_state
-from utils.checks import is_not_blocked
-from utils.messages import get_insufficient_balance_message
 from discordQuestAuto.discordQuestAuto import start_quest_auto
+from handlers.user_commands import show_main_menu, is_user_busy, send_or_reply
+from utils.checks import is_not_blocked, check_maintenance
+from utils.messages import get_insufficient_balance_message
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +20,14 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
     if await is_user_busy(update, context):
         return
 
+    if await check_maintenance(update, db, 'discord_quest_auto'):
+        return
+
     user_id = update.effective_user.id
     user = db.get_user(user_id)
     
     if user["balance"] < DISCORD_QUEST_COST:
-        await update.message.reply_text(get_insufficient_balance_message(user["balance"]), parse_mode='HTML')
+        await send_or_reply(update, context, get_insufficient_balance_message(user["balance"]), parse_mode='HTML')
         await show_main_menu(update, context, db, "⚠️ <i>Số dư không đủ để sử dụng Discord Quest Auto.</i>")
         return
 
@@ -32,7 +36,7 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
     prompt_text = (
         f"🚀 <b>Discord Quest Auto</b>\n\n"
         f"Chức năng này sẽ tự động hoàn thành các Quest trên Discord của bạn.\n"
-        f"Chi phí: 🪙 <b>{DISCORD_QUEST_COST} điểm</b>\n\n"
+        f"Chi phí: 💎 <b>{DISCORD_QUEST_COST} điểm</b>\n\n"
         f"Vui lòng gửi <b>Discord Token</b> của bạn vào tin nhắn trả lời bên dưới:\n"
         f"<i>(Token sẽ được xóa ngay sau khi nhận để đảm bảo an toàn)</i>"
     )
@@ -42,6 +46,11 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, token: str):
     """Xử lý token Discord và bắt đầu tác vụ chạy ngầm"""
+    # Kiểm tra bảo trì
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'discord_quest_auto'):
+        return
+
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 

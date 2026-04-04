@@ -1,7 +1,9 @@
 import asyncio
 import logging
+
 from telegram import Update
 from telegram.ext import ContextTypes
+
 from utils.messages import get_maintenance_keyboard
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ async def toggle_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE,
         'verify_youtube_student': '🎥 YouTube Premium',
         'verify_gemini_pro': '🤖 Gemini One Pro',
         'convert_url_login_app_netflix': '🎬 Chuyển đổi Netflix',
-        'check_cc': '🃏 Check CC',
+        'check_cc': '💳 Check CC',
         'discord_quest_auto': '🚀 Discord Quest Auto'
     }
     service_name = mapping.get(service_id, service_id)
