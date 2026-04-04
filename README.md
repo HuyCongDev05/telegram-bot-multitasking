@@ -58,8 +58,8 @@ Bot hỗ trợ xác thực cho các dịch vụ sau thông qua SheerID:
 ### 1. Sao chép dự án (Clone)
 
 ```bash
-git clone https://github.com/your-username/telegram-bot-verify.git # Thay bằng URL repo của bạn
-cd telegram-bot-verify
+git clone git clone https://github.com/HuyCongDev05/telegram-bot-multitasking.git
+cd telegram-bot-multitasking
 ```
 
 ### 2. Cài đặt thư viện
@@ -83,7 +83,7 @@ MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_USER=root
 MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=tgbot_verify
+MYSQL_DATABASE=telegram-bot-multitasking
 ```
 
 ### 4. Chạy Bot
@@ -111,8 +111,8 @@ python bot.py
 3.  **Xây dựng và chạy thủ công**:
 
     ```bash
-    docker build -t tgbot-verify .
-    docker run -d --name tgbot-verify --env-file .env -v $(pwd)/logs:/app/logs tgbot-verify
+    docker build -t telegram-bot-multitasking .
+    docker run -d --name telegram-bot-multitasking --env-file .env -v $(pwd)/logs:/app/logs telegram-bot-multitasking
     ```
 
 ---

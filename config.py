@@ -8,8 +8,8 @@ load_dotenv()
 
 # Cấu hình Telegram Bot
 BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "pk_oa")
-CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/pk_oa")
+CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "hcongdev")
+CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/")
 
 # Cấu hình Admin
 ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "123456789"))

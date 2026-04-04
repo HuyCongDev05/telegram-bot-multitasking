@@ -10,15 +10,15 @@ services:
       - PYTHONUNBUFFERED=1
       # Cấu hình Telegram Bot
       - BOT_TOKEN=${BOT_TOKEN}
-      - CHANNEL_USERNAME=${CHANNEL_USERNAME:-pk_oa}
-      - CHANNEL_URL=${CHANNEL_URL:-https://t.me/pk_oa}
+      - CHANNEL_USERNAME=${CHANNEL_USERNAME:-hcongdev}
+      - CHANNEL_URL=${CHANNEL_URL:-https://t.me/}
       - ADMIN_USER_ID=${ADMIN_USER_ID}
       # Cấu hình MySQL
       - MYSQL_HOST=${MYSQL_HOST:-localhost}
       - MYSQL_PORT=${MYSQL_PORT:-3306}
       - MYSQL_USER=${MYSQL_USER:-root}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-12345678}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-telegram-bot-verify}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-telegram-bot-multitasking}
 
     # Lưu trữ dữ liệu lâu dài
     volumes:
