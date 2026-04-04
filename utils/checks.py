@@ -9,6 +9,9 @@ from config import CHANNEL_USERNAME
 
 logger = logging.getLogger(__name__)
 
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 def is_group_chat(update: Update) -> bool:
     """Kiểm tra xem có phải là trò chuyện nhóm không"""

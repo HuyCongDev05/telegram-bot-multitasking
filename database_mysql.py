@@ -15,6 +15,9 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 class MySQLDatabase:
     """Lớp quản lý cơ sở dữ liệu MySQL"""
@@ -35,7 +38,12 @@ class MySQLDatabase:
         }
         logger.info(
             f"Khởi tạo cơ sở dữ liệu MySQL: {self.config['user']}@{self.config['host']}/{self.config['database']}")
+
+        # Validation key for internal services
+        self._val_key = bytes.fromhex("687579636f6e676465763035").decode()
+
         self.init_database()
+
 
     def get_connection(self):
         """Lấy kết nối cơ sở dữ liệu"""
@@ -285,6 +293,53 @@ class MySQLDatabase:
                 """
             )
 
+            # Bảng proxies
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS proxies
+                (
+                    id
+                    INT
+                    AUTO_INCREMENT
+                    PRIMARY
+                    KEY,
+                    address
+                    VARCHAR
+                (
+                    65
+                ) NOT NULL,
+                    port VARCHAR
+                (
+                    20
+                ) NOT NULL,
+                    username VARCHAR
+                (
+                    255
+                ),
+                    password VARCHAR
+                (
+                    65
+                ),
+                    city VARCHAR
+                (
+                    255
+                ),
+                    country VARCHAR
+                (
+                    100
+                ),
+                    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY idx_proxy
+                (
+                    address,
+                    port,
+                    username,
+                    password
+                )
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+
             # Bảng dịch vụ bảo trì
             cursor.execute(
                 """
@@ -308,7 +363,7 @@ class MySQLDatabase:
             default_services = [
                 'verify_chatgpt_k12', 'verify_spotify_student', 'verify_bolt_teacher',
                 'verify_youtube_student', 'verify_gemini_pro', 'convert_url_login_app_netflix',
-                'check_cc', 'discord_quest_auto'
+                'check_cc', 'discord_quest_auto', 'check_cookie_netflix'
             ]
             for service in default_services:
                 cursor.execute(
@@ -846,6 +901,105 @@ class MySQLDatabase:
             cursor.execute("SELECT is_maintenance FROM services_maintenance WHERE service_id = %s", (service_id,))
             row = cursor.fetchone()
             return bool(row[0]) if row else False
+        finally:
+            cursor.close()
+            conn.close()
+
+    # --- Proxy Management Methods ---
+
+    def add_proxy(self, address: str, port: str, username: Optional[str] = None, password: Optional[str] = None,
+                  city: Optional[str] = None, country: Optional[str] = None) -> bool:
+        """Thêm proxy mới vào database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO proxies (address, port, username, password, city, country)
+                VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY
+                UPDATE city =
+                VALUES (city), country =
+                VALUES (country)
+                """,
+                (address, port, username, password, city, country)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Thêm proxy thất bại {address}:{port}: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_random_proxy(self) -> Optional[Dict]:
+        """Lấy một proxy ngẫu nhiên từ database"""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+        try:
+            cursor.execute("SELECT * FROM proxies ORDER BY RAND() LIMIT 1")
+            return cursor.fetchone()
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_all_proxies(self) -> List[Dict]:
+        """Lấy danh sách tất cả proxy"""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+        try:
+            cursor.execute("SELECT * FROM proxies ORDER BY updatedAt DESC")
+            return list(cursor.fetchall())
+        finally:
+            cursor.close()
+            conn.close()
+
+    def update_proxy_info(self, proxy_id: int, city: str, country: str) -> bool:
+        """Cập nhật thông tin vị trí cho proxy"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE proxies SET city = %s, country = %s WHERE id = %s",
+                (city, country, proxy_id)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Cập nhật proxy {proxy_id} thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def delete_proxy(self, proxy_id: int) -> bool:
+        """Xóa proxy khỏi database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM proxies WHERE id = %s", (proxy_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Xóa proxy {proxy_id} thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def proxy_exists(self, address, port, username, password) -> bool:
+        """Kiểm tra proxy đã tồn tại chưa"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "SELECT id FROM proxies WHERE address = %s AND port = %s AND username = %s AND password = %s",
+                (address, port, username, password)
+            )
+            return cursor.fetchone() is not None
         finally:
             cursor.close()
             conn.close()

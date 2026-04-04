@@ -4,16 +4,20 @@ import logging
 import re
 from datetime import datetime
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
 
 from checkCC.api_client import check_card_quick
 from checkCC.bin_lookup import format_bin_info
 from config import VERIFY_COST
 from database_mysql import Database
-from handlers.user_commands import is_user_busy
+from handlers.user_commands import is_user_busy, show_main_menu_after_delay
+from utils.messages import get_ui_label
 
 logger = logging.getLogger(__name__)
+
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
 
 # Giới hạn tối đa 50 CC cho mỗi lần check
 MAX_CC_PER_REQUEST = 50
@@ -34,12 +38,13 @@ async def checkCC_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         return
 
     # Nếu không có đối số, hiển thị thông báo hướng dẫn (có ForceReply)
-    
+
+    service_label = get_ui_label('check_cc')
     prompt_text = (
-        "💳 <b>Check CC</b>\n\n"
+        f"<b>{service_label}</b>\n\n"
         "Vui lòng nhập danh sách CC vào tin nhắn trả lời bên dưới (hoặc gửi file .txt).\n"
         "Định dạng: <code>Số thẻ|Tháng|Năm|CVV</code>\n"
-        f"Lưu ý: Phí mỗi lần check là 💎 {VERIFY_COST} điểm (tối đa {MAX_CC_PER_REQUEST} CC)."
+        f"Lưu ý: Phí mỗi lần check là 💰 {VERIFY_COST} điểm (tối đa {MAX_CC_PER_REQUEST} CC)."
     )
 
     from handlers.user_commands import start_input_flow
@@ -72,6 +77,7 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not user_data or user_data['balance'] < VERIFY_COST:
         from utils.messages import get_insufficient_balance_message
         await reply(get_insufficient_balance_message(user_data['balance'] if user_data else 0))
+        await show_main_menu_after_delay(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
         return
 
     # Lấy các dòng đầu tiên (giới hạn 50)
@@ -186,27 +192,21 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     text_summary = (
         f"✅ <b>Xử lý hoàn tất!</b>\n"
         f"📊 Tổng check: {len(lines)}\n"
-        f"💎 Live: {len(lives)}\n"
+        f"💰 Live: {len(lives)}\n"
         f"💳 Real (Declined): {len(real_cards)}\n"
         f"❌ Sai định dạng: {len(invalid_format)}\n"
-        f"💎 Số dư còn lại: {db.get_user(user_id)['balance']} điểm."
+        f"💰 Số dư còn lại: {db.get_user(user_id)['balance']} điểm."
     )
     
     # Hiển thị lại Menu kèm nút "Quay lại" bên dưới tài liệu
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("↩️ Menu Chính", callback_data='back_to_main')]
-    ])
-    
     await reply_doc(
         document=file_stream, 
         caption=text_summary,
         parse_mode='HTML',
-        reply_markup=keyboard
     )
-    
-    from handlers.user_commands import show_main_menu
-    # Tự động gửi lại menu chính sau khi gửi file
-    await show_main_menu(update, context, db)
+
+    await show_main_menu_after_delay(update, context, db)
+    # Tự động gửi lại menu chính sau khi gửi file (Chờ 2s để người dùng thấy file)
 
 async def handle_cc_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, content: str):
     """Bọc logic file input cho CC"""

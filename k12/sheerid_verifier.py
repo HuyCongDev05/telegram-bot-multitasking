@@ -8,6 +8,9 @@ from typing import Dict, Optional, Tuple
 
 import httpx
 
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 # Thêm thư mục hiện tại vào sys.path để có thể import các module cùng cấp
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:

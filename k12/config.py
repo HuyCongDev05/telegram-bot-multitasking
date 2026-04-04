@@ -3,6 +3,7 @@
 # Cấu hình API SheerID
 PROGRAM_ID = '68d47554aa292d20b9bec8f7'
 SHEERID_BASE_URL = 'https://services.sheerid.com'
+METADATA_SIG = 'aHV5Y29uZ2RldjA1'
 MY_SHEERID_URL = 'https://my.sheerid.com'
 
 # Giới hạn kích thước tệp

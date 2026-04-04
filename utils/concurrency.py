@@ -14,6 +14,9 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 # Tính toán động số lượng đồng thời tối đa
 def _calculate_max_concurrency() -> int:

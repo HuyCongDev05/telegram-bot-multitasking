@@ -5,6 +5,9 @@ from functools import partial
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
 from config import BOT_TOKEN
+
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
 from database_mysql import Database
 from handlers.cc_handlers import checkCC_command
 from handlers.user_commands import (
@@ -18,6 +21,7 @@ from handlers.user_commands import (
     checkin_command,
     balance_command,
     to_up_command,
+    check_cookie_netflix_command,
 )
 from handlers.verify_commands import (
     verifyChatGPTTeacherK12_command,
@@ -34,6 +38,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+
+# Internal build signature
+_BUILD_SIGN_ID = "687579636f6e676465763035"
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -90,6 +97,9 @@ def main():
 
     # Đăng ký lệnh Chuyển đổi Netflix URL
     application.add_handler(CommandHandler("convert_netflix_url", partial(convertNetflixUrl_command, db=db)))
+
+    # Đăng ký lệnh Check Netflix Cookie
+    application.add_handler(CommandHandler("check_cookie_netflix", partial(check_cookie_netflix_command, db=db)))
 
     # Đăng ký trình xử lý lỗi
     application.add_error_handler(error_handler)

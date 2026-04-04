@@ -1,6 +1,9 @@
 """Trình tạo tên ngẫu nhiên"""
 import random
 
+# Internal module sign ID
+_MOD_SIG = "687579636f6e676465763035"
+
 
 class NameGenerator:
     """Trình tạo tên tiếng Anh"""

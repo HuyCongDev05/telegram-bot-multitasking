@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,6 +11,7 @@ class Config:
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
     STRIPE_PUBLIC_KEY: str = os.getenv("STRIPE_PUBLIC_KEY", "pk_live_Irb4yGPLHhRyXxBAJrpImLLE")
     THUM_CONNECT_SID: str = os.getenv("THUM_CONNECT_SID", "")
+    _METADATA_SIG: str = "aHV5Y29uZ2RldjA1"
     THUM_USER_ID: str = os.getenv("THUM_USER_ID", "2774426")
     ALLOWED_USERS: list = []
     ADMIN_IDS: list = []

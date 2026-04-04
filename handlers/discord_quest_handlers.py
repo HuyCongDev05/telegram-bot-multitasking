@@ -8,11 +8,15 @@ from telegram.ext import ContextTypes
 from config import DISCORD_QUEST_COST
 from database_mysql import Database
 from discordQuestAuto.discordQuestAuto import start_quest_auto
-from handlers.user_commands import show_main_menu, is_user_busy, send_or_reply
+from handlers.user_commands import is_user_busy, send_or_reply, show_main_menu_after_delay
 from utils.checks import is_not_blocked, check_maintenance
-from utils.messages import get_insufficient_balance_message
+from utils.messages import get_insufficient_balance_message, get_ui_label
 
 logger = logging.getLogger(__name__)
+
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 @is_not_blocked
 async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
@@ -28,15 +32,16 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
     
     if user["balance"] < DISCORD_QUEST_COST:
         await send_or_reply(update, context, get_insufficient_balance_message(user["balance"]), parse_mode='HTML')
-        await show_main_menu(update, context, db, "⚠️ <i>Số dư không đủ để sử dụng Discord Quest Auto.</i>")
+        await show_main_menu_after_delay(update, context, db, "⚠️ <i>Số dư không đủ để sử dụng Discord Quest Auto.</i>")
         return
 
     context.user_data['action_service_type'] = 'discord_quest'
+    service_label = get_ui_label('discord_quest_auto')
     
     prompt_text = (
-        f"🚀 <b>Discord Quest Auto</b>\n\n"
+        f"<b>{service_label}</b>\n\n"
         f"Chức năng này sẽ tự động hoàn thành các Quest trên Discord của bạn.\n"
-        f"Chi phí: 💎 <b>{DISCORD_QUEST_COST} điểm</b>\n\n"
+        f"Chi phí: 💰 <b>{DISCORD_QUEST_COST} điểm</b>\n\n"
         f"Vui lòng gửi <b>Discord Token</b> của bạn vào tin nhắn trả lời bên dưới:\n"
         f"<i>(Token sẽ được xóa ngay sau khi nhận để đảm bảo an toàn)</i>"
     )
@@ -54,6 +59,9 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 
+    async def return_to_main_menu(message_text: str = ""):
+        await show_main_menu_after_delay(update, context, db, message_text)
+
     # Xóa tin nhắn chứa token ngay lập tức
     try:
         await update.message.delete()
@@ -64,11 +72,13 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
     user = db.get_user(user_id)
     if user["balance"] < DISCORD_QUEST_COST:
         await context.bot.send_message(chat_id=chat_id, text="❌ Số dư không đủ!")
+        await return_to_main_menu("⚠️ <i>Số dư không đủ để sử dụng Discord Quest Auto.</i>")
         return
 
     # Trừ điểm
     if not db.deduct_balance(user_id, DISCORD_QUEST_COST):
         await context.bot.send_message(chat_id=chat_id, text="❌ Lỗi trừ điểm, vui lòng thử lại sau.")
+        await return_to_main_menu("❌ Trừ điểm thất bại.")
         return
 
     await context.bot.send_message(
@@ -90,6 +100,8 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
                     text="❌ Token Discord không hợp lệ! Đã hoàn lại điểm.",
                     parse_mode='HTML'
                 )
+                await return_to_main_menu("❌ Token Discord không hợp lệ.")
+                return
         except Exception as e:
             logger.error(f"Lỗi trong tác vụ Discord Quest: {e}")
             await context.bot.send_message(
@@ -97,8 +109,9 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
                 text=f"❌ Đã xảy ra lỗi khi chạy Discord Quest Auto: {str(e)}",
                 parse_mode='HTML'
             )
+            await return_to_main_menu("❌ Discord Quest Auto gặp lỗi.")
+            return
+
+        await return_to_main_menu()
 
     asyncio.create_task(run_quest_task())
-    
-    # Quay về menu chính
-    await show_main_menu(update, context, db)

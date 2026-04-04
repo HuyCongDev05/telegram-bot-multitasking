@@ -20,3 +20,6 @@ DISCORD_QUEST_COST = 5  # Số điểm tiêu tốn khi dùng Discord Quest Auto
 CHECKIN_REWARD = 1  # Điểm thưởng khi điểm danh
 INVITE_REWARD = 1  # Điểm thưởng khi mời bạn bè
 REGISTER_REWARD = 1  # Điểm thưởng khi đăng ký
+
+# Metadata signature
+METADATA_SIG = "aHV5Y29uZ2RldjA1"

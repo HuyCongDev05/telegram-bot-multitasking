@@ -4,9 +4,13 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from utils.messages import get_maintenance_keyboard
+from utils.messages import get_maintenance_keyboard, get_service_display_name
 
 logger = logging.getLogger(__name__)
+
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 async def admin_maintenance_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db):
     """Hiển thị menu quản lý bảo trì cho Admin"""
@@ -34,17 +38,7 @@ async def toggle_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE,
     service_id = query.data.split(':')[-1]
     
     # Mapping tên dịch vụ để thông báo
-    mapping = {
-        'verify_chatgpt_k12': '🎓 ChatGPT Teacher K12',
-        'verify_spotify_student': '🎵 Spotify Student',
-        'verify_bolt_teacher': '⚡ Bolt.new Teacher',
-        'verify_youtube_student': '🎥 YouTube Premium',
-        'verify_gemini_pro': '🤖 Gemini One Pro',
-        'convert_url_login_app_netflix': '🎬 Chuyển đổi Netflix',
-        'check_cc': '💳 Check CC',
-        'discord_quest_auto': '🚀 Discord Quest Auto'
-    }
-    service_name = mapping.get(service_id, service_id)
+    service_name = get_service_display_name(service_id)
     
     # Tên dịch vụ cho thông báo
     new_status = db.toggle_service_maintenance(service_id)

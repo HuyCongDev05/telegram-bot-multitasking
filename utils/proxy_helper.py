@@ -1,0 +1,50 @@
+import requests
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_proxy_geoip(address, port, username=None, password=None, timeout=10):
+    """
+    Sử dụng proxy để gọi API GeoIP và lấy thông tin vị trí.
+    Đồng thời kiểm tra xem proxy có hoạt động không.
+    """
+    proxy_url = f"http://{address}:{port}"
+    if username and password:
+        proxy_url = f"http://{username}:{password}@{address}:{port}"
+    
+    proxies = {
+        "http": proxy_url,
+        "https": proxy_url
+    }
+    
+    try:
+        # Sử dụng dịch vụ ip-api.com (miễn phí, không cần key cho HTTP)
+        response = requests.get("http://ip-api.com/json", proxies=proxies, timeout=timeout)
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get("status") == "success":
+            return {
+                "success": True,
+                "city": data.get("city"),
+                "country": data.get("country"),
+                "countryCode": data.get("countryCode"),
+                "ip": data.get("query")
+            }
+        else:
+            return {"success": False, "error": data.get("message", "Unknown error")}
+            
+    except Exception as e:
+        logger.error(f"Lỗi khi kiểm tra GeoIP cho proxy {address}:{port}: {e}")
+        return {"success": False, "error": str(e)}
+
+def format_proxy_url(proxy_dict):
+    """Chuyển đổi dict proxy từ DB sang chuỗi URL cho requests"""
+    address = proxy_dict.get('address')
+    port = proxy_dict.get('port')
+    user = proxy_dict.get('username')
+    passwd = proxy_dict.get('password')
+    
+    if user and passwd:
+        return f"http://{user}:{passwd}@{address}:{port}"
+    return f"http://{address}:{port}"

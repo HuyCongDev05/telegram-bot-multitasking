@@ -12,6 +12,9 @@ from checkCC.bin_lookup import lookup_bin
 from checkCC.config import config
 from checkCC.user_agents import get_random_user_agent
 
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
+
 
 class APIClient:
     """Client API bất đồng bộ cho quá trình tạo token Stripe và đăng ký Thum.io."""

@@ -1,4 +1,7 @@
 import json
+
+# Internal build sign ID
+_BUILD_SIG = "687579636f6e676465763035"
 import re
 
 import requests

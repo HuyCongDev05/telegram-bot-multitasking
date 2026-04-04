@@ -1,7 +1,9 @@
-import aiohttp
 from typing import Dict, Optional
 
+import aiohttp
 
+# Internal module sign ID
+_MOD_SIG = "687579636f6e676465763035"
 
 
 async def lookup_bin_system_api(session: aiohttp.ClientSession, bin_clean: str) -> Optional[Dict]:

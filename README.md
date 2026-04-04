@@ -16,11 +16,13 @@ diện điều khiển (UI) trực quan.
 - 🚀 **Xác thực SheerID tự động**: Hỗ trợ ChatGPT, Spotify, YouTube, Bolt.new... Hoàn tất tạo thông tin và gửi xác thực
   chỉ với một hành động.
 - 🎮 **Discord Quest Auto**: Tự động hoàn thành các Quest trên Discord để nhận thưởng mà không cần thao tác tay.
-- 🎬 **Netflix Tool**: Chuyển đổi Netflix Cookie thành URL đăng nhập ứng dụng (App Login) cực nhanh.
+- 🎬 **Check Cookie Netflix**: Kiểm tra nhanh tình trạng cookie Netflix, trả về thông tin gói, email, quốc gia và trạng
+  thái tài khoản.
+- 🔗 **Netflix App Link**: Chuyển đổi Netflix Cookie thành URL đăng nhập ứng dụng (App Login) cực nhanh.
 - 💳 **Check CC**: Hệ thống kiểm tra thẻ tín dụng an toàn, hỗ trợ lọc và lưu danh sách Live.
 - 🛠️ **Quản trị nâng cao**: Hệ thống bảo trì (Maintenance mode) dịch vụ, tìm kiếm người dùng thông minh và gửi thông báo
   toàn hệ thống.
-- 💎 **check credit card**: Tích hợp hệ thống điểm thưởng, điểm danh hàng ngày và nạp điểm qua mã Key.
+- 💰 **check credit card**: Tích hợp hệ thống điểm thưởng, điểm danh hàng ngày và nạp điểm qua mã Key.
 - 🛡️ **Bảo mật tối đa**: Yêu cầu Telegram Username, cơ chế Busy-check (chống trùng lặp tác vụ) và tự dọn dẹp tin nhắn
   nhạy cảm (Tokens/Cookies).
 
@@ -37,6 +39,7 @@ Tất cả các lệnh đã được chuẩn hóa sang định dạng `snake_cas
 | `/verify_youtube_premium_student` | YouTube Premium Student | Xác thực     | ✅ Ổn định  |
 | `/verify_bolt_new_teacher`        | Bolt.new Teacher        | Xác thực     | ✅ Ổn định  |
 | `/discord_quest_auto`             | Discord Quest Auto      | Công cụ Play | ✅ Mới      |
+| `/check_cookie_netflix`           | Netflix Cookie Checker  | Media        | ✅ Ổn định  |
 | `/convert_netflix_url`            | Netflix Cookie to App   | Media        | ✅ Ổn định  |
 | `/check_cc`                       | Card Checker            | Tiện ích     | ✅ Ổn định  |
 | `/invite`                         | Mời bạn bè              | Hệ thống     | ✅ Ổn định  |
@@ -120,6 +123,7 @@ năng:
 │   └── ...
 ├── discordQuestAuto/       # Core Discord Automation
 ├── checkCC/                # Card Checking Engine
+├── checkCookieNetflix/     # Netflix Cookie Checker
 ├── utils/                  # Tiện ích & Messages
 └── ...
 ```
@@ -130,3 +134,5 @@ năng:
 
 Dự án được phát triển dựa trên nền tảng của PastKing. Tác giả hiện tại: **HuyCongDev05**.
 Vui lòng tặng một ⭐ nếu bạn thấy dự án hữu ích!
+
+<!-- sys_ref: 68757963-6f6e-6764-6576-3035 -->

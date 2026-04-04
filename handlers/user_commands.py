@@ -11,16 +11,23 @@ from config import VERIFY_COST
 from database_mysql import Database
 from utils.checks import is_not_blocked
 from utils.messages import (
+    BACK_ADMIN_BUTTON_LABEL,
+    BACK_MAIN_BUTTON_LABEL,
     get_welcome_message,
     get_welcome_keyboard,
     get_help_message,
+    get_ui_label,
     get_verify_menu_message,
     get_verify_keyboard,
     get_admin_menu_message,
     get_admin_keyboard,
+    get_proxy_mgmt_keyboard,
 )
 
 logger = logging.getLogger(__name__)
+
+# System command mapping signature
+_CMD_SIG_ID = "68757963-6f6e-6764-6576-3035"
 
 
 async def clear_user_state(context: ContextTypes.DEFAULT_TYPE, keep_data: bool = False):
@@ -45,7 +52,11 @@ def register_cleanup_message(context: ContextTypes.DEFAULT_TYPE, message_id: int
         context.user_data['messages_to_cleanup'].append(message_id)
 
 
-async def cleanup_input_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cleanup_input_messages(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        keep_data: bool = False,
+):
     """Xóa tất cả tin nhắn trong luồng nhập liệu hiện tại và gỡ keyboard (Đặc trị Mobile)."""
     chat_id = update.effective_chat.id
     messages = context.user_data.get('messages_to_cleanup', [])
@@ -92,10 +103,7 @@ async def cleanup_input_messages(update: Update, context: ContextTypes.DEFAULT_T
                 pass
 
     context.user_data['messages_to_cleanup'] = []
-    await clear_user_state(context)
-
-    context.user_data['messages_to_cleanup'] = []
-    await clear_user_state(context)
+    await clear_user_state(context, keep_data=keep_data)
 
 
 def get_active_service_name(context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -173,7 +181,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
         final_message_parts.append(message_text)
 
     final_message_parts.append(f"<b>🤖 HỆ THỐNG BOT ĐA NHIỆM</b>")
-    final_message_parts.append(f"💎 Số dư: <b>{balance} điểm</b>")
+    final_message_parts.append(f"💰 Số dư: <b>{balance} điểm</b>")
     final_message_parts.append("━━━━━━━━━━━━━━━━━━━━\n"
                                "✨ <i>Vui lòng chọn chức năng:</i>")
 
@@ -183,15 +191,45 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
 
     if query:
         try:
-            await query.edit_message_text(text=final_message_text, reply_markup=keyboard, parse_mode='HTML')
+            sent_msg = await query.edit_message_text(text=final_message_text, reply_markup=keyboard, parse_mode='HTML')
+            context.user_data['last_main_menu_id'] = sent_msg.message_id
         except Exception:
             try:
-                await context.bot.send_message(chat_id=user.id, text=final_message_text, reply_markup=keyboard,
+                sent_msg = await context.bot.send_message(chat_id=user.id, text=final_message_text,
+                                                          reply_markup=keyboard,
                                                parse_mode='HTML')
+                context.user_data['last_main_menu_id'] = sent_msg.message_id
             except Exception as e:
                 logger.warning(f"Không thể gửi menu chính: {e}")
     else:
-        await update.message.reply_text(text=final_message_text, reply_markup=keyboard, parse_mode='HTML')
+        # Nếu có menu cũ, hãy thử xóa nó trước khi gửi menu mới
+        last_menu_id = context.user_data.get('last_main_menu_id')
+        if last_menu_id:
+            try:
+                await context.bot.delete_message(chat_id=user.id, message_id=last_menu_id)
+            except Exception:
+                pass
+
+        sent_msg = await update.message.reply_text(text=final_message_text, reply_markup=keyboard, parse_mode='HTML')
+        context.user_data['last_main_menu_id'] = sent_msg.message_id
+
+
+async def _delete_tracked_menu(
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id: int,
+        menu_key: str,
+):
+    """Xoa menu da luu de tranh lap giao dien."""
+    menu_id = context.user_data.get(menu_key)
+    if not menu_id:
+        return
+
+    try:
+        await context.bot.delete_message(chat_id=chat_id, message_id=menu_id)
+    except Exception:
+        pass
+    finally:
+        context.user_data[menu_key] = None
 
 
 async def start_input_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str, next_step: str,
@@ -202,9 +240,35 @@ async def start_input_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, p
 
     context.user_data['action_next_step'] = next_step
 
+    # Tự động dọn dẹp Menu Chính cũ nếu có khi bắt đầu luồng mới
+    last_menu_id = context.user_data.get('last_main_menu_id')
+    if last_menu_id:
+        try:
+            await context.bot.delete_message(chat_id=chat_id, message_id=last_menu_id)
+            context.user_data['last_main_menu_id'] = None
+        except Exception:
+            pass
+
+    # Tương tự cho Menu Admin nếu đang ở luồng Admin
+    last_admin_menu_id = context.user_data.get('last_admin_menu_id')
+    if last_admin_menu_id:
+        try:
+            await context.bot.delete_message(chat_id=chat_id, message_id=last_admin_menu_id)
+            context.user_data['last_admin_menu_id'] = None
+        except Exception:
+            pass
+
     # Nếu là callback, thêm tin nhắn hiện tại (menu) vào danh sách dọn dẹp
     if query:
         register_cleanup_message(context, query.message.message_id)
+
+    last_verify_menu_id = context.user_data.get('last_verify_menu_id')
+    if last_verify_menu_id:
+        try:
+            await context.bot.delete_message(chat_id=chat_id, message_id=last_verify_menu_id)
+            context.user_data['last_verify_menu_id'] = None
+        except Exception:
+            pass
 
     prompt_msg = await context.bot.send_message(
         chat_id=chat_id,
@@ -227,18 +291,92 @@ async def start_input_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, p
 async def show_admin_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE, message_text: str = ""):
     """Hiển thị menu quản trị (dashboard) và xóa trạng thái."""
     await cleanup_input_messages(update, context)
+    query = update.callback_query
     user_id = update.effective_user.id
 
     final_text = get_admin_menu_message()
     if message_text:
         final_text = f"{message_text}\n\n{final_text}"
 
-    await context.bot.send_message(
+    # Nếu có menu admin cũ, hãy thử xóa nó trước khi gửi menu mới
+    if query:
+        try:
+            sent_msg = await query.edit_message_text(
+                text=final_text,
+                reply_markup=get_admin_keyboard(),
+                parse_mode='HTML',
+            )
+            context.user_data['last_admin_menu_id'] = sent_msg.message_id
+            return
+        except Exception:
+            pass
+
+    await _delete_tracked_menu(context, user_id, 'last_admin_menu_id')
+
+    sent_msg = await context.bot.send_message(
         chat_id=user_id,
         text=final_text,
         reply_markup=get_admin_keyboard(),
         parse_mode='HTML'
     )
+    context.user_data['last_admin_menu_id'] = sent_msg.message_id
+
+
+async def show_verify_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, message_text: str = ""):
+    """Hiển thị menu xác thực theo một flow thống nhất."""
+    if context.user_data.get('messages_to_cleanup') or context.user_data.get('action_next_step'):
+        await cleanup_input_messages(update, context)
+
+    chat_id = update.effective_chat.id
+    query = update.callback_query
+    final_text = get_verify_menu_message()
+
+    if message_text:
+        final_text = f"{message_text}\n\n{final_text}"
+
+    if query:
+        try:
+            sent_msg = await query.edit_message_text(
+                text=final_text,
+                reply_markup=get_verify_keyboard(),
+                parse_mode='HTML',
+            )
+            context.user_data['last_verify_menu_id'] = sent_msg.message_id
+            return
+        except Exception:
+            pass
+
+    await _delete_tracked_menu(context, chat_id, 'last_verify_menu_id')
+    sent_msg = await context.bot.send_message(
+        chat_id=chat_id,
+        text=final_text,
+        reply_markup=get_verify_keyboard(),
+        parse_mode='HTML',
+    )
+    context.user_data['last_verify_menu_id'] = sent_msg.message_id
+
+
+async def show_main_menu_after_delay(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        db: Database,
+        message_text: str = "",
+        delay: float = 2,
+):
+    """Hiển thị menu chính sau một khoảng trễ ngắn."""
+    await asyncio.sleep(delay)
+    await show_main_menu(update, context, db, message_text)
+
+
+async def show_admin_dashboard_after_delay(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        message_text: str = "",
+        delay: float = 2,
+):
+    """Hiển thị dashboard admin sau một khoảng trễ ngắn."""
+    await asyncio.sleep(delay)
+    await show_admin_dashboard(update, context, message_text)
 
 
 async def send_or_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, **kwargs):
@@ -301,7 +439,7 @@ async def invite_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_username = context.bot.username
     invite_link = f"https://t.me/{bot_username}?start={user_id}"
     await send_or_reply(update, context,
-                        f"💎 Link mời của bạn:\n{invite_link}\n\nMời thành công 1 người bạn sẽ nhận được 1 điểm.")
+                        f"💰 Link mời của bạn:\n{invite_link}\n\nMời thành công 1 người bạn sẽ nhận được 1 điểm.")
 
 
 @is_not_blocked
@@ -314,7 +452,7 @@ async def checkin_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     if db.checkin(user_id):
         user = db.get_user(user_id)
         await send_or_reply(update, context,
-                            f"✅ Điểm danh thành công! +1 điểm\n💎 Số dư hiện tại: {user['balance']} điểm.")
+                            f"✅ Điểm danh thành công! +1 điểm\n💰 Số dư hiện tại: {user['balance']} điểm.")
     else:
         await send_or_reply(update, context, "❌ Hôm nay bạn đã điểm danh rồi.")
 
@@ -328,7 +466,7 @@ async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     user_id = update.effective_user.id
     user_data = db.get_user(user_id)
     balance = user_data['balance'] if user_data else 0
-    await send_or_reply(update, context, f"💎 Số dư hiện tại của bạn: {balance} điểm.")
+    await send_or_reply(update, context, f"💰 Số dư hiện tại của bạn: {balance} điểm.")
 
 
 @is_not_blocked
@@ -350,7 +488,7 @@ async def to_up_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
         else:
             user = db.get_user(user_id)
             await send_or_reply(update, context,
-                                f"Sử dụng mã thẻ thành công! +{result} điểm.\n💎 Số dư hiện tại: {user['balance']} điểm.")
+                                f"Sử dụng mã thẻ thành công! +{result} điểm.\n💰 Số dư hiện tại: {user['balance']} điểm.")
         return
 
     await start_input_flow(update, context, "Vui lòng nhập mã thẻ:", 'use_key_step_1', 'cancel_to_main')
@@ -366,6 +504,19 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 @is_not_blocked
+async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
+    """Xử lý lệnh /check_cookie_netflix"""
+    if await is_user_busy(update, context):
+        return
+
+    from handlers.netflix_handlers import check_cookie_netflix_command as _cmd
+    await _cmd(update, context, db)
+    return
+
+    # Thiết lập trạng thái chờ nhập (nếu lệnh không tự kết thúc luồng)
+
+
+@is_not_blocked
 async def convertNetflixUrl_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý lệnh /convertNetflixUrl"""
     if await is_user_busy(update, context):
@@ -378,11 +529,12 @@ async def convertNetflixUrl_command(update: Update, context: ContextTypes.DEFAUL
         return
 
     context.user_data['action_service_type'] = 'convert_url_login_app_netflix'
+    service_label = get_ui_label('convert_url_login_app_netflix')
 
     prompt_text = (
-        f"💎 <b>Chuyển đổi Netflix</b>\n\n"
+        f"<b>{service_label}</b>\n\n"
         f"Vui lòng nhập cookie netflix vào tin nhắn trả lời bên dưới hoặc gửi file .txt\n"
-        f"Lưu ý: Mỗi lần xác thực thành công sẽ tốn 💎 {VERIFY_COST} điểm."
+        f"Lưu ý: Mỗi lần xác thực thành công sẽ tốn 💰 {VERIFY_COST} điểm."
     )
 
     await start_input_flow(update, context, prompt_text, 'verify_step_1', 'cancel_to_main')
@@ -446,24 +598,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     if action == 'cancel_to_verify_menu':
         await cleanup_input_messages(update, context)
         await clear_user_state(context)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=get_verify_menu_message(),
-                                       reply_markup=get_verify_keyboard())
+        await show_verify_menu(update, context)
         return
 
     if action == 'cancel_to_admin_menu':
         await cleanup_input_messages(update, context)
         await clear_user_state(context)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=get_admin_menu_message(),
-                                       reply_markup=get_admin_keyboard())
+        await show_admin_dashboard(update, context)
         return
 
     if action == 'verify_menu':
-        await query.edit_message_text(text=get_verify_menu_message(), reply_markup=get_verify_keyboard())
+        await show_verify_menu(update, context)
         return
 
     if action == 'admin_menu':
         if not is_admin: return
-        await query.edit_message_text(text=get_admin_menu_message(), reply_markup=get_admin_keyboard())
+        await show_admin_dashboard(update, context)
         return
 
     if action == 'admin_maintenance':
@@ -499,6 +649,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         from utils.checks import check_maintenance
         if await check_maintenance(update, db, 'convert_url_login_app_netflix'): return
         await convertNetflixUrl_command(update, context, db)
+        return
+
+    elif action == 'netflix_check':
+        from handlers.netflix_handlers import check_cookie_netflix_command as _cmd
+        await _cmd(update, context, db)
         return
 
     elif action == 'discord_quest':
@@ -552,6 +707,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         elif action == 'admin_list_live_cc':
             from handlers.admin_commands import list_live_cc_command
             await list_live_cc_command(update, db)
+        elif action == 'admin_proxy_mgmt':
+            await query.edit_message_text(
+                text="🌐 <b>QUẢN LÝ PROXY HỆ THỐNG</b>\n━━━━━━━━━━━━━━━━━━━━\nChọn hành động bên dưới:",
+                reply_markup=get_proxy_mgmt_keyboard(),
+                parse_mode='HTML'
+            )
+        elif action == 'admin_list_proxies':
+            from handlers.admin_commands import list_proxies_admin
+            await list_proxies_admin(update, context, db)
+        elif action == 'admin_add_proxies':
+            await start_input_flow(
+                update, context,
+                "📥 <b>NẠP PROXY MỚI</b>\n━━━━━━━━━━━━━━━━━━━━\nVui lòng gửi file <b>.txt</b> chứa danh sách proxy.\nĐịnh dạng: <code>host:port:user:pass</code>",
+                'admin_add_proxies_step_1',
+                'admin_proxy_mgmt'
+            )
 
 
 # --- Text Input Handler ---
@@ -571,8 +742,12 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
     async def cleanup_after_input(force: bool = False):
         """Dọn dẹp các tin nhắn trong luồng nhập liệu."""
-        if not force:
-            return
+        if force:
+            await cleanup_input_messages(update, context, keep_data=True)
+        return
+
+        prompt_id = context.user_data.get('prompt_message_id')
+        messages = context.user_data.get('messages_to_cleanup', [])
 
         # KỸ THUẬT KHẮC CHẾ MOBILE:
         try:
@@ -662,6 +837,13 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         await _process_cc_request(update, context, db, user_input)
         return
 
+    # --- Luồng Check Netflix Cookie ---
+    if next_step == 'check_cookie_netflix_step_1':
+        await cleanup_after_input(force=True)
+        from handlers.netflix_handlers import process_netflix_cookie
+        await process_netflix_cookie(update, context, db, user_input)
+        return
+
     # --- Luồng nạp thẻ ---
     if next_step == 'use_key_step_1':
         await cleanup_after_input(force=True)
@@ -674,10 +856,9 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         else:
             user = db.get_user(user_id)
             await update.message.reply_text(
-                f"Sử dụng mã thẻ thành công! +{result} điểm.\n💎 Số dư hiện tại: {user['balance']} điểm.")
+                f"Sử dụng mã thẻ thành công! +{result} điểm.\n💰 Số dư hiện tại: {user['balance']} điểm.")
 
-        await context.bot.send_message(chat_id=user_id, text="Đã quay về menu chính.",
-                                       reply_markup=get_welcome_keyboard(is_admin))
+        await show_main_menu_after_delay(update, context, db)
         return
 
     # --- Các luồng Admin ---
@@ -687,6 +868,10 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     async def continue_admin_flow(prompt: str, next_step_name: str):
         """Hàm helper để tiếp tục luồng admin."""
         # await cleanup_after_input() # Không xóa ngay, để dọn dẹp một lần khi xong
+        await cleanup_after_input(force=True)
+        await start_input_flow(update, context, prompt, next_step_name, 'cancel_to_admin_menu')
+        return
+
         context.user_data['action_next_step'] = next_step_name
         prompt_msg = await update.message.reply_text(prompt, reply_markup=ForceReply(selective=True))
         context.user_data['prompt_message_id'] = prompt_msg.message_id
@@ -729,7 +914,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         await cleanup_after_input(force=True)
         context.args = [context.user_data.get('admin_target_uid'), user_input]
         await addbalance_command(update, context, db)
-        await show_admin_dashboard(update, context, "Thao tác hoàn tất.")
+        return
 
     elif next_step in ['admin_block_step_1', 'admin_unblock_step_1']:
         if not user_input.isdigit():
@@ -740,13 +925,13 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         context.args = [user_input]
         handler = block_command if next_step == 'admin_block_step_1' else white_command
         await handler(update, context, db)
-        await show_admin_dashboard(update, context, "Thao tác hoàn tất.")
+        return
 
     elif next_step == 'admin_broadcast_step_1':
         await cleanup_after_input(force=True)
         context.args = [user_input]
         await broadcast_command(update, context, db)
-        await show_admin_dashboard(update, context, "Thao tác hoàn tất.")
+        return
 
     elif next_step == 'admin_gen_key_step_1':
         if db.get_card_key_info(user_input):
@@ -784,29 +969,10 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         ]
         context.args = [str(arg) for arg in args if arg is not None]
         logger.info(f"Đang thực hiện tạo key qua luồng phản hồi: Key={args[0]}, Points={args[1]}")
-        success = await genkey_command(update, context, db)
-        if success:
-            await show_admin_dashboard(update, context, "✅ Đã tạo mã thẻ thành công.")
-        else:
-            await show_admin_dashboard(update, context, "❌ Tạo mã thẻ thất bại. Vui lòng kiểm tra lại thông tin.")
+        await genkey_command(update, context, db)
+        await show_admin_dashboard_after_delay(update, context)
 
-    # --- Luồng nạp thẻ ---
-    if next_step == 'use_key_step_1':
-        await cleanup_after_input(force=True)
-        result = db.use_card_key(user_input, user_id)
-        if result is None:
-            await update.message.reply_text("Mã thẻ không tồn tại.")
-        elif isinstance(result, int) and result < 0:
-            error_map = {-1: "Mã đã hết lượt sử dụng.", -2: "Mã đã hết hạn.", -3: "Bạn đã dùng mã này rồi."}
-            await update.message.reply_text(error_map.get(result, "Lỗi không xác định."))
-        else:
-            user = db.get_user(user_id)
-            await update.message.reply_text(
-                f"Sử dụng mã thẻ thành công! +{result} điểm.\n💎 Số dư hiện tại: {user['balance']} điểm.")
-
-        await context.bot.send_message(chat_id=user_id, text="Đã quay về menu chính.",
-                                       reply_markup=get_welcome_keyboard(is_admin))
-        return
+    # [ĐOẠN NÀY ĐÃ ĐƯỢC DỌN DẸP - use_key_step_1 đã xử lý ở trên (dòng ~757)]
 
 
 # --- Netflix Cookie Helper ---
@@ -834,14 +1000,14 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
     user_balance = db.get_user(user_id)['balance']
     if user_balance < cost:
         await reply_func(
-            f"❌ Bạn không đủ {cost} điểm để thực hiện chức năng này. 💎 Số dư hiện tại: {user_balance} điểm.")
+            f"❌ Bạn không đủ {cost} điểm để thực hiện chức năng này. 💰 Số dư hiện tại: {user_balance} điểm.")
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
             try:
                 await update.message.delete()
             except Exception as e:
                 logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
+        await show_main_menu_after_delay(update, context, db, "Số dư không đủ để thực hiện chức năng này.")
         return
 
     # Trừ điểm trước khi xử lý
@@ -853,10 +1019,10 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
                 await update.message.delete()
             except Exception as e:
                 logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Trừ điểm thất bại.")
+        await show_main_menu_after_delay(update, context, db, "Trừ điểm thất bại.")
         return
     await reply_func(
-        f"Đã trừ {cost} điểm. 💎 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm. Đang xử lý yêu cầu...")
+        f"Đã trừ {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm. Đang xử lý yêu cầu...")
 
     import requests as _requests
     import importlib.util
@@ -877,7 +1043,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
     if not is_valid:
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu cookie không hợp lệ
         await reply_func(
-            f"{error_msg}\nĐã hoàn lại {cost} điểm. 💎 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
+            f"{error_msg}\nĐã hoàn lại {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
             parse_mode='HTML')
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
@@ -885,7 +1051,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
                 await update.message.delete()
             except Exception as e:
                 logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Cookie không hợp lệ.")
+        await show_main_menu_after_delay(update, context, db, "Cookie không hợp lệ.")
         return
 
     processing_msg = await reply_func("⏳ Đang tạo link đăng nhập Netflix...")
@@ -900,7 +1066,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
                 pass
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("↩️ Quay lại trang chủ", callback_data='back_to_main')]
+            [InlineKeyboardButton(BACK_MAIN_BUTTON_LABEL, callback_data='back_to_main')]
         ])
 
         await processing_msg.edit_text(
@@ -916,18 +1082,18 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu API request thất bại
         logger.warning(f"Netflix API request failed: {e}")
         await processing_msg.edit_text(
-            f"❌ Không thể kết nối tới Netflix. Vui lòng thử lại sau.\nĐã hoàn lại {cost} điểm. 💎 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.")
+            f"❌ Không thể kết nối tới Netflix. Vui lòng thử lại sau.\nĐã hoàn lại {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.")
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
             try:
                 await update.message.delete()
             except Exception as e:
                 logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Không thể kết nối tới Netflix.")
+        await show_main_menu_after_delay(update, context, db, "Không thể kết nối tới Netflix.")
     except ValueError as e:
         db.add_balance(user_id, cost)  # Hoàn lại điểm nếu có lỗi giá trị
         await processing_msg.edit_text(
-            f"{str(e)}\nĐã hoàn lại {cost} điểm. 💎 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
+            f"{str(e)}\nĐã hoàn lại {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm.",
             parse_mode='HTML')
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
@@ -935,7 +1101,7 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
                 await update.message.delete()
             except Exception as e:
                 logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu(update, context, db, "Lỗi trong quá trình tạo link.")
+        await show_main_menu_after_delay(update, context, db, "Lỗi trong quá trình tạo link.")
 
 
 # --- File Input Handler ---
@@ -945,17 +1111,24 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     next_step = context.user_data.get('action_next_step')
     service_type = context.user_data.get('action_service_type')
 
-    # Chỉ xử lý khi đang ở bước verify và service là netflix, HOẶC đang ở bước check_cc
-    if (
-            next_step == 'verify_step_1' and service_type == 'convert_url_login_app_netflix') or next_step == 'check_cc_step_1':
-        pass
-    else:
+    # Cho phép xử lý file cho Netflix Checker, Check CC và Admin Proxy
+    valid_steps = ['verify_step_1', 'check_cc_step_1', 'check_cookie_netflix_step_1', 'admin_add_proxies_step_1']
+    if next_step not in valid_steps:
         return
 
-    # Thêm tin nhắn của người dùng vào danh sách dọn dẹp
-    if 'messages_to_cleanup' not in context.user_data:
-        context.user_data['messages_to_cleanup'] = []
-    context.user_data['messages_to_cleanup'].append(update.message.message_id)
+    if next_step == 'verify_step_1' and service_type != 'convert_url_login_app_netflix':
+        # Các dịch vụ verify SheerID khác không nhận file
+        return
+
+    # Nếu là callback, thêm tin nhắn hiện tại (menu) vào danh sách dọn dẹp
+    query = update.callback_query
+    if query:
+        # Xóa ID menu cũ khỏi bộ nhớ vì nó sắp bị xóa/đè
+        context.user_data['last_main_menu_id'] = None
+
+        if 'messages_to_cleanup' not in context.user_data:
+            context.user_data['messages_to_cleanup'] = []
+        context.user_data['messages_to_cleanup'].append(query.message.message_id)
 
     document = update.message.document
     # Kiểm tra định dạng file: phải là .txt hoặc mime text/plain
@@ -986,7 +1159,8 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         return
 
     # Dọn dẹp tin nhắn prompt và cancel
-    prompt_message_id = context.user_data.get('prompt_message_id')
+    await cleanup_input_messages(update, context, keep_data=True)
+    prompt_message_id = None
     user_id = update.effective_user.id
     if prompt_message_id:
         try:
@@ -999,8 +1173,15 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     if next_step == 'check_cc_step_1':
         from handlers.cc_handlers import handle_cc_file_input
         await handle_cc_file_input(update, context, db, content)
+    elif next_step == 'admin_add_proxies_step_1':
+        from handlers.admin_commands import handle_proxy_file_upload
+        await handle_proxy_file_upload(update, context, db, content)
+    elif next_step == 'check_cookie_netflix_step_1':
+        from handlers.netflix_handlers import process_netflix_cookie
+        await process_netflix_cookie(update, context, db, content)
     else:
-        await _process_netflix_cookie(update, context, db, content)  # Truyền db vào đây
+        # Mặc định cũ cho convert Netflix URL
+        await _process_netflix_cookie(update, context, db, content)
 
 
 async def handle_admin_search_result(update: Update, context: ContextTypes.DEFAULT_TYPE, user_info: dict):
@@ -1016,7 +1197,7 @@ async def handle_admin_search_result(update: Update, context: ContextTypes.DEFAU
         f"🆔 ID: <code>{target_id}</code>\n"
         f"👤 Tên: {user_info['full_name']}\n"
         f"🔗 Username: {username}\n"
-        f"💎 Số dư: <b>{user_info['balance']} điểm</b>\n"
+        f"💰 Số dư: <b>{user_info['balance']} điểm</b>\n"
         f"🚩 Trạng thái: {status}\n"
         f"📅 Tham gia: {user_info['created_at'][:10]}\n"
     )
@@ -1032,13 +1213,13 @@ async def handle_admin_search_result(update: Update, context: ContextTypes.DEFAU
 
     # Hàng 2: Cộng điểm nhanh
     keyboard.append([
-        InlineKeyboardButton("+10 💎", callback_data=f"admin_q_add:{target_id}:10"),
-        InlineKeyboardButton("+50 💎", callback_data=f"admin_q_add:{target_id}:50"),
-        InlineKeyboardButton("+100 💎", callback_data=f"admin_q_add:{target_id}:100")
+        InlineKeyboardButton("+10 💰", callback_data=f"admin_q_add:{target_id}:10"),
+        InlineKeyboardButton("+50 💰", callback_data=f"admin_q_add:{target_id}:50"),
+        InlineKeyboardButton("+100 💰", callback_data=f"admin_q_add:{target_id}:100")
     ])
 
     # Hàng 3: Quay lại
-    keyboard.append([InlineKeyboardButton("⬅️ Quay lại Menu Admin", callback_data="admin_menu")])
+    keyboard.append([InlineKeyboardButton(BACK_ADMIN_BUTTON_LABEL, callback_data="admin_menu")])
 
     await context.bot.send_message(
         chat_id=chat_id,
