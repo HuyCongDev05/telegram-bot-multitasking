@@ -69,6 +69,7 @@ def get_active_service_name(context: ContextTypes.DEFAULT_TYPE) -> str:
         'verify_youtube_student': 'Xác thực YouTube Student',
         'verify_gemini_pro': 'Xác thực Gemini One Pro',
         'convert_url_login_app_netflix': 'Chuyển đổi Netflix',
+        'discord_quest': 'Discord Quest Auto',
         'check_cc_step_1': 'Check CC',
         'use_key_step_1': 'Nạp mã Key (Nạp điểm)',
         'admin_add_balance_step_1': 'Admin: Cộng điểm',
@@ -126,7 +127,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
     if message_text:
         final_message_parts.append(message_text)
 
-    final_message_parts.append(f"<b>🤖 HỆ THỐNG BOT VERIFY</b>")
+    final_message_parts.append(f"<b>🤖 HỆ THỐNG BOT ĐA NHIỆM</b>")
     final_message_parts.append(f"🪙 Số dư: <b>{balance} điểm</b>")
     final_message_parts.append("━━━━━━━━━━━━━━━━━━━━\n"
                                "✨ <i>Vui lòng chọn chức năng:</i>")
@@ -433,6 +434,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     elif action == 'convert_url_login_app_netflix':
         await convertNetflixUrl_command(update, context, db)
 
+    elif action == 'discord_quest':
+        from handlers.discord_quest_handlers import discord_quest_command
+        await discord_quest_command(update, context, db)
+
     elif action.startswith('verify_'):
         service_map = {
             'verify_chatgpt_k12': "ChatGPT Teacher K12", 'verify_spotify_student': "Spotify Student",
@@ -533,6 +538,13 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         if handler:
             context.args = [user_input]
             await handler(update, context, db)
+        return
+
+    # --- Luồng Discord Quest ---
+    if next_step == 'discord_quest_step_1':
+        await cleanup_after_input(force=True)
+        from handlers.discord_quest_handlers import process_discord_token
+        await process_discord_token(update, context, db, user_input)
         return
 
     # --- Luồng Check CC ---

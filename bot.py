@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from config import BOT_TOKEN
 from database_mysql import Database
 from handlers.cc_handlers import checkCC_command
+from handlers.discord_quest_handlers import discord_quest_command
 from handlers.user_commands import (
     start_command,
     help_command,
@@ -90,6 +91,9 @@ def main():
 
     # Đăng ký lệnh Chuyển đổi Netflix URL
     application.add_handler(CommandHandler("convert_netflix_url", partial(convertNetflixUrl_command, db=db)))
+
+    # Đăng ký lệnh Discord Quest Auto
+    application.add_handler(CommandHandler("discord_quest_auto", partial(discord_quest_command, db=db)))
 
     # Đăng ký trình xử lý lỗi
     application.add_error_handler(error_handler)

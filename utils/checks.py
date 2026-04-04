@@ -17,11 +17,16 @@ def is_group_chat(update: Update) -> bool:
 
 
 async def reject_group_command(update: Update) -> bool:
-    """Hạn chế nhóm: Chỉ cho phép các lệnh /verify /verify2 /verify3 /verify4 /verify5 /qd"""
+    """Hạn chế nhóm: Yêu cầu người dùng nhắn tin riêng cho Bot"""
     if is_group_chat(update):
         if update.effective_message:
             await update.effective_message.reply_text(
-                "Nhóm chỉ hỗ trợ /verify /verify2 /verify3 /verify4 /verify5 /qd, vui lòng nhắn tin riêng để sử dụng các lệnh khác.")
+                "⚠️ <b>Bot không hỗ trợ xử lý trong Nhóm.</b>\n\n"
+                "Vui lòng nhấn vào @{bot_username} để nhắn tin riêng (Inbox) và sử dụng đầy đủ các tính năng xác thực, nạp điểm, v.v.".format(
+                    bot_username=update.get_bot().username
+                ),
+                parse_mode='HTML'
+            )
         return True
     return False
 
