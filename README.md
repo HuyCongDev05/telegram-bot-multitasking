@@ -15,7 +15,6 @@ Ngoài ra, bot còn tích hợp các tính năng quản lý người dùng, hệ
 - 🚀 **Xác thực SheerID tự động**: Hoàn tất tạo thông tin, tạo hồ sơ và gửi xác thực chỉ với một lệnh.
 - 🎨 **Tạo hồ sơ thông minh**: Tự động render ảnh thẻ Sinh viên/Giáo viên định dạng PNG chuyên nghiệp.
 - 🎬 **Chuyển đổi Netflix Cookie**: Biến cookie Netflix thành link đăng nhập ứng dụng cực nhanh.
-- 🚀 **Discord Quest Auto**: Tự động hoàn thành các nhiệm vụ (Quest) trên Discord để nhận phần thưởng.
 - 🃏 **Check CC Quick**: Hỗ trợ kiểm tra hàng loạt thẻ tín dụng với tốc độ và độ chính xác cao.
 - 💎 **Hệ thống điểm thưởng**: Tích hợp điểm danh hằng ngày, mời bạn bè và nạp thẻ (key).
 - 🛡️ **Bảo mật Username**: Bắt buộc người dùng phải có Telegram Username để định danh và chống spam.
@@ -37,7 +36,6 @@ Bot hỗ trợ xác thực cho các dịch vụ sau thông qua SheerID:
 | `/verify_gemini_one_pro`          | Gemini One Pro          | Công cụ       | 🛠️ Đang phát triển |
 | `/convert_netflix_url`            | Netflix                 | Công cụ       | ✅ Hoàn tất          |
 | `/check_cc`                       | Credit Card             | Công cụ       | ✅ Hoàn tất          |
-| `/discord_quest_auto`             | Discord Quest           | Công cụ       | ✅ Hoàn tất          |
 
 > **⚠️ Lưu ý trước khi dùng**: Các `programId` của từng module xác thực SheerID có thể thay đổi định kỳ. Nếu xác thực thất bại liên tục, hãy kiểm tra và cập nhật tệp `config.py` tương ứng (xem phần "Hướng dẫn cấu hình" bên dưới).
 
@@ -139,7 +137,6 @@ Các lệnh này có thể được truy cập thông qua Menu nút bấm hoặc
 - `/verify_bolt_new_teacher` - Xác thực Bolt.new Giáo viên.
 - `/verify_youtube_premium_student` - Xác thực YouTube Premium.
 - `/verify_gemini_one_pro` - Xác thực Gemini Pro (Đang phát triển).
-- `/discord_quest_auto` - Tự động cày Quest Discord.
 
 **Công cụ tiện ích:**
 
@@ -178,18 +175,6 @@ bấm **"🛠 Quản trị viên"** sau khi xác thực danh tính bởi BOT.
 2. Gửi danh sách thẻ theo định dạng `Số thẻ|Tháng|Năm|CVV` (hỗ trợ nhập văn bản trực tiếp hoặc file `.txt`).
 3. Bot sẽ kiểm tra từng thẻ (tối đa 50 thẻ/lần).
 4. Bot trả về bản tóm tắt (Live/Declined) và một file `cc.txt` chứa chi tiết kết quả.
-
-+
-
-+### Quy Trình Discord Quest Auto
-
-+
-
-+1. Chọn chức năng "🚀 Discord Quest" từ menu hoặc dùng lệnh `/discord_quest_auto`.
-+2. Bot sẽ yêu cầu bạn nhập **Discord Token**. (Lưu ý: Bot sẽ xóa tin nhắn chứa token ngay lập tức để bảo mật).
-+3. Bot trừ điểm phí dịch vụ và bắt đầu quét các Quest khả dụng trên tài khoản của bạn.
-+4. Thông báo tiến độ (nhận Quest, xem video, chơi game) sẽ được gửi trực tiếp cho bạn qua Bot.
-+5. Khi tất cả Quest hoàn thành, Bot sẽ gửi thông báo kết thúc.
 
 ---
 
@@ -293,9 +278,6 @@ telegram-bot-verify/
 ├── Boltnew/                # Module và cấu hình cho xác thực Bolt.new Teacher
 ├── nftokenNetflix/         # Module cho công cụ chuyển đổi Netflix URL
 │   └── nf_token_generator.py # Logic tạo NFT token từ cookie
-├── discordQuestAuto/       # Module tự động hoàn thành Discord Quest
-│   ├── discordQuestAuto.py   # Logic cày Quest (Async)
-│   └── config.py           # Cấu hình riêng cho Discord Quest
 └── utils/                  # Các hàm và tiện ích hỗ trợ
     ├── messages.py         # Chứa các mẫu tin nhắn và bàn phím bot
     ├── concurrency.py      # Cơ chế kiểm soát đồng thời
@@ -335,8 +317,7 @@ Nếu xác thực SheerID thất bại liên tục, nguyên nhân thường là 
 Bạn có thể tùy chỉnh các giá trị điểm thưởng và chi phí xác thực trong tệp `config.py` ở thư mục gốc của dự án:
 
 ```python
-VERIFY_COST = 1  # Điểm tiêu tốn cho mỗi lần xác thực SheerID hoặc sử dụng nhà Netflix
-DISCORD_QUEST_COST = 5 # Điểm tiêu tốn cho mỗi lần sử dụng Discord Quest Auto
+VERIFY_COST = 1  # Điểm tiêu tốn cho mỗi lần xác thực SheerID hoặc sử dụng công cụ Netflix
 CHECKIN_REWARD = 1  # Điểm thưởng khi người dùng điểm danh hàng ngày
 INVITE_REWARD = 2  # Điểm thưởng khi người dùng mời thành công một người bạn mới
 REGISTER_REWARD = 1  # Điểm thưởng khi người dùng đăng ký tài khoản mới lần đầu

@@ -31,7 +31,6 @@ def get_welcome_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("🃏 Check CC Quick", callback_data='check_cc_menu'),
-            InlineKeyboardButton("🚀 Discord Quest", callback_data='discord_quest'),
         ],
         [
             InlineKeyboardButton("🧧 Mời bạn bè", callback_data='invite'),
@@ -122,9 +121,6 @@ def get_help_message() -> str:
         "🎬 Chuyển đổi Netflix Cookie:\n"
         "Nhấn nút '🎬 Chuyển đổi Netflix Cookie':\n"
         f"• Nhập Cookie Netflix để lấy Link đăng nhập App.\n\n"
-        "🚀 Discord Quest Auto:\n"
-        "Nhấn nút '🚀 Discord Quest' hoặc dùng /discord_quest_auto:\n"
-        f"• Nhập Discord Token để tự động cày Quest (-🪙 {DISCORD_QUEST_COST})\n\n"
         "💬 <i>Hỗ trợ trực tiếp: @hcongdev</i>"
     )
 

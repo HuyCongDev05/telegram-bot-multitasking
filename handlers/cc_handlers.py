@@ -1,15 +1,16 @@
 """Trình xử lý lệnh Check CC"""
+import io
 import logging
 import re
-import io
 from datetime import datetime
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
 from telegram.ext import ContextTypes
 
-from config import VERIFY_COST
-from database_mysql import Database
 from checkCC.api_client import check_card_quick
 from checkCC.bin_lookup import format_bin_info
+from config import VERIFY_COST
+from database_mysql import Database
 from handlers.user_commands import register_cleanup_message, is_user_busy
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,10 @@ MAX_CC_PER_REQUEST = 50
 async def checkCC_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý lệnh /check_cc"""
     if await is_user_busy(update, context):
+        return
+
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'check_cc'):
         return
     
     # Nếu có đối số (text sau lệnh /checkCC)
