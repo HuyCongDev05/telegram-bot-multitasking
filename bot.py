@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from config import BOT_TOKEN
 from database_mysql import Database
 from handlers.cc_handlers import checkCC_command
+from handlers.maintenance_handlers import admin_maintenance_menu, toggle_maintenance, noop_callback
 from handlers.user_commands import (
     start_command,
     help_command,
@@ -62,7 +63,12 @@ def main():
     # application.add_handler(CommandHandler("clear", clear_command)) # Đã xóa đăng ký lệnh /clear
 
     # Đăng ký trình xử lý callback cho các nút bấm
-    application.add_handler(CallbackQueryHandler(partial(button_callback, db=db)))
+    application.add_handler(
+        CallbackQueryHandler(partial(button_callback, db=db), pattern='^(?!toggle_m:|admin_maintenance_menu|noop).*$'))
+    application.add_handler(
+        CallbackQueryHandler(partial(admin_maintenance_menu, db=db), pattern='^admin_maintenance_menu$'))
+    application.add_handler(CallbackQueryHandler(partial(toggle_maintenance, db=db), pattern='^toggle_m:.*$'))
+    application.add_handler(CallbackQueryHandler(noop_callback, pattern='^noop$'))
 
     # Đăng ký trình xử lý tin nhắn trả lời
     application.add_handler(

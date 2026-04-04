@@ -15,11 +15,12 @@ Ngoài ra, bot còn tích hợp các tính năng quản lý người dùng, hệ
 - 🚀 **Xác thực SheerID tự động**: Hoàn tất tạo thông tin, tạo hồ sơ và gửi xác thực chỉ với một lệnh.
 - 🎨 **Tạo hồ sơ thông minh**: Tự động render ảnh thẻ Sinh viên/Giáo viên định dạng PNG chuyên nghiệp.
 - 🎬 **Chuyển đổi Netflix Cookie**: Biến cookie Netflix thành link đăng nhập ứng dụng cực nhanh.
-- 🃏 **Check CC Quick**: Hỗ trợ kiểm tra hàng loạt thẻ tín dụng với tốc độ và độ chính xác cao.
+- 🃏 **Check CC**: Hỗ trợ kiểm tra hàng loạt thẻ tín dụng với tốc độ và độ chính xác cao.
 - 💎 **Hệ thống điểm thưởng**: Tích hợp điểm danh hằng ngày, mời bạn bè và nạp thẻ (key).
 - 🛡️ **Bảo mật Username**: Bắt buộc người dùng phải có Telegram Username để định danh và chống spam.
 - ⚡ **Chống Spam & Dọn dẹp**: Tự động dọn dẹp tin nhắn rác và ngăn chặn hành động trùng lặp (Busy Check).
 - 🛠️ **Quản trị nâng cao**: Tìm kiếm người dùng bằng Username/ID và quản lý "một chạm" cho Admin.
+- ⚙️ **Chế độ Bảo trì**: Admin có thể bật/tắt bảo trì cho từng dịch vụ và tự động thông báo cho toàn bộ người dùng.
 
 ---
 
@@ -27,15 +28,16 @@ Ngoài ra, bot còn tích hợp các tính năng quản lý người dùng, hệ
 
 Bot hỗ trợ xác thực cho các dịch vụ sau thông qua SheerID:
 
-| Lệnh/Chức năng                    | Dịch vụ                 | Loại xác thực | Trạng thái          |
-|:----------------------------------|:------------------------|:--------------|:--------------------|
-| `/verify_chatgpt_teacher_k12`     | ChatGPT Teacher K12     | Giáo viên     | ✅ Hoàn tất          |
-| `/verify_spotify_student`         | Spotify Student         | Sinh viên     | ✅ Hoàn tất          |
-| `/verify_bolt_new_teacher`        | Bolt.new Teacher        | Giáo viên     | ✅ Hoàn tất          |
-| `/verify_youtube_premium_student` | YouTube Premium Student | Sinh viên     | ✅ Hoàn tất          |
-| `/verify_gemini_one_pro`          | Gemini One Pro          | Công cụ       | 🛠️ Đang phát triển |
-| `/convert_netflix_url`            | Netflix                 | Công cụ       | ✅ Hoàn tất          |
-| `/check_cc`                       | Credit Card             | Công cụ       | ✅ Hoàn tất          |
+| Lệnh/Chức năng                    | Dịch vụ                 | Loại xác thực | Trạng thái           |
+|:----------------------------------|:------------------------|:--------------|:---------------------|
+| `/verify_chatgpt_teacher_k12`     | ChatGPT Teacher K12     | Giáo viên     | ✅ Hoàn tất           |
+| `/verify_spotify_student`         | Spotify Student         | Sinh viên     | ✅ Hoàn tất           |
+| `/verify_bolt_new_teacher`        | Bolt.new Teacher        | Giáo viên     | ✅ Hoàn tất           |
+| `/verify_youtube_premium_student` | YouTube Premium Student | Sinh viên     | ✅ Hoàn tất           |
+| `/verify_gemini_one_pro`          | Gemini One Pro          | Công cụ       | 🛠️ Đang phát triển  |
+| `/convert_netflix_url`            | Netflix                 | Công cụ       | ✅ Hoàn tất           |
+| `/check_cc`                       | Credit Card             | Công cụ       | ✅ Hoàn tất           |
+| `/discord_quest_auto`             | Discord Quest           | Công cụ       | 🛠️ Nhánh phát triển |
 
 > **⚠️ Lưu ý trước khi dùng**: Các `programId` của từng module xác thực SheerID có thể thay đổi định kỳ. Nếu xác thực thất bại liên tục, hãy kiểm tra và cập nhật tệp `config.py` tương ứng (xem phần "Hướng dẫn cấu hình" bên dưới).
 
@@ -58,8 +60,8 @@ Bot hỗ trợ xác thực cho các dịch vụ sau thông qua SheerID:
 ### 1. Sao chép dự án (Clone)
 
 ```bash
-git clone https://github.com/your-username/telegram-bot-verify.git # Thay bằng URL repo của bạn
-cd telegram-bot-verify
+git clone https://github.com/HuyCongDev05/telegram-bot-multitasking.git
+cd telegram-bot-multitasking
 ```
 
 ### 2. Cài đặt thư viện
@@ -141,7 +143,7 @@ Các lệnh này có thể được truy cập thông qua Menu nút bấm hoặc
 **Công cụ tiện ích:**
 
 - `/convert_netflix_url` - Chuyển đổi Cookie Netflix sang Link App.
-- `/check_cc` - Kiểm tra thẻ tín dụng nhanh.
+- `/check_cc` - Kiểm tra thẻ tín dụng.
 
 Để đảm bảo an toàn, các lệnh quản trị đã được gỡ bỏ khỏi lệnh slash công khai. Admin chỉ có thể thao tác thông qua nút
 bấm **"🛠 Quản trị viên"** sau khi xác thực danh tính bởi BOT.
@@ -152,6 +154,7 @@ bấm **"🛠 Quản trị viên"** sau khi xác thực danh tính bởi BOT.
 - 💰 **Cộng tiền nhanh**: Các nút bấm cộng nhanh 10, 50, 100 điểm cho người dùng.
 - 🔒 **Quản lý trạng thái**: Khóa (Block) hoặc Mở khóa người dùng chỉ với 1 chạm.
 - 🗝 **Hệ thống Key**: Tạo và quản lý mã nạp điểm tự động.
+- 🛠 **Chế độ Bảo trì**: Bật/tắt bảo trì cho từng dịch vụ (Verify, Netflix, Check CC...).
 - 📣 **Broadcast**: Gửi thông báo toàn hệ thống kèm định dạng HTML.
 
 ### Quy Trình Xác Thực SheerID
@@ -171,7 +174,7 @@ bấm **"🛠 Quản trị viên"** sau khi xác thực danh tính bởi BOT.
 
 ### Quy Trình Kiểm Tra Thẻ (Check CC)
 
-1. Chọn chức năng "🃏 Check CC Quick" từ menu hoặc dùng lệnh `/check_cc`.
+1. Chọn chức năng "🃏 Check CC" từ menu hoặc dùng lệnh `/check_cc`.
 2. Gửi danh sách thẻ theo định dạng `Số thẻ|Tháng|Năm|CVV` (hỗ trợ nhập văn bản trực tiếp hoặc file `.txt`).
 3. Bot sẽ kiểm tra từng thẻ (tối đa 50 thẻ/lần).
 4. Bot trả về bản tóm tắt (Live/Declined) và một file `cc.txt` chứa chi tiết kết quả.

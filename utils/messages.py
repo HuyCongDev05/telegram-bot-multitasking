@@ -30,7 +30,7 @@ def get_welcome_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
             InlineKeyboardButton("🎬 Chuyển đổi Netflix Cookie", callback_data='convert_url_login_app_netflix'),
         ],
         [
-            InlineKeyboardButton("🃏 Check CC Quick", callback_data='check_cc_menu'),
+            InlineKeyboardButton("🃏 Check CC", callback_data='check_cc_menu'),
         ],
         [
             InlineKeyboardButton("🧧 Mời bạn bè", callback_data='invite'),
@@ -94,7 +94,8 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton("📣 Gửi thông báo", callback_data='admin_broadcast')
         ],
         [
-            InlineKeyboardButton("💳 DS CC Live", callback_data='admin_list_live_cc')
+            InlineKeyboardButton("💳 DS CC Live", callback_data='admin_list_live_cc'),
+            InlineKeyboardButton("🛠 Quản lý Bảo trì", callback_data='admin_maintenance_menu')
         ],
         [
             InlineKeyboardButton("🔙 Quay lại", callback_data='back_to_main')
@@ -115,8 +116,8 @@ def get_help_message() -> str:
         f"• Bolt new Teacher (-🪙 {VERIFY_COST})\n"
         f"• YouTube Premium (-🪙 {VERIFY_COST})\n"
         f"• Gemini One Pro (-🪙 {VERIFY_COST})\n\n"
-        "🃏 Check CC Quick:\n"
-        "Sử dụng lệnh <code>/check_cc</code> hoặc nút '🃏 Check CC Quick':\n"
+        "🃏 Check CC:\n"
+        "Sử dụng lệnh <code>/check_cc</code> hoặc nút '🃏 Check CC':\n"
         f"• Gửi: <code>số thẻ|tháng|năm|cvv</code> (-🪙 {VERIFY_COST})\n\n"
         "🎬 Chuyển đổi Netflix Cookie:\n"
         "Nhấn nút '🎬 Chuyển đổi Netflix Cookie':\n"
@@ -142,3 +143,34 @@ def get_verify_usage_message(service_name: str) -> str:
         f"Bạn đã chọn xác thực: {service_name}\n\n"
         "Vui lòng nhập hoặc dán liên kết SheerID vào tin nhắn trả lời bên dưới:"
     )
+
+
+def get_maintenance_keyboard(services_status: list) -> InlineKeyboardMarkup:
+    """Lấy bàn phím danh sách dịch vụ kèm trạng thái bảo trì"""
+    mapping = {
+        'verify_chatgpt_k12': '🎓 ChatGPT K12',
+        'verify_spotify_student': '🎵 Spotify',
+        'verify_bolt_teacher': '⚡ Bolt.new',
+        'verify_youtube_student': '🎥 YouTube',
+        'verify_gemini_pro': '🤖 Gemini Pro',
+        'convert_url_login_app_netflix': '🎬 Netflix',
+        'check_cc': '🃏 Check CC',
+        'discord_quest_auto': '🚀 Discord Quest'
+    }
+
+    keyboard = []
+    for s in services_status:
+        s_id = s['service_id']
+        is_m = s['is_maintenance']
+        display_name = mapping.get(s_id, s_id)
+
+        status_emoji = "🛠 Bảo trì" if is_m else "🟢 Đang chạy"
+        status_icon = "❌ Bật bảo trì" if not is_m else "✅ Tắt bảo trì"
+
+        keyboard.append([
+            InlineKeyboardButton(f"{display_name}: {status_emoji}", callback_data='noop'),
+            InlineKeyboardButton(status_icon, callback_data=f"toggle_m:{s_id}")
+        ])
+
+    keyboard.append([InlineKeyboardButton("🔙 Quay lại", callback_data='admin_menu')])
+    return InlineKeyboardMarkup(keyboard)

@@ -32,6 +32,10 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
     if await is_user_busy(update, context):
         return
 
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'verify_chatgpt_k12'):
+        return
+
     user_id = update.effective_user.id
     if not context.args:
         from handlers.user_commands import start_input_flow
@@ -134,6 +138,10 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
 async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý lệnh /verify_spotify_student - Spotify Student"""
     if await is_user_busy(update, context):
+        return
+
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'verify_spotify_student'):
         return
 
     user_id = update.effective_user.id
@@ -253,6 +261,10 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý lệnh /verify_bolt_new_teacher - Bolt.new Teacher"""
     if await is_user_busy(update, context):
+        return
+
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'verify_bolt_teacher'):
         return
 
     user_id = update.effective_user.id
@@ -484,6 +496,10 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
     if await is_user_busy(update, context):
         return
 
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'verify_youtube_student'):
+        return
+
     user_id = update.effective_user.id
 
     if not context.args:
@@ -671,9 +687,13 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
 
 
 @is_not_blocked
-async def verifyGeminiOnePro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def verifyGeminiOnePro_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý lệnh /verify_gemini_one_pro - Gemini One Pro"""
     if await is_user_busy(update, context):
+        return
+
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'verify_gemini_pro'):
         return
 
 

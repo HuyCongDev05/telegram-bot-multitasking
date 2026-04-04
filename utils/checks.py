@@ -68,5 +68,16 @@ def is_not_blocked(func):
             return None
 
         return await func(update, context, *args, **kwargs)
-
     return wrapper
+
+
+async def check_maintenance(update: Update, db, service_id: str) -> bool:
+    """Kiểm tra dịch vụ có đang bảo trì không và thông báo cho người dùng"""
+    if db.is_service_maintenance(service_id):
+        msg = "🛠 <b>DỊCH VỤ ĐANG BẢO TRÌ</b>\n━━━━━━━━━━━━━━━━━━━━\nHiện tại tính năng này đang được bảo trì để nâng cấp. Vui lòng quay lại sau ít phút!"
+        if update.callback_query:
+            await update.callback_query.answer("🛠 Dịch vụ đang bảo trì. Vui lòng quay lại sau!", show_alert=True)
+        else:
+            await update.effective_message.reply_text(msg, parse_mode='HTML')
+        return True
+    return False

@@ -423,6 +423,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     elif action == 'checkin':
         await checkin_command(update, context, db)
     elif action == 'check_cc_menu':
+        # Kiểm tra bảo trì
+        if db.is_service_maintenance('check_cc'):
+            await query.answer("🛠 Dịch vụ Check CC đang bảo trì. Vui lòng quay lại sau!", show_alert=True)
+            return
         from handlers.cc_handlers import checkCC_command
         await checkCC_command(update, context, db)
         return
@@ -431,9 +435,17 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         await to_up_command(update, context, db)
 
     elif action == 'convert_url_login_app_netflix':
+        # Kiểm tra bảo trì
+        if db.is_service_maintenance('convert_url_login_app_netflix'):
+            await query.answer("🛠 Dịch vụ Chuyển đổi Netflix đang bảo trì. Vui lòng quay lại sau!", show_alert=True)
+            return
         await convertNetflixUrl_command(update, context, db)
 
     elif action.startswith('verify_'):
+        # Kiểm tra bảo trì
+        if db.is_service_maintenance(action):
+            await query.answer("🛠 Dịch vụ này đang bảo trì. Vui lòng quay lại sau!", show_alert=True)
+            return
         service_map = {
             'verify_chatgpt_k12': "ChatGPT Teacher K12", 'verify_spotify_student': "Spotify Student",
             'verify_bolt_teacher': "Bolt.new Teacher", 'verify_youtube_student': "YouTube Student",
@@ -455,6 +467,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
             'admin_unblock': ("Vui lòng nhập ID người dùng cần bỏ chặn:", 'admin_unblock_step_1'),
             'admin_broadcast': ("Vui lòng nhập nội dung thông báo muốn gửi:", 'admin_broadcast_step_1'),
             'admin_gen_key': ("Vui lòng nhập mã thẻ (ví dụ: VIP2024):", 'admin_gen_key_step_1'),
+            'admin_search_user': ("Vui lòng nhập ID hoặc Username người dùng cần tìm:", 'admin_search_step_1'),
         }
 
         if action in admin_prompts:
