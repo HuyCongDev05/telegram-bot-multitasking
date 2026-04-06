@@ -13,12 +13,16 @@ diện điều khiển (UI) trực quan.
 
 ### ✨ Tính Năng Nổi Bật
 
+- 🌐 **Đa ngôn ngữ Anh/Việt**: User mới sẽ được hỏi chọn ngôn ngữ ngay lần đầu dùng bot. User cũ chưa có
+  `language` cũng sẽ tự động được yêu cầu chọn lại, và hệ thống sẽ ghi nhớ trong MySQL (`users.language`) cho các lần
+  vào sau.
 - 🚀 **Xác thực SheerID tự động**: Hỗ trợ ChatGPT, Spotify, YouTube, Bolt.new... Hoàn tất tạo thông tin và gửi xác thực
   chỉ với một hành động.
 - 🎮 **Discord Quest Auto**: Tự động hoàn thành các Quest trên Discord để nhận thưởng mà không cần thao tác tay.
-- 🎬 **Check Cookie Netflix**: Kiểm tra nhanh tình trạng cookie Netflix, trả về thông tin gói, email, quốc gia và trạng
+- 🍪 **Lấy Cookie Netflix**: Trích xuất nhanh cookie chuẩn gồm `NetflixId` và `SecureNetflixId` từ text hoặc file.
+- ✅ **Check Cookie Netflix**: Kiểm tra nhanh tình trạng cookie Netflix, trả về thông tin gói, email, quốc gia và trạng
   thái tài khoản.
-- 🔗 **Netflix App Link**: Chuyển đổi Netflix Cookie thành URL đăng nhập ứng dụng (App Login) cực nhanh.
+- 📱 **Login App Netflix**: Chuyển đổi Netflix Cookie thành URL đăng nhập ứng dụng (App Login) cực nhanh.
 - 💳 **Check CC**: Hệ thống kiểm tra thẻ tín dụng an toàn, hỗ trợ lọc và lưu danh sách Live.
 - 🛠️ **Quản trị nâng cao**: Hệ thống bảo trì (Maintenance mode) dịch vụ, tìm kiếm người dùng thông minh và gửi thông báo
   toàn hệ thống.
@@ -39,8 +43,10 @@ Tất cả các lệnh đã được chuẩn hóa sang định dạng `snake_cas
 | `/verify_youtube_premium_student` | YouTube Premium Student | Xác thực     | ✅ Ổn định  |
 | `/verify_bolt_new_teacher`        | Bolt.new Teacher        | Xác thực     | ✅ Ổn định  |
 | `/discord_quest_auto`             | Discord Quest Auto      | Công cụ Play | ✅ Mới      |
+| `/get_cookie_netflix`             | Get Netflix Cookie      | Media        | ✅ Ổn định  |
 | `/check_cookie_netflix`           | Netflix Cookie Checker  | Media        | ✅ Ổn định  |
 | `/convert_netflix_url`            | Netflix Cookie to App   | Media        | ✅ Ổn định  |
+| `/login_app_netflix`              | Netflix Cookie to App   | Media        | ✅ Ổn định  |
 | `/check_cc`                       | Card Checker            | Tiện ích     | ✅ Ổn định  |
 | `/invite`                         | Mời bạn bè              | Hệ thống     | ✅ Ổn định  |
 | `/checkin`                        | Điểm danh hàng ngày     | Hệ thống     | ✅ Ổn định  |
@@ -86,6 +92,10 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
+> Ghi chú:
+> - Chức năng chọn ngôn ngữ không thêm dependency Python mới.
+> - Khi bot khởi động, hệ thống sẽ tự migrate DB nếu bảng `users` chưa có cột `language`.
+
 Sao chép `env.example` thành `.env` và điền:
 
 - `BOT_TOKEN`: Token từ @BotFather.
@@ -96,6 +106,12 @@ Sao chép `env.example` thành `.env` và điền:
 ```bash
 python bot.py
 ```
+
+Sau khi user gửi `/start`:
+
+- User mới sẽ thấy màn hình chọn ngôn ngữ bằng tiếng Anh với 2 nút `🇬🇧 English` và `🇻🇳 Tiếng Việt`.
+- User cũ chưa có `users.language` cũng sẽ bị chặn các flow khác cho tới khi chọn xong.
+- Sau khi chọn, toàn bộ menu và phần lớn tin nhắn hệ thống sẽ hiển thị theo ngôn ngữ đã lưu.
 
 ---
 
@@ -123,8 +139,10 @@ năng:
 │   └── ...
 ├── discordQuestAuto/       # Core Discord Automation
 ├── checkCC/                # Card Checking Engine
-├── checkCookieNetflix/     # Netflix Cookie Checker
-├── utils/                  # Tiện ích & Messages
+├── netflix/                # Netflix Cookie + App Login tools
+├── utils/
+│   ├── i18n.py             # Bản dịch UI + helper đa ngôn ngữ
+│   └── messages.py         # Builder menu/tin nhắn theo ngôn ngữ
 └── ...
 ```
 

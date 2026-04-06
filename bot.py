@@ -17,6 +17,7 @@ from handlers.user_commands import (
     handle_text_input,
     handle_file_input,
     convertNetflixUrl_command,
+    get_cookie_netflix_command,
     invite_command,
     checkin_command,
     balance_command,
@@ -97,6 +98,8 @@ def main():
 
     # Đăng ký lệnh Chuyển đổi Netflix URL
     application.add_handler(CommandHandler("convert_netflix_url", partial(convertNetflixUrl_command, db=db)))
+    application.add_handler(CommandHandler("login_app_netflix", partial(convertNetflixUrl_command, db=db)))
+    application.add_handler(CommandHandler("get_cookie_netflix", partial(get_cookie_netflix_command, db=db)))
 
     # Đăng ký lệnh Check Netflix Cookie
     application.add_handler(CommandHandler("check_cookie_netflix", partial(check_cookie_netflix_command, db=db)))

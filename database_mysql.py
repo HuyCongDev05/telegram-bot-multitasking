@@ -49,6 +49,12 @@ class MySQLDatabase:
         """Lấy kết nối cơ sở dữ liệu"""
         return pymysql.connect(**self.config)
 
+    @staticmethod
+    def _column_exists(cursor, table_name: str, column_name: str) -> bool:
+        """Kiểm tra cột đã tồn tại trong bảng chưa."""
+        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE %s", (column_name,))
+        return cursor.fetchone() is not None
+
     def init_database(self):
         """Khởi tạo cấu trúc các bảng trong cơ sở dữ liệu"""
         conn = self.get_connection()
@@ -73,6 +79,10 @@ class MySQLDatabase:
                 (
                     255
                 ),
+                    language VARCHAR
+                (
+                    10
+                ) NULL,
                     balance INT DEFAULT 1,
                     is_blocked TINYINT
                 (
@@ -92,6 +102,14 @@ class MySQLDatabase:
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+
+            if not self._column_exists(cursor, 'users', 'language'):
+                cursor.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN language VARCHAR(10) NULL AFTER full_name
+                    """
+                )
 
             # Bảng ghi chép mời bạn bè
             cursor.execute(
@@ -340,6 +358,25 @@ class MySQLDatabase:
                 """
             )
 
+            # Bảng lưu kho cookie Netflix
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS netflix_cookies
+                (
+                    id
+                    BIGINT
+                    AUTO_INCREMENT
+                    PRIMARY
+                    KEY,
+                    cookie_text
+                    LONGTEXT
+                    NOT
+                    NULL,
+                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+
             # Bảng dịch vụ bảo trì
             cursor.execute(
                 """
@@ -363,7 +400,7 @@ class MySQLDatabase:
             default_services = [
                 'verify_chatgpt_k12', 'verify_spotify_student', 'verify_bolt_teacher',
                 'verify_youtube_student', 'verify_gemini_pro', 'convert_url_login_app_netflix',
-                'check_cc', 'discord_quest_auto', 'check_cookie_netflix'
+                'check_cc', 'discord_quest_auto', 'check_cookie_netflix', 'get_cookie_netflix'
             ]
             for service in default_services:
                 cursor.execute(
@@ -426,6 +463,50 @@ class MySQLDatabase:
             cursor.close()
             conn.close()
 
+    def update_user_profile(self, user_id: int, username: str, full_name: str) -> bool:
+        """Cập nhật username/full name mới nhất của người dùng."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                """
+                UPDATE users
+                SET username = %s, full_name = %s
+                WHERE user_id = %s
+                """,
+                (username, full_name, user_id),
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Cập nhật hồ sơ người dùng thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def set_user_language(self, user_id: int, language: str) -> bool:
+        """Lưu ngôn ngữ người dùng đã chọn."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                "UPDATE users SET language = %s WHERE user_id = %s",
+                (language, user_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            logger.error(f"Cập nhật ngôn ngữ người dùng thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
     def get_user(self, user_id: int) -> Optional[Dict]:
         """Lấy thông tin người dùng"""
         conn = self.get_connection()
@@ -478,6 +559,13 @@ class MySQLDatabase:
     def user_exists(self, user_id: int) -> bool:
         """Kiểm tra người dùng có tồn tại không"""
         return self.get_user(user_id) is not None
+
+    def get_user_language(self, user_id: int) -> Optional[str]:
+        """Lấy ngôn ngữ đã lưu của người dùng."""
+        user = self.get_user(user_id)
+        if not user:
+            return None
+        return user.get("language")
 
     def is_user_blocked(self, user_id: int) -> bool:
         """Kiểm tra người dùng có bị chặn (blacklisted) không"""
@@ -849,6 +937,75 @@ class MySQLDatabase:
                 (limit,)
             )
             return list(cursor.fetchall())
+        finally:
+            cursor.close()
+            conn.close()
+
+    def add_netflix_cookie(self, cookie_text: str) -> bool:
+        """Lưu một cookie Netflix vào kho."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO netflix_cookies (cookie_text, createdAt)
+                VALUES (%s, NOW())
+                """,
+                (cookie_text,),
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Thêm cookie Netflix thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_netflix_cookies(self, limit: int = 20) -> List[Dict]:
+        """Lấy danh sách cookie Netflix theo thứ tự cũ nhất trước."""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+        try:
+            cursor.execute(
+                """
+                SELECT id, cookie_text, createdAt
+                FROM netflix_cookies
+                ORDER BY createdAt ASC, id ASC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return list(cursor.fetchall())
+        finally:
+            cursor.close()
+            conn.close()
+
+    def delete_netflix_cookie(self, cookie_id: int) -> bool:
+        """Xóa một cookie Netflix khỏi kho."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM netflix_cookies WHERE id = %s", (cookie_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            logger.error(f"Xóa cookie Netflix {cookie_id} thất bại: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def count_netflix_cookies(self) -> int:
+        """Đếm số cookie Netflix hiện có trong kho."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM netflix_cookies")
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
         finally:
             cursor.close()
             conn.close()
