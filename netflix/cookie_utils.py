@@ -1,5 +1,6 @@
 """Utilities for parsing and validating Netflix cookies."""
 
+import hashlib
 import json
 import re
 
@@ -7,48 +8,141 @@ import re
 _MOD_SIG = "687579636f6e676465763035"
 
 REQUIRED_COOKIES = ("NetflixId", "SecureNetflixId")
+KNOWN_COOKIE_KEYS = {
+    "NetflixId",
+    "SecureNetflixId",
+    "nfvdid",
+    "OptanonConsent",
+    "OptanonAlertBoxClosed",
+    "gsid",
+    "dsca",
+    "OTSessionTracking",
+    "memclid",
+    "netflix-sans-bold-3-loaded",
+    "netflix-sans-normal-3-loaded",
+}
+COOKIE_ATTRIBUTE_KEYS = {
+    "path",
+    "domain",
+    "expires",
+    "max-age",
+    "secure",
+    "httponly",
+    "samesite",
+    "priority",
+    "partitioned",
+}
+NOISE_LINE_PATTERNS = (
+    re.compile(r"^(?:[-*]\s*)?valid cookies by\b.*$", re.I),
+    re.compile(r"^(?:[-*]\s*)?(?:join\s+)?telegram\b.*$", re.I),
+    re.compile(r"^(?:[-*]\s*)?@[\w.]+$", re.I),
+    re.compile(r"^(?:[-*]\s*)?(?:https?://)?(?:t\.me|telegram\.me)/\S+$", re.I),
+)
+
+
+def normalize_cookie_domain(domain: str) -> str:
+    """Normalize Netscape cookie domains into a form requests can use."""
+    normalized = (domain or "").strip()
+    if normalized.startswith("#HttpOnly_"):
+        normalized = normalized[len("#HttpOnly_"):]
+    if normalized.startswith(".www."):
+        return "." + normalized[5:]
+    if normalized.startswith("www."):
+        return "." + normalized[4:]
+    return normalized
+
+
+def is_probable_netscape_cookie_line(line: str) -> bool:
+    """Return True when a line looks like a Netscape cookie row."""
+    stripped = (line or "").strip()
+    if not stripped:
+        return False
+    if stripped.startswith("#") and not stripped.startswith("#HttpOnly_"):
+        return False
+
+    fields = re.split(r"\s+", stripped, maxsplit=6)
+    if len(fields) < 7:
+        return False
+
+    domain, flag, path, secure, _expiration, name, _value = fields
+    normalized_domain = normalize_cookie_domain(domain)
+    return (
+            "." in normalized_domain
+            and flag.upper() in {"TRUE", "FALSE"}
+            and secure.upper() in {"TRUE", "FALSE"}
+            and path.startswith("/")
+            and re.fullmatch(r"[A-Za-z0-9_.-]+", name) is not None
+    )
+
+
+def sanitize_cookie_text(text: str) -> str:
+    """Remove common promo/header noise while preserving cookie content."""
+    if not text:
+        return ""
+
+    cleaned_lines = []
+    for raw_line in text.replace("\ufeff", "").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("#") and not line.startswith("#HttpOnly_"):
+            continue
+        if any(pattern.match(line) for pattern in NOISE_LINE_PATTERNS):
+            continue
+        cleaned_lines.append(line)
+
+    return "\n".join(cleaned_lines).strip()
+
+
+def _is_cookie_attribute(name: str) -> bool:
+    return (name or "").strip().lower() in COOKIE_ATTRIBUTE_KEYS
 
 
 def extract_cookie_dict(text: str) -> dict:
     """Normalize cookie text into a name/value dict."""
     cookie_dict = {}
+    normalized_text = sanitize_cookie_text(text)
 
     try:
-        data = json.loads(text)
+        data = json.loads(normalized_text)
         if isinstance(data, list):
             for item in data:
-                if isinstance(item, dict) and "name" in item and "value" in item:
+                if (
+                        isinstance(item, dict)
+                        and "name" in item
+                        and "value" in item
+                        and not _is_cookie_attribute(item["name"])
+                ):
                     cookie_dict[item["name"]] = str(item["value"])
             if cookie_dict:
                 return cookie_dict
         elif isinstance(data, dict):
             for key, value in data.items():
-                if isinstance(value, (str, int, float, bool)):
+                if isinstance(value, (str, int, float, bool)) and not _is_cookie_attribute(key):
                     cookie_dict[key] = str(value)
             if cookie_dict:
                 return cookie_dict
     except json.JSONDecodeError:
         pass
 
-    for match in re.finditer(r"([a-zA-Z0-9_.-]+)=([^;\s]+)", text):
-        cookie_dict[match.group(1)] = match.group(2)
+    for line in normalized_text.splitlines():
+        if not is_probable_netscape_cookie_line(line):
+            continue
+        fields = re.split(r"\s+", line, maxsplit=6)
+        cookie_dict[fields[5]] = fields[6]
 
-    tokens = text.split()
-    known_keys = {
-        "NetflixId",
-        "SecureNetflixId",
-        "nfvdid",
-        "OptanonConsent",
-        "OptanonAlertBoxClosed",
-        "gsid",
-        "dsca",
-        "OTSessionTracking",
-        "memclid",
-        "netflix-sans-bold-3-loaded",
-        "netflix-sans-normal-3-loaded",
-    }
+    if cookie_dict:
+        return cookie_dict
+
+    for match in re.finditer(r"([a-zA-Z0-9_.-]+)=([^;\s]+)", normalized_text):
+        key = match.group(1)
+        if _is_cookie_attribute(key):
+            continue
+        cookie_dict[key] = match.group(2)
+
+    tokens = normalized_text.split()
     for index, token in enumerate(tokens):
-        if token in known_keys and index + 1 < len(tokens) and tokens[index + 1] not in known_keys:
+        if token in KNOWN_COOKIE_KEYS and index + 1 < len(tokens) and tokens[index + 1] not in KNOWN_COOKIE_KEYS:
             cookie_dict[token] = tokens[index + 1]
 
     return cookie_dict
@@ -56,10 +150,11 @@ def extract_cookie_dict(text: str) -> dict:
 
 def validate_netflix_cookie(text: str) -> tuple:
     """Validate whether the cookie text contains the required Netflix keys."""
-    if not text or not text.strip():
+    normalized_text = sanitize_cookie_text(text)
+    if not normalized_text:
         return False, "Nội dung cookie trống."
 
-    cookie_dict = extract_cookie_dict(text.strip())
+    cookie_dict = extract_cookie_dict(normalized_text)
     missing = [name for name in REQUIRED_COOKIES if not cookie_dict.get(name)]
     if missing:
         return (
@@ -81,3 +176,31 @@ def build_cookie_header(cookie_dict, required_only: bool = False):
     else:
         items = list(cookie_dict.items())
     return "; ".join(f"{key}={value}" for key, value in items)
+
+
+def build_cookie_fingerprint(cookie_input) -> str:
+    """Build a stable fingerprint for duplicate detection."""
+    if isinstance(cookie_input, dict):
+        cookie_dict = {
+            str(key): str(value)
+            for key, value in cookie_input.items()
+            if value is not None and not _is_cookie_attribute(str(key))
+        }
+    else:
+        cookie_dict = extract_cookie_dict(cookie_input)
+
+    preferred_items = [(key, cookie_dict.get(key, "")) for key in REQUIRED_COOKIES if cookie_dict.get(key)]
+    if preferred_items:
+        canonical_items = preferred_items
+    else:
+        canonical_items = sorted(
+            (key, value)
+            for key, value in cookie_dict.items()
+            if value is not None and not _is_cookie_attribute(key)
+        )
+
+    if not canonical_items:
+        return ""
+
+    canonical_text = json.dumps(canonical_items, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()

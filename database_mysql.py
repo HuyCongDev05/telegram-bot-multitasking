@@ -10,6 +10,8 @@ import pymysql
 from dotenv import load_dotenv
 from pymysql.cursors import DictCursor
 
+from netflix.cookie_utils import build_cookie_fingerprint, sanitize_cookie_text
+
 # Tải biến môi trường
 load_dotenv()
 
@@ -54,6 +56,39 @@ class MySQLDatabase:
         """Kiểm tra cột đã tồn tại trong bảng chưa."""
         cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE %s", (column_name,))
         return cursor.fetchone() is not None
+
+    @staticmethod
+    def _index_exists(cursor, table_name: str, index_name: str) -> bool:
+        """Kiểm tra index đã tồn tại trong bảng chưa."""
+        cursor.execute(f"SHOW INDEX FROM `{table_name}` WHERE Key_name = %s", (index_name,))
+        return cursor.fetchone() is not None
+
+    def _backfill_netflix_cookie_fingerprints(self, cursor) -> None:
+        """Populate cookie fingerprints and remove duplicates, keeping the oldest row."""
+        cursor.execute(
+            """
+            SELECT id, cookie_text
+            FROM netflix_cookies
+            ORDER BY createdAt ASC, id ASC
+            """
+        )
+        rows = cursor.fetchall()
+        seen_fingerprints = set()
+
+        for row_id, cookie_text in rows:
+            fingerprint = build_cookie_fingerprint(cookie_text)
+            if not fingerprint:
+                continue
+
+            if fingerprint in seen_fingerprints:
+                cursor.execute("DELETE FROM netflix_cookies WHERE id = %s", (row_id,))
+                continue
+
+            seen_fingerprints.add(fingerprint)
+            cursor.execute(
+                "UPDATE netflix_cookies SET cookie_fingerprint = %s WHERE id = %s",
+                (fingerprint, row_id),
+            )
 
     def init_database(self):
         """Khởi tạo cấu trúc các bảng trong cơ sở dữ liệu"""
@@ -376,6 +411,24 @@ class MySQLDatabase:
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+
+            if not self._column_exists(cursor, 'netflix_cookies', 'cookie_fingerprint'):
+                cursor.execute(
+                    """
+                    ALTER TABLE netflix_cookies
+                        ADD COLUMN cookie_fingerprint VARCHAR(64) NULL AFTER cookie_text
+                    """
+                )
+
+            self._backfill_netflix_cookie_fingerprints(cursor)
+
+            if not self._index_exists(cursor, 'netflix_cookies', 'uniq_netflix_cookie_fingerprint'):
+                cursor.execute(
+                    """
+                    ALTER TABLE netflix_cookies
+                        ADD UNIQUE KEY uniq_netflix_cookie_fingerprint (cookie_fingerprint)
+                    """
+                )
 
             # Bảng dịch vụ bảo trì
             cursor.execute(
@@ -941,27 +994,51 @@ class MySQLDatabase:
             cursor.close()
             conn.close()
 
-    def add_netflix_cookie(self, cookie_text: str) -> bool:
-        """Lưu một cookie Netflix vào kho."""
+    def save_netflix_cookie(self, cookie_text: str) -> str:
+        """Lưu một cookie Netflix vào kho, trả về trạng thái kết quả."""
+        normalized_cookie_text = sanitize_cookie_text(cookie_text)
+        if not normalized_cookie_text:
+            logger.warning("Bỏ qua cookie Netflix rỗng sau khi làm sạch.")
+            return "invalid"
+
+        cookie_fingerprint = build_cookie_fingerprint(normalized_cookie_text)
+        if not cookie_fingerprint:
+            logger.warning("Bỏ qua cookie Netflix không tạo được fingerprint.")
+            return "invalid"
+
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute(
+                "SELECT id FROM netflix_cookies WHERE cookie_fingerprint = %s LIMIT 1",
+                (cookie_fingerprint,),
+            )
+            if cursor.fetchone():
+                return "duplicate"
+
+            cursor.execute(
                 """
-                INSERT INTO netflix_cookies (cookie_text, createdAt)
-                VALUES (%s, NOW())
+                INSERT INTO netflix_cookies (cookie_text, cookie_fingerprint, createdAt)
+                VALUES (%s, %s, NOW())
                 """,
-                (cookie_text,),
+                (normalized_cookie_text, cookie_fingerprint),
             )
             conn.commit()
-            return True
+            return "stored"
+        except pymysql.err.IntegrityError:
+            conn.rollback()
+            return "duplicate"
         except Exception as e:
             logger.error(f"Thêm cookie Netflix thất bại: {e}")
             conn.rollback()
-            return False
+            return "error"
         finally:
             cursor.close()
             conn.close()
+
+    def add_netflix_cookie(self, cookie_text: str) -> bool:
+        """Lưu một cookie Netflix vào kho."""
+        return self.save_netflix_cookie(cookie_text) == "stored"
 
     def get_netflix_cookies(self, limit: int = 20) -> List[Dict]:
         """Lấy danh sách cookie Netflix theo thứ tự cũ nhất trước."""

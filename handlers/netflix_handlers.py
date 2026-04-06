@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import zipfile
 from html import escape
@@ -8,7 +9,7 @@ from telegram.ext import ContextTypes
 
 from config import ADMIN_USER_ID, VERIFY_COST
 from database_mysql import Database
-from netflix.cookie_utils import validate_netflix_cookie
+from netflix.cookie_utils import sanitize_cookie_text, validate_netflix_cookie
 from netflix.netflix_checker import NetflixChecker, NetscapeConverter
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.messages import get_back_admin_button_label, get_ui_label
@@ -378,7 +379,7 @@ COUNTRY_MAP = {
     },
 }
 
-MAX_UPLOAD_COOKIES = 20
+MAX_UPLOAD_COOKIES = 50
 MAX_FETCH_RECHECKS = 20
 FETCH_BATCH_SIZE = 5
 
@@ -447,12 +448,12 @@ def _get_cookie_error_message(result: dict, language: str = DEFAULT_LANGUAGE) ->
 
 
 def _normalize_cookie_content(cookie_content: str):
-    storage_cookie_text = cookie_content.strip()
-    is_valid, error_message = validate_netflix_cookie(cookie_content)
+    storage_cookie_text = sanitize_cookie_text(cookie_content)
+    is_valid, error_message = validate_netflix_cookie(storage_cookie_text)
     if not is_valid:
         return None, None, error_message
 
-    cookies = NetscapeConverter.convert_to_json(cookie_content)
+    cookies = NetscapeConverter.convert_to_json(storage_cookie_text)
     if not cookies:
         return None, None, "❌ Không đọc được cookie Netflix từ nội dung đã gửi."
 
@@ -541,6 +542,145 @@ def _extract_cookie_entries(file_name: str, file_bytes: bytes):
         return None, 0, "❌ File cookie trống, vui lòng kiểm tra lại."
 
     return [(file_name or "netflix.txt", content)], 0, ""
+
+
+def _run_admin_cookie_batch(db: Database, entries, language: str):
+    checked = 0
+    stored = 0
+    rejected = 0
+    errors = 0
+    rejected_details = []
+    duplicate_reason = "Cookie already exists in inventory." if language == 'en' else "Cookie đã trùng trong kho."
+
+    for entry_name, cookie_content in entries:
+        checked += 1
+
+        if not cookie_content:
+            errors += 1
+            continue
+
+        success, result, stored_cookie_text, _ = _check_cookie_content(db, cookie_content)
+        if not success:
+            rejected += 1
+            if len(rejected_details) < 5:
+                cookie_name = entry_name or f"cookie_{checked}.txt"
+                reason = _get_cookie_error_message(result, language)
+                rejected_details.append(f"- <code>{escape(cookie_name)}</code>: {escape(reason)}")
+            continue
+
+        save_status = db.save_netflix_cookie(stored_cookie_text)
+        if save_status == "stored":
+            stored += 1
+        elif save_status == "duplicate":
+            rejected += 1
+            if len(rejected_details) < 5:
+                cookie_name = entry_name or f"cookie_{checked}.txt"
+                rejected_details.append(f"- <code>{escape(cookie_name)}</code>: {escape(duplicate_reason)}")
+        else:
+            errors += 1
+
+    inventory = db.count_netflix_cookies()
+    return {
+        "checked": checked,
+        "stored": stored,
+        "rejected": rejected,
+        "errors": errors,
+        "rejected_details": rejected_details,
+        "inventory": inventory,
+    }
+
+
+def _build_admin_upload_summary(result_summary: dict, ignored_count: int, language: str) -> str:
+    checked = result_summary["checked"]
+    stored = result_summary["stored"]
+    rejected = result_summary["rejected"]
+    errors = result_summary["errors"]
+    rejected_details = result_summary["rejected_details"]
+    inventory = result_summary["inventory"]
+
+    if language == 'en':
+        summary = (
+            "✅ <b>NETFLIX COOKIE UPLOAD COMPLETED</b>\n"
+            f"📂 Read: <code>{checked}</code>\n"
+            f"📥 Stored: <code>{stored}</code>\n"
+            f"🚫 Rejected: <code>{rejected}</code>\n"
+            f"❌ File errors: <code>{errors}</code>\n"
+            f"⏭️ Skipped due to limit: <code>{ignored_count}</code>\n"
+            f"📦 Current inventory: <code>{inventory}</code>"
+        )
+    else:
+        summary = (
+            "✅ <b>HOÀN TẤT NẠP COOKIE NETFLIX</b>\n"
+            f"📂 Đã đọc: <code>{checked}</code>\n"
+            f"📥 Lưu vào kho: <code>{stored}</code>\n"
+            f"🚫 Bị loại: <code>{rejected}</code>\n"
+            f"❌ Lỗi file: <code>{errors}</code>\n"
+            f"⏭️ Bỏ qua do vượt giới hạn: <code>{ignored_count}</code>\n"
+            f"📦 Tồn kho hiện tại: <code>{inventory}</code>"
+        )
+
+    if rejected_details:
+        summary += (
+            "\n📝 Rejected details:\n"
+            if language == 'en'
+            else "\n📝 Chi tiết bị từ chối:\n"
+        )
+        summary += "\n".join(rejected_details)
+
+        remaining_rejected = rejected - len(rejected_details)
+        if remaining_rejected > 0:
+            summary += (
+                f"\n...and <code>{remaining_rejected}</code> more rejected cookies."
+                if language == 'en'
+                else f"\n...và còn <code>{remaining_rejected}</code> cookie bị từ chối khác."
+            )
+
+    return summary
+
+
+async def _run_admin_cookie_upload_task(
+        context: ContextTypes.DEFAULT_TYPE,
+        db: Database,
+        chat_id: int,
+        progress_message_id: int,
+        source_message_id: int,
+        entries,
+        ignored_count: int,
+        language: str,
+):
+    try:
+        result_summary = await asyncio.to_thread(_run_admin_cookie_batch, db, entries, language)
+        reply_markup = InlineKeyboardMarkup(
+            [[InlineKeyboardButton(get_back_admin_button_label(language), callback_data='admin_menu')]]
+        )
+        await context.bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=progress_message_id,
+            text=_build_admin_upload_summary(result_summary, ignored_count, language),
+            parse_mode='HTML',
+            reply_markup=reply_markup,
+        )
+    except Exception as exc:
+        logger.exception("Lỗi khi xử lý upload cookie Netflix nền: %s", exc)
+        error_text = (
+            "❌ An error occurred while uploading Netflix cookies. Please try again later."
+            if language == 'en'
+            else "❌ Có lỗi xảy ra khi nạp cookie Netflix. Vui lòng thử lại sau."
+        )
+        try:
+            await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=progress_message_id,
+                text=error_text,
+            )
+        except Exception:
+            pass
+    finally:
+        if source_message_id:
+            try:
+                await context.bot.delete_message(chat_id=chat_id, message_id=source_message_id)
+            except Exception:
+                pass
 
 
 async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
@@ -648,6 +788,113 @@ async def process_admin_netflix_cookie_upload(
         await processing_msg.edit_text(error_message, reply_markup=reply_markup, parse_mode='HTML')
         return
 
+    context.application.create_task(
+        _run_admin_cookie_upload_task(
+            context=context,
+            db=db,
+            chat_id=processing_msg.chat_id,
+            progress_message_id=processing_msg.message_id,
+            source_message_id=message.message_id if message else 0,
+            entries=entries,
+            ignored_count=ignored_count,
+            language=language,
+        )
+    )
+    return
+
+    result_summary = await asyncio.to_thread(_run_admin_cookie_batch, db, entries, language)
+    checked = result_summary["checked"]
+    stored = result_summary["stored"]
+    rejected = result_summary["rejected"]
+    errors = result_summary["errors"]
+    rejected_details = result_summary["rejected_details"]
+    inventory = result_summary["inventory"]
+
+    clean_reply_markup = InlineKeyboardMarkup(
+        [[InlineKeyboardButton(get_back_admin_button_label(language), callback_data='admin_menu')]]
+    )
+    clean_summary = (
+        "✅ <b>NETFLIX COOKIE UPLOAD COMPLETED</b>\n"
+        f"Read: <code>{checked}</code>\n"
+        f"Stored: <code>{stored}</code>\n"
+        f"Dead/invalid: <code>{rejected}</code>\n"
+        f"File errors: <code>{errors}</code>\n"
+        f"Skipped due to limit: <code>{ignored_count}</code>\n"
+        f"Current inventory: <code>{inventory}</code>"
+        if language == 'en' else
+        "✅ <b>HOAN TAT NAP COOKIE NETFLIX</b>\n"
+        f"Da doc: <code>{checked}</code>\n"
+        f"Luu vao kho: <code>{stored}</code>\n"
+        f"Die/khong xem duoc: <code>{rejected}</code>\n"
+        f"Loi file: <code>{errors}</code>\n"
+        f"Bo qua do vuot gioi han: <code>{ignored_count}</code>\n"
+        f"Ton kho hien tai: <code>{inventory}</code>"
+    )
+    if rejected_details:
+        clean_summary += (
+            "\nRejected details:\n"
+            if language == 'en' else
+            "\nChi tiet bi tu choi:\n"
+        )
+        clean_summary += "\n".join(rejected_details)
+        remaining_rejected = rejected - len(rejected_details)
+        if remaining_rejected > 0:
+            clean_summary += (
+                f"\n...and <code>{remaining_rejected}</code> more rejected cookies."
+                if language == 'en' else
+                f"\n...va con <code>{remaining_rejected}</code> cookie bi tu choi khac."
+            )
+
+    await processing_msg.edit_text(clean_summary, parse_mode='HTML', reply_markup=clean_reply_markup)
+    await _delete_source_message(update)
+    return
+
+    reply_markup = InlineKeyboardMarkup(
+        [[InlineKeyboardButton(get_back_admin_button_label(language), callback_data='admin_menu')]]
+    )
+    summary = (
+        "âœ… <b>NETFLIX COOKIE UPLOAD COMPLETED</b>\n"
+        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"ðŸ“‚ Read: <code>{checked}</code>\n"
+        f"âž• Stored: <code>{stored}</code>\n"
+        f"ðŸš« Dead/invalid: <code>{rejected}</code>\n"
+        f"âŒ File errors: <code>{errors}</code>\n"
+        f"â­ Skipped due to limit: <code>{ignored_count}</code>\n"
+        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"ðŸ“¦ Current inventory: <code>{inventory}</code>"
+        if language == 'en' else
+        "âœ… <b>HOÃ€N Táº¤T Náº P COOKIE NETFLIX</b>\n"
+        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"ðŸ“‚ ÄÃ£ Ä‘á»c: <code>{checked}</code>\n"
+        f"âž• LÆ°u vÃ o kho: <code>{stored}</code>\n"
+        f"ðŸš« Die/khÃ´ng xem Ä‘Æ°á»£c: <code>{rejected}</code>\n"
+        f"âŒ Lá»—i file: <code>{errors}</code>\n"
+        f"â­ Bá» qua do vÆ°á»£t giá»›i háº¡n: <code>{ignored_count}</code>\n"
+        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"ðŸ“¦ Tá»“n kho hiá»‡n táº¡i: <code>{inventory}</code>"
+    )
+    if rejected_details:
+        summary += (
+            "\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+            "ðŸ“ Rejected details:\n"
+            if language == 'en' else
+            "\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+            "ðŸ“ Chi tiáº¿t bá»‹ tá»« chá»‘i:\n"
+        )
+        summary += "\n".join(rejected_details)
+
+        remaining_rejected = rejected - len(rejected_details)
+        if remaining_rejected > 0:
+            summary += (
+                f"\n...and <code>{remaining_rejected}</code> more rejected cookies."
+                if language == 'en' else
+                f"\n...vÃ  cÃ²n <code>{remaining_rejected}</code> cookie bá»‹ tá»« chá»‘i khÃ¡c."
+            )
+
+    await processing_msg.edit_text(summary, parse_mode='HTML', reply_markup=reply_markup)
+    await _delete_source_message(update)
+    return
+
     checked = 0
     stored = 0
     rejected = 0
@@ -740,6 +987,19 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
             )
         return
 
+    user = db.get_user(user_id)
+    if user['balance'] < VERIFY_COST:
+        if update.effective_message:
+            await update.effective_message.reply_text(
+                (
+                    f"❌ Insufficient balance! Each request costs <b>{VERIFY_COST} points</b>. Current balance: {user['balance']} points."
+                    if language == 'en'
+                    else f"❌ Số dư không đủ! Mỗi lần lấy cookie tốn <b>{VERIFY_COST} điểm</b>. Hiện có: {user['balance']} điểm."
+                ),
+                parse_mode='HTML',
+            )
+        return
+
     message = update.effective_message
     processing_msg = await message.reply_text(
         "⏳ Finding a live Netflix cookie for you..." if language == 'en'
@@ -761,6 +1021,17 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
                 db.delete_netflix_cookie(cookie_row['id'])
                 continue
 
+            if not db.deduct_balance(user_id, VERIFY_COST):
+                await processing_msg.edit_text(
+                    (
+                        "❌ Failed to deduct points. Please try again later."
+                        if language == 'en'
+                        else "❌ Không thể trừ điểm. Vui lòng thử lại sau."
+                    )
+                )
+                await show_main_menu_after_delay(update, context, db)
+                return
+
             cookie_file = BytesIO(cookie_text.encode('utf-8'))
             cookie_file.name = "netflix.txt"
 
@@ -769,7 +1040,13 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
                 caption=_build_cookie_result_text(result, language),
                 parse_mode='HTML',
             )
-            await processing_msg.edit_text("✅ Sent 1 live Netflix cookie." if language == 'en' else "✅ Đã gửi 1 cookie Netflix live.")
+            await processing_msg.edit_text(
+                (
+                    f"✅ Sent 1 live Netflix cookie.\n💰 Deducted: {VERIFY_COST} points\n💰 Remaining balance: {db.get_user(user_id)['balance']} points"
+                    if language == 'en'
+                    else f"✅ Đã gửi 1 cookie Netflix live.\n💰 Đã trừ: {VERIFY_COST} điểm\n💰 Số dư còn lại: {db.get_user(user_id)['balance']} điểm"
+                )
+            )
             await show_main_menu_after_delay(update, context, db)
             return
 

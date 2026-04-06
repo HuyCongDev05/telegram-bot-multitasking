@@ -7,7 +7,12 @@ import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import ConnectionError, RequestException
 
-from netflix.cookie_utils import extract_cookie_dict
+from netflix.cookie_utils import (
+    extract_cookie_dict,
+    is_probable_netscape_cookie_line,
+    normalize_cookie_domain,
+    sanitize_cookie_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +26,7 @@ class NetscapeConverter:
     @staticmethod
     def is_json(content):
         try:
-            json.loads(content)
+            json.loads(sanitize_cookie_text(content))
             return True
         except Exception:
             return False
@@ -29,28 +34,28 @@ class NetscapeConverter:
     @staticmethod
     def convert_to_json(content):
         """Convert Netscape cookie content into a list of cookie dicts."""
+        content = sanitize_cookie_text(content)
         if NetscapeConverter.is_json(content):
             return json.loads(content)
 
         cookies = []
         for line in content.splitlines():
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not is_probable_netscape_cookie_line(line):
                 continue
 
-            fields = re.split(r"\s+", line)
-            if len(fields) >= 7:
-                cookies.append(
-                    {
-                        "domain": fields[0].replace("www", ""),
-                        "flag": fields[1],
-                        "path": fields[2],
-                        "secure": fields[3].upper() == "TRUE",
-                        "expiration": fields[4],
-                        "name": fields[5],
-                        "value": fields[6],
-                    }
-                )
+            fields = re.split(r"\s+", line, maxsplit=6)
+            cookies.append(
+                {
+                    "domain": normalize_cookie_domain(fields[0]),
+                    "flag": fields[1],
+                    "path": fields[2],
+                    "secure": fields[3].upper() == "TRUE",
+                    "expiration": fields[4],
+                    "name": fields[5],
+                    "value": fields[6],
+                }
+            )
         if cookies:
             return cookies
 
