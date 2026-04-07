@@ -151,6 +151,14 @@ TRANSLATIONS = {
             "- Mời bạn bè\n"
             "- Nạp điểm"
         ),
+        "discord.balance.insufficient": (
+            "Số dư không đủ! Cần 💰 <b>{cost} điểm</b> để sử dụng Discord Quest Auto.\n\n"
+            "Hiện có: 💰 <b>{current_balance} điểm</b>\n\n"
+            "Cách nhận thêm điểm:\n"
+            "- Điểm danh hằng ngày\n"
+            "- Mời bạn bè\n"
+            "- Nạp thêm điểm"
+        ),
         "checks.group": (
             "⚠️ <b>Bot không hỗ trợ xử lý trong Nhóm.</b>\n\n"
             "Vui lòng nhấn vào @{bot_username} để nhắn tin riêng (Inbox) và sử dụng đầy đủ các tính năng xác thực, nạp điểm, v.v."
@@ -318,6 +326,14 @@ TRANSLATIONS = {
         ),
         "balance.insufficient": (
             "Insufficient balance! Need 💰 {verify_cost} points, you currently have 💰 {current_balance} points.\n\n"
+            "Ways to get points:\n"
+            "- Daily check-in\n"
+            "- Invite friends\n"
+            "- Top up"
+        ),
+        "discord.balance.insufficient": (
+            "Insufficient balance! Need 💰 <b>{cost} points</b> to use Discord Quest Auto.\n\n"
+            "Current balance: 💰 <b>{current_balance} points</b>\n\n"
             "Ways to get points:\n"
             "- Daily check-in\n"
             "- Invite friends\n"

@@ -294,11 +294,21 @@ def get_help_message(language: str = DEFAULT_LANGUAGE) -> str:
 
 
 def get_insufficient_balance_message(current_balance: int, language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn số dư không đủ."""
+    """Tin nhắn số dư không đủ dùng chung cho xác thực 2 điểm."""
     return tr(
         language,
         "balance.insufficient",
         verify_cost=VERIFY_COST,
+        current_balance=current_balance,
+    )
+
+
+def get_discord_insufficient_balance_message(current_balance: int, language: str = DEFAULT_LANGUAGE) -> str:
+    """Tin nhắn số dư không đủ cho Discord Quest Auto (5 điểm)."""
+    return tr(
+        language,
+        "discord.balance.insufficient",
+        cost=DISCORD_QUEST_COST,
         current_balance=current_balance,
     )
 

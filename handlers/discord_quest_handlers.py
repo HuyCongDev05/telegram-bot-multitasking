@@ -9,9 +9,9 @@ from config import DISCORD_QUEST_COST
 from database_mysql import Database
 from discordQuestAuto.discordQuestAuto import start_quest_auto
 from handlers.user_commands import is_user_busy, send_or_reply, show_main_menu_after_delay
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.checks import is_not_blocked, check_maintenance
-from utils.messages import get_insufficient_balance_message, get_ui_label
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language
+from utils.messages import get_discord_insufficient_balance_message, get_ui_label
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,8 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
     user = db.get_user(user_id)
     
     if user["balance"] < DISCORD_QUEST_COST:
-        await send_or_reply(update, context, get_insufficient_balance_message(user["balance"], language), parse_mode='HTML')
+        await send_or_reply(update, context, get_discord_insufficient_balance_message(user["balance"], language),
+                            parse_mode='HTML')
         await show_main_menu_after_delay(
             update,
             context,

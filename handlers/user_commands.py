@@ -9,14 +9,13 @@ from telegram.ext import ContextTypes
 from config import ADMIN_USER_ID
 from config import VERIFY_COST
 from database_mysql import Database
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language, normalize_language, tr
 from utils.checks import is_not_blocked
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language, normalize_language, tr
 from utils.messages import (
     get_admin_key_keyboard,
     get_admin_key_menu_message,
     get_back_admin_button_label,
     get_back_main_button_label,
-    get_back_button_label,
     get_language_selection_keyboard,
     get_language_selection_message,
     get_service_display_name,

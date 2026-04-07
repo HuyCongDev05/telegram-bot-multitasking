@@ -1040,16 +1040,17 @@ class MySQLDatabase:
         """Lưu một cookie Netflix vào kho."""
         return self.save_netflix_cookie(cookie_text) == "stored"
 
-    def get_netflix_cookies(self, limit: int = 20) -> List[Dict]:
-        """Lấy danh sách cookie Netflix theo thứ tự cũ nhất trước."""
+    def get_netflix_cookies(self, limit: int = 20, randomize: bool = False) -> List[Dict]:
+        """Lấy danh sách cookie Netflix."""
+        order_clause = "ORDER BY RAND()" if randomize else "ORDER BY createdAt ASC, id ASC"
         conn = self.get_connection()
         cursor = conn.cursor(DictCursor)
         try:
             cursor.execute(
-                """
+                f"""
                 SELECT id, cookie_text, createdAt
                 FROM netflix_cookies
-                ORDER BY createdAt ASC, id ASC
+                {order_clause}
                 LIMIT %s
                 """,
                 (limit,),

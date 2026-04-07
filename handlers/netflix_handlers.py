@@ -1009,7 +1009,7 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
     checked_count = 0
     while checked_count < MAX_FETCH_RECHECKS:
         batch_size = min(FETCH_BATCH_SIZE, MAX_FETCH_RECHECKS - checked_count)
-        cookie_rows = db.get_netflix_cookies(limit=batch_size)
+        cookie_rows = db.get_netflix_cookies(limit=batch_size, randomize=True)
         if not cookie_rows:
             break
 
