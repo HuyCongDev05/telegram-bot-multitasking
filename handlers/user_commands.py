@@ -1216,15 +1216,15 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
     # --- Luồng Lấy Cookie Netflix ---
     if next_step == 'admin_upload_netflix_cookies_step_1':
-        error_msg = await update.message.reply_text(
-            (
-                "Please upload a .txt or .zip file containing Netflix cookies instead of plain text."
-                if language == 'en'
-                else "Vui long gui file .txt hoac .zip chua cookie Netflix, khong nhap van ban."
-            ),
-            reply_markup=ForceReply(selective=True),
+        if not is_admin:
+            return
+        await cleanup_after_input(force=True)
+        from handlers.netflix_handlers import process_admin_netflix_cookie_upload
+        await process_admin_netflix_cookie_upload(
+            update, context, db,
+            file_name="netflix.txt",
+            file_bytes=user_input.encode('utf-8'),
         )
-        register_cleanup_message(context, error_msg.message_id)
         return
 
     # --- Luồng Check Netflix Cookie ---
@@ -1533,12 +1533,14 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"🎬 <b>Your Netflix app login link:</b>\n"
                 f"<code>{result_url}</code>\n\n"
+                f"⏳ <i>This link will expire in <b>60 minutes</b>. Use it as soon as possible!</i>\n"
                 f"💡 <i>Tip: Open this link on a phone that already has the Netflix app installed for automatic sign-in.</i>"
                 if language == 'en'
                 else f"✅ <b>CHUYỂN ĐỔI THÀNH CÔNG!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"🎬 <b>Link đăng nhập App Netflix của bạn:</b>\n"
                 f"<code>{result_url}</code>\n\n"
+                f"⏳ <i>Link này sẽ hết hạn sau <b>60 phút</b>. Hãy sử dụng ngay!</i>\n"
                 f"💡 <i>Mẹo: Hãy nhấn vào link trên điện thoại đã cài sẵn App Netflix để đăng nhập tự động.</i>"
             ),
             parse_mode='HTML',

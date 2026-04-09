@@ -741,16 +741,20 @@ async def upload_netflix_cookies_command(update: Update, context: ContextTypes.D
     prompt_text = (
         "📥 <b>UPLOAD NETFLIX COOKIES</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "Send <b>1 .txt file</b> or <b>1 .zip file</b> containing multiple .txt files.\n"
-        "Each .txt file should contain 1 cookie.\n"
-        f"The system only reads and checks up to <b>{MAX_UPLOAD_COOKIES}</b> cookies per upload.\n"
+        "You can send cookies in 3 ways:\n"
+        "• <b>Paste cookie text</b> directly (1 cookie)\n"
+        "• <b>Send a .txt file</b> (1 cookie per file)\n"
+        "• <b>Send a .zip file</b> containing multiple .txt files\n"
+        f"The system reads up to <b>{MAX_UPLOAD_COOKIES}</b> cookies per upload.\n"
         "Only cookies that can actually watch Netflix will be stored."
         if language == 'en' else
         "📥 <b>NẠP COOKIE NETFLIX</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "Gửi <b>1 file .txt</b> hoặc <b>1 file .zip</b> chứa nhiều file .txt.\n"
-        "Mỗi file .txt tương ứng 1 cookie.\n"
-        f"Hệ thống chỉ đọc và check tối đa <b>{MAX_UPLOAD_COOKIES}</b> cookie mỗi lần nạp.\n"
+        "Bạn có thể gửi cookie theo 3 cách:\n"
+        "• <b>Dán trực tiếp nội dung cookie</b> (1 cookie)\n"
+        "• <b>Gửi file .txt</b> (1 file = 1 cookie)\n"
+        "• <b>Gửi file .zip</b> chứa nhiều file .txt\n"
+        f"Hệ thống chỉ đọc tối đa <b>{MAX_UPLOAD_COOKIES}</b> cookie mỗi lần nạp.\n"
         "Chỉ cookie nào xem được Netflix thật sự mới được lưu vào kho."
     )
     await start_input_flow(

@@ -1,6 +1,7 @@
 """Netflix auto-login token generation."""
 
 import json
+import urllib.parse
 
 import requests
 
@@ -32,7 +33,8 @@ PAYLOAD = {
 
 def build_nftoken_link(token):
     """Create a Netflix app-login URL from the returned token."""
-    return "https://netflix.com/?nftoken=" + token
+    encoded_token = urllib.parse.quote(token, safe="")
+    return "https://www.netflix.com/YourAccount?nftoken=" + encoded_token
 
 
 def fetch_nftoken(cookie_dict):
