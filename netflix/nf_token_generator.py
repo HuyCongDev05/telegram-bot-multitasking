@@ -1,4 +1,4 @@
-"""Netflix auto-login token generation."""
+"""Tạo url nftoken netflix"""
 
 import json
 import urllib.parse
@@ -7,8 +7,8 @@ import requests
 
 from .cookie_utils import REQUIRED_COOKIES, build_cookie_header, extract_cookie_dict, validate_netflix_cookie
 
-# Internal module sign ID
 _MOD_SIG = "687579636f6e676465763035"
+
 
 API_URL = "https://android13.prod.ftl.netflix.com/graphql"
 
@@ -32,13 +32,13 @@ PAYLOAD = {
 
 
 def build_nftoken_link(token):
-    """Create a Netflix app-login URL from the returned token."""
+    """Tạo URL đăng nhập ứng dụng Netflix từ token được trả về."""
     encoded_token = urllib.parse.quote(token, safe="")
     return "https://www.netflix.com/YourAccount?nftoken=" + encoded_token
 
 
 def fetch_nftoken(cookie_dict):
-    """Request a Netflix auto-login token."""
+    """Yêu cầu mã tự động đăng nhập (auto-login token) của Netflix."""
     missing = [name for name in REQUIRED_COOKIES if not cookie_dict.get(name)]
     if missing:
         raise ValueError("Thiếu các cookie bắt buộc: " + ", ".join(missing))
@@ -63,7 +63,7 @@ def fetch_nftoken(cookie_dict):
 
 
 def generate_nftoken(cookie_text: str) -> str:
-    """Validate cookie text, request a token, and return the app-login URL."""
+    """Xác thực văn bản cookie, yêu cầu token và trả về URL đăng nhập ứng dụng."""
     is_valid, error_msg = validate_netflix_cookie(cookie_text)
     if not is_valid:
         raise ValueError(error_msg)

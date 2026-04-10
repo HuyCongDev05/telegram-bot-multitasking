@@ -9,7 +9,6 @@ from utils.messages import get_maintenance_keyboard, get_service_display_name
 
 logger = logging.getLogger(__name__)
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 

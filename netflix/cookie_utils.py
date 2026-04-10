@@ -1,10 +1,9 @@
-"""Utilities for parsing and validating Netflix cookies."""
+"""Các tiện ích để phân tích và xác thực cookie của Netflix."""
 
 import hashlib
 import json
 import re
 
-# Internal module sign ID
 _MOD_SIG = "687579636f6e676465763035"
 
 REQUIRED_COOKIES = ("NetflixId", "SecureNetflixId")
@@ -41,7 +40,7 @@ NOISE_LINE_PATTERNS = (
 
 
 def normalize_cookie_domain(domain: str) -> str:
-    """Normalize Netscape cookie domains into a form requests can use."""
+    """Chuẩn hóa tên miền cookie Netscape sang định dạng mà requests có thể sử dụng."""
     normalized = (domain or "").strip()
     if normalized.startswith("#HttpOnly_"):
         normalized = normalized[len("#HttpOnly_"):]
@@ -53,7 +52,7 @@ def normalize_cookie_domain(domain: str) -> str:
 
 
 def is_probable_netscape_cookie_line(line: str) -> bool:
-    """Return True when a line looks like a Netscape cookie row."""
+    """Trả về True nếu một dòng có vẻ là hàng cookie Netscape."""
     stripped = (line or "").strip()
     if not stripped:
         return False
@@ -76,7 +75,7 @@ def is_probable_netscape_cookie_line(line: str) -> bool:
 
 
 def sanitize_cookie_text(text: str) -> str:
-    """Remove common promo/header noise while preserving cookie content."""
+    """Loại bỏ nhiễu tiêu đề/quảng cáo phổ biến trong khi vẫn giữ nguyên nội dung cookie."""
     if not text:
         return ""
 
@@ -99,7 +98,7 @@ def _is_cookie_attribute(name: str) -> bool:
 
 
 def extract_cookie_dict(text: str) -> dict:
-    """Normalize cookie text into a name/value dict."""
+    """Chuẩn hóa văn bản cookie thành từ điển tên/giá trị (name/value dict)."""
     cookie_dict = {}
     normalized_text = sanitize_cookie_text(text)
 
@@ -149,7 +148,7 @@ def extract_cookie_dict(text: str) -> dict:
 
 
 def validate_netflix_cookie(text: str) -> tuple:
-    """Validate whether the cookie text contains the required Netflix keys."""
+    """Xác thực xem văn bản cookie có chứa các phím Netflix bắt buộc hay không."""
     normalized_text = sanitize_cookie_text(text)
     if not normalized_text:
         return False, "Nội dung cookie trống."
@@ -170,7 +169,7 @@ def validate_netflix_cookie(text: str) -> tuple:
 
 
 def build_cookie_header(cookie_dict, required_only: bool = False):
-    """Build a Cookie header string from the provided cookie mapping."""
+    """Xây dựng chuỗi tiêu đề Cookie từ ánh xạ cookie được cung cấp."""
     if required_only:
         items = [(key, cookie_dict[key]) for key in REQUIRED_COOKIES if cookie_dict.get(key)]
     else:
@@ -179,7 +178,7 @@ def build_cookie_header(cookie_dict, required_only: bool = False):
 
 
 def build_cookie_fingerprint(cookie_input) -> str:
-    """Build a stable fingerprint for duplicate detection."""
+    """Xây dựng dấu vân tay ổn định để phát hiện các trường hợp trùng lặp."""
     if isinstance(cookie_input, dict):
         cookie_dict = {
             str(key): str(value)

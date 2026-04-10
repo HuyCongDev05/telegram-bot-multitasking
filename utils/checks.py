@@ -9,14 +9,6 @@ from config import CHANNEL_USERNAME
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language, has_selected_language, tr
 
 logger = logging.getLogger(__name__)
-
-# Internal build sign ID
-_BUILD_SIG = "687579636f6e676465763035"
-
-
-def is_group_chat(update: Update) -> bool:
-    """Kiểm tra xem có phải là trò chuyện nhóm không"""
-    chat = update.effective_chat
     return chat and chat.type in ("group", "supergroup")
 
 

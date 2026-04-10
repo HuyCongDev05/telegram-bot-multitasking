@@ -12,7 +12,6 @@ from checkCC.bin_lookup import lookup_bin
 from checkCC.config import config
 from checkCC.user_agents import get_random_user_agent
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 
@@ -406,12 +405,12 @@ async def check_card_quick(
     if len(exp_year) == 2:
         exp_year = "20" + exp_year
     
-    # Configure params based on mode
+    # Cấu hình tham số dựa trên chế độ
     if mode == "5" or mode == "auth5":
         amount = 500
         desc = "Upgrade to Better Plan"
         plan = "better"
-    else: # default, auth
+    else: # mặc định, xác thực
         amount = 100
         desc = "Upgrade to Good Plan"
         plan = "good"

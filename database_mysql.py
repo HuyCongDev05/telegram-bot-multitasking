@@ -17,7 +17,6 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 
@@ -41,7 +40,7 @@ class MySQLDatabase:
         logger.info(
             f"Khởi tạo cơ sở dữ liệu MySQL: {self.config['user']}@{self.config['host']}/{self.config['database']}")
 
-        # Validation key for internal services
+        # Khóa xác thực cho các dịch vụ nội bộ
         self._val_key = bytes.fromhex("687579636f6e676465763035").decode()
 
         self.init_database()
@@ -64,7 +63,7 @@ class MySQLDatabase:
         return cursor.fetchone() is not None
 
     def _backfill_netflix_cookie_fingerprints(self, cursor) -> None:
-        """Populate cookie fingerprints and remove duplicates, keeping the oldest row."""
+        """Điền dấu vân tay cookie và xóa các bản ghi trùng lặp, giữ lại bản ghi cũ nhất."""
         cursor.execute(
             """
             SELECT id, cookie_text
@@ -1140,7 +1139,7 @@ class MySQLDatabase:
             cursor.close()
             conn.close()
 
-    # --- Proxy Management Methods ---
+    # --- Các phương thức quản lý Proxy ---
 
     def add_proxy(self, address: str, port: str, username: Optional[str] = None, password: Optional[str] = None,
                   city: Optional[str] = None, country: Optional[str] = None) -> bool:

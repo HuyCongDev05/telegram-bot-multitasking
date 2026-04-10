@@ -26,7 +26,7 @@ diện điều khiển (UI) trực quan.
 - 💳 **Check CC**: Hệ thống kiểm tra thẻ tín dụng an toàn, hỗ trợ lọc và lưu danh sách Live.
 - 🛠️ **Quản trị nâng cao**: Hệ thống bảo trì (Maintenance mode) dịch vụ, tìm kiếm người dùng thông minh và gửi thông báo
   toàn hệ thống.
-- 💰 **check credit card**: Tích hợp hệ thống điểm thưởng, điểm danh hàng ngày và nạp điểm qua mã Key.
+- 💰 **Hệ thống nạp điểm**: Tích hợp hệ thống điểm thưởng, điểm danh hàng ngày và nạp điểm qua mã Key.
 - 🛡️ **Bảo mật tối đa**: Yêu cầu Telegram Username, cơ chế Busy-check (chống trùng lặp tác vụ) và tự dọn dẹp tin nhắn
   nhạy cảm (Tokens/Cookies).
 
@@ -46,8 +46,8 @@ Tất cả các lệnh đã được chuẩn hóa sang định dạng `snake_cas
 | `/get_cookie_netflix`             | Get Netflix Cookie      | Media        | ✅ Ổn định  |
 | `/check_cookie_netflix`           | Netflix Cookie Checker  | Media        | ✅ Ổn định  |
 | `/convert_netflix_url`            | Netflix Cookie to App   | Media        | ✅ Ổn định  |
-| `/login_app_netflix`              | Netflix Cookie to App   | Media        | ✅ Ổn định  |
-| `/check_cc`                       | Card Checker            | Tiện ích     | ✅ Ổn định  |
+| `/login_app_netflix`              | Đăng nhập ứng dụng Netflix | Media        | ✅ Ổn định  |
+| `/check_cc`                       | Kiểm tra thẻ tín dụng   | Tiện ích     | ✅ Ổn định  |
 | `/invite`                         | Mời bạn bè              | Hệ thống     | ✅ Ổn định  |
 | `/checkin`                        | Điểm danh hàng ngày     | Hệ thống     | ✅ Ổn định  |
 | `/balance`                        | Kiểm tra số dư          | Hệ thống     | ✅ Ổn định  |
@@ -134,12 +134,12 @@ năng:
 ├── config.py               # Cấu hình & Điểm thưởng
 ├── database_mysql.py       # Xử lý MySQL (Maintenance, Users, Keys)
 ├── handlers/               # Xử lý Logic Telegram
-│   ├── discord_quest_handlers.py # Discord Quest Logic
-│   ├── maintenance_handlers.py   # Admin Maintenance System
+│   ├── discord_quest_handlers.py # Logic nhiệm vụ Discord
+│   ├── maintenance_handlers.py   # Hệ thống bảo trì của Admin
 │   └── ...
-├── discordQuestAuto/       # Core Discord Automation
-├── checkCC/                # Card Checking Engine
-├── netflix/                # Netflix Cookie + App Login tools
+├── discordQuestAuto/       # Tự động hóa Discord
+├── checkCC/                # Công cụ kiểm tra thẻ
+├── netflix/                # Công cụ Cookie & Đăng nhập App Netflix
 ├── utils/
 │   ├── i18n.py             # Bản dịch UI + helper đa ngôn ngữ
 │   └── messages.py         # Builder menu/tin nhắn theo ngôn ngữ

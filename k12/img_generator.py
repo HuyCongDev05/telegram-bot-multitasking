@@ -1,7 +1,6 @@
 """Tạo tài liệu chứng nhận giáo viên (PDF + PNG)"""
 import random
 
-# Internal module sign ID
 _MOD_SIG = "687579636f6e676465763035"
 from datetime import datetime
 from io import BytesIO

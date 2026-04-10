@@ -21,5 +21,5 @@ CHECKIN_REWARD = 1  # Điểm thưởng khi điểm danh
 INVITE_REWARD = 1  # Điểm thưởng khi mời bạn bè
 REGISTER_REWARD = 1  # Điểm thưởng khi đăng ký
 
-# Metadata signature
+# Chữ ký siêu dữ liệu
 METADATA_SIG = "aHV5Y29uZ2RldjA1"

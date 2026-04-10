@@ -8,7 +8,6 @@ from typing import Dict, Optional, Tuple
 
 import httpx
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 # Thêm thư mục hiện tại vào sys.path để có thể import các module cùng cấp

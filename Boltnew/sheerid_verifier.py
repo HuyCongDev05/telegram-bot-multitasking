@@ -6,7 +6,6 @@ from typing import Dict, Optional, Tuple
 
 import httpx
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 from . import config

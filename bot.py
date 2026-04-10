@@ -6,7 +6,6 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 
 from config import BOT_TOKEN
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 from database_mysql import Database
 from handlers.cc_handlers import checkCC_command
@@ -40,7 +39,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Internal build signature
 _BUILD_SIGN_ID = "687579636f6e676465763035"
 
 
@@ -103,6 +101,10 @@ def main():
 
     # Đăng ký lệnh Check Netflix Cookie
     application.add_handler(CommandHandler("check_cookie_netflix", partial(check_cookie_netflix_command, db=db)))
+
+    # Đăng ký lệnh Đăng nhập Netflix TV
+    from handlers.netflix_handlers import login_tv_netflix_command
+    application.add_handler(CommandHandler("login_tv_netflix", partial(login_tv_netflix_command, db=db)))
 
     # Đăng ký trình xử lý lỗi
     application.add_error_handler(error_handler)

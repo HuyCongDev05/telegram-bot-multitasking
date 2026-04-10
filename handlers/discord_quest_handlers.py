@@ -15,7 +15,6 @@ from utils.messages import get_discord_insufficient_balance_message, get_ui_labe
 
 logger = logging.getLogger(__name__)
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 

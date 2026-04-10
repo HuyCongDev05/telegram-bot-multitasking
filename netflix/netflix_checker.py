@@ -16,12 +16,11 @@ from netflix.cookie_utils import (
 
 logger = logging.getLogger(__name__)
 
-# Internal module sign ID
 _MOD_SIG = "687579636f6e676465763035"
 
 
 class NetscapeConverter:
-    """Convert Netscape cookies into JSON-style cookie dicts."""
+    """Chuyển đổi cookie Netscape thành cấu trúc từ điển (dict) kiểu JSON."""
 
     @staticmethod
     def is_json(content):
@@ -33,7 +32,7 @@ class NetscapeConverter:
 
     @staticmethod
     def convert_to_json(content):
-        """Convert Netscape cookie content into a list of cookie dicts."""
+        """Chuyển đổi nội dung cookie Netscape thành danh sách các từ điển cookie."""
         content = sanitize_cookie_text(content)
         if NetscapeConverter.is_json(content):
             return json.loads(content)
@@ -79,7 +78,7 @@ class NetscapeConverter:
 
 
 class NetflixChecker:
-    """Check Netflix cookies and only accept accounts that are watchable."""
+    """Kiểm tra cookie Netflix và chỉ chấp nhận các tài khoản có thể xem được."""
 
     ERROR_MESSAGES = {
         "cookie_expired_or_invalid": "Cookie expired or invalid",
@@ -107,7 +106,7 @@ class NetflixChecker:
             self.session.proxies = {
                 "http": proxy_url,
                 "https": proxy_url,
-            }
+                }
         self.session.headers.update(
             {
                 "User-Agent": (
@@ -115,7 +114,7 @@ class NetflixChecker:
                     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 ),
                 "Accept-Encoding": "identity",
-            }
+                }
         )
 
     def decode_hex_escapes(self, value):
@@ -161,8 +160,8 @@ class NetflixChecker:
 
     def check(self, cookies_list):
         """
-        Validate a Netflix cookie list.
-        Returns: (True/False, info_dict)
+        Xác thực danh sách cookie Netflix.
+        Trả về: (True/False, info_dict)
         """
         self.session.cookies.clear()
         for cookie in cookies_list:

@@ -36,7 +36,7 @@ from utils.messages import (
 
 logger = logging.getLogger(__name__)
 
-# System command mapping signature
+# Chữ ký định danh ánh xạ lệnh hệ thống
 _CMD_SIG_ID = "68757963-6f6e-6764-6576-3035"
 
 
@@ -1008,6 +1008,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         await _cmd(update, context, db)
         return
 
+    elif action == 'login_tv_netflix':
+        from handlers.netflix_handlers import login_tv_netflix_command as _cmd
+        await _cmd(update, context, db)
+        return
+
     elif action == 'netflix_check':
         from handlers.netflix_handlers import check_cookie_netflix_command as _cmd
         await _cmd(update, context, db)
@@ -1099,7 +1104,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
             await upload_netflix_cookies_command(update, context, db)
 
 
-# --- Text Input Handler ---
+# --- Trình xử lý nhập văn bản ---
 @is_not_blocked
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
     """Xử lý tất cả các tin nhắn văn bản không phải lệnh, dựa trên trạng thái."""
@@ -1225,6 +1230,13 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             file_name="netflix.txt",
             file_bytes=user_input.encode('utf-8'),
         )
+        return
+
+    # --- Luồng Đăng nhập Netflix TV ---
+    if next_step == 'login_tv_netflix_step_1':
+        await cleanup_after_input(force=True)
+        from handlers.netflix_handlers import process_tv_login
+        await process_tv_login(update, context, db, user_input)
         return
 
     # --- Luồng Check Netflix Cookie ---

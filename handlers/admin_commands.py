@@ -15,7 +15,6 @@ from utils.proxy_helper import get_proxy_geoip
 
 logger = logging.getLogger(__name__)
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 

@@ -9,7 +9,6 @@ from typing import Optional, Dict, Any
 
 import aiohttp
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 try:

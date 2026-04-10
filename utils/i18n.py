@@ -18,6 +18,7 @@ TRANSLATIONS = {
         "ui.get_cookie_netflix": "🍪 Lấy Cookie Netflix",
         "ui.check_cookie_netflix": "🍪 Check Cookie Netflix",
         "ui.convert_url_login_app_netflix": "📱 Login App Netflix",
+        "ui.login_tv_netflix": "📺 Đăng nhập Netflix TV",
         "ui.check_cc": "💳 Check CC",
         "ui.discord_quest_auto": "🚀 Discord Quest Auto",
         "ui.invite": "👥 Mời bạn bè",
@@ -91,6 +92,7 @@ TRANSLATIONS = {
         "service.convert_url_login_app_netflix": "Login App Netflix",
         "service.get_cookie_netflix": "Lấy Cookie Netflix",
         "service.check_cookie_netflix_step_1": "Check Cookie Netflix",
+        "service.login_tv_netflix_step_1": "Đăng nhập Netflix TV",
         "service.discord_quest": "Discord Quest Auto",
         "service.check_cc_step_1": "💳 Check CC",
         "service.use_key_step_1": "Nạp mã Key (Nạp điểm)",
@@ -107,6 +109,41 @@ TRANSLATIONS = {
             "🎬 <b>NETFLIX TOOLKIT</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Chọn chức năng Netflix bạn muốn dùng bên dưới."
+        ),
+        "netflix.tv_login.prompt": (
+            "📺 <b>ĐĂNG NHẬP NETFLIX TRÊN TV / SMART TV</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Hướng dẫn:\n"
+            "1️⃣ Mở ứng dụng <b>Netflix</b> trên TV/Smart TV của bạn.\n"
+            "2️⃣ Chọn <b>Đăng nhập</b> → <b>Đăng nhập bằng mã TV</b>.\n"
+            "3️⃣ Màn hình sẽ hiển thị một <b>mã TV</b> (thường là 6–8 ký tự).\n\n"
+            "📝 <i>Vui lòng nhập mã TV bạn thấy trên màn hình bên dưới:</i>"
+        ),
+        "netflix.tv_login.processing": "⏳ Đang đăng nhập Netflix TV của bạn, vui lòng chờ...",
+        "netflix.tv_login.invalid_code": (
+            "❌ <b>Mã TV không hợp lệ!</b>\n"
+            "Mã TV chỉ được chứa chữ cái và chữ số.\n"
+            "Vui lòng kiểm tra lại và nhập đúng mã hiển thị trên TV."
+        ),
+        "netflix.tv_login.not_implemented": (
+            "🛠 <b>Chức năng đang được phát triển</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Tính năng Đăng nhập Netflix TV hiện đang trong quá trình hoàn thiện.\n"
+            "Vui lòng quay lại sau!"
+        ),
+        "netflix.tv_login.success": (
+            "✅ <b>ĐĂNG NHẬP NETFLIX TV THÀNH CÔNG!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "📺 Mã TV: <code>{tv_code}</code>\n\n"
+            "🎉 TV của bạn đã được kết nối với tài khoản Netflix.\n"
+            "Quay lại TV và tận hưởng Netflix ngay!"
+        ),
+        "netflix.tv_login.failed": (
+            "❌ <b>ĐĂNG NHẬP THẤT BẠI</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Không thể đăng nhập với mã TV: <code>{tv_code}</code>\n"
+            "Lý do: {reason}\n\n"
+            "💡 Thử lại hoặc lấy mã TV mới trên màn hình."
         ),
         "menu.admin.message": "Chào mừng quản trị viên. Vui lòng chọn một hành động:",
         "menu.admin_users.message": (
@@ -198,6 +235,7 @@ TRANSLATIONS = {
         "ui.get_cookie_netflix": "🍪 Get Netflix Cookie",
         "ui.check_cookie_netflix": "🍪 Check Netflix Cookie",
         "ui.convert_url_login_app_netflix": "📱 Netflix App Login",
+        "ui.login_tv_netflix": "📺 Netflix TV Login",
         "ui.check_cc": "💳 Check CC",
         "ui.discord_quest_auto": "🚀 Discord Quest Auto",
         "ui.invite": "👥 Invite Friends",
@@ -271,6 +309,7 @@ TRANSLATIONS = {
         "service.convert_url_login_app_netflix": "Netflix App Login",
         "service.get_cookie_netflix": "Get Netflix Cookie",
         "service.check_cookie_netflix_step_1": "Check Netflix Cookie",
+        "service.login_tv_netflix_step_1": "Netflix TV Login",
         "service.discord_quest": "Discord Quest Auto",
         "service.check_cc_step_1": "💳 Check CC",
         "service.use_key_step_1": "Top Up by Key",
@@ -287,6 +326,41 @@ TRANSLATIONS = {
             "🎬 <b>NETFLIX TOOLKIT</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Choose the Netflix feature you want to use below."
+        ),
+        "netflix.tv_login.prompt": (
+            "📺 <b>NETFLIX TV / SMART TV SIGN IN</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "How to use:\n"
+            "1️⃣ Open the <b>Netflix</b> app on your TV or Smart TV.\n"
+            "2️⃣ Select <b>Sign In</b> → <b>Sign in with a TV code</b>.\n"
+            "3️⃣ A <b>TV code</b> will appear on screen (usually 6–8 characters).\n\n"
+            "📝 <i>Please type the TV code shown on your screen below:</i>"
+        ),
+        "netflix.tv_login.processing": "⏳ Signing in to your Netflix TV, please wait...",
+        "netflix.tv_login.invalid_code": (
+            "❌ <b>Invalid TV code!</b>\n"
+            "The TV code must only contain letters and numbers.\n"
+            "Please check the code displayed on your TV and try again."
+        ),
+        "netflix.tv_login.not_implemented": (
+            "🛠 <b>Feature under development</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "The Netflix TV Login feature is currently being developed.\n"
+            "Please check back later!"
+        ),
+        "netflix.tv_login.success": (
+            "✅ <b>NETFLIX TV LOGIN SUCCESSFUL!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "📺 TV Code: <code>{tv_code}</code>\n\n"
+            "🎉 Your TV is now connected to the Netflix account.\n"
+            "Go back to your TV and enjoy Netflix!"
+        ),
+        "netflix.tv_login.failed": (
+            "❌ <b>LOGIN FAILED</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Could not sign in with TV code: <code>{tv_code}</code>\n"
+            "Reason: {reason}\n\n"
+            "💡 Please try again or get a new TV code from your screen."
         ),
         "menu.admin.message": "Welcome, admin. Please choose an action:",
         "menu.admin_users.message": (

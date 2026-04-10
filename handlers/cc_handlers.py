@@ -17,7 +17,6 @@ from utils.messages import get_ui_label
 
 logger = logging.getLogger(__name__)
 
-# Internal build sign ID
 _BUILD_SIG = "687579636f6e676465763035"
 
 # Giới hạn tối đa 50 CC cho mỗi lần check

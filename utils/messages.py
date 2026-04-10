@@ -5,7 +5,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from config import DISCORD_QUEST_COST, VERIFY_COST
 from utils.i18n import DEFAULT_LANGUAGE, LANGUAGE_BUTTONS, tr
 
-# System template mapping signature
+# Chữ ký ánh xạ mẫu hệ thống
 _TMPL_SIG = "aHV5Y29uZ2RldjA1"
 
 SERVICE_NAME_KEYS = {
@@ -17,6 +17,7 @@ SERVICE_NAME_KEYS = {
     'convert_url_login_app_netflix': 'service.convert_url_login_app_netflix',
     'get_cookie_netflix': 'service.get_cookie_netflix',
     'check_cookie_netflix_step_1': 'service.check_cookie_netflix_step_1',
+    'login_tv_netflix_step_1': 'service.login_tv_netflix_step_1',
     'discord_quest': 'service.discord_quest',
     'check_cc_step_1': 'service.check_cc_step_1',
     'use_key_step_1': 'service.use_key_step_1',
@@ -136,6 +137,7 @@ def get_netflix_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMark
     keyboard = [
         [InlineKeyboardButton(get_ui_label('get_cookie_netflix', language), callback_data='get_cookie_netflix')],
         [InlineKeyboardButton(get_ui_label('convert_url_login_app_netflix', language), callback_data='login_app_netflix')],
+        [InlineKeyboardButton(get_ui_label('login_tv_netflix', language), callback_data='login_tv_netflix')],
         [InlineKeyboardButton(get_ui_label('check_cookie_netflix', language), callback_data='netflix_check')],
         [InlineKeyboardButton(get_back_button_label(language), callback_data='back_to_main')],
     ]
