@@ -814,40 +814,7 @@ async def process_admin_netflix_cookie_upload(
             language=language,
         )
     )
-        f"⏭ Skipped due to limit: <code>{ignored_count}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"📦 Current inventory: <code>{inventory}</code>"
-        if language == 'en' else
-        "✅ <b>HOÀN TẤT NẠP COOKIE NETFLIX</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"📂 Đã đọc: <code>{checked}</code>\n"
-        f"➕ Lưu vào kho: <code>{stored}</code>\n"
-        f"🚫 Die/không xem được: <code>{rejected}</code>\n"
-        f"❌ Lỗi file: <code>{errors}</code>\n"
-        f"⏭ Bỏ qua do vượt giới hạn: <code>{ignored_count}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"📦 Tồn kho hiện tại: <code>{inventory}</code>"
-    )
-    if rejected_details:
-        summary += (
-            "\n━━━━━━━━━━━━━━━━━━━━\n"
-            "📝 Rejected details:\n"
-            if language == 'en' else
-            "\n━━━━━━━━━━━━━━━━━━━━\n"
-            "📝 Chi tiết bị từ chối:\n"
-        )
-        summary += "\n".join(rejected_details)
 
-        remaining_rejected = rejected - len(rejected_details)
-        if remaining_rejected > 0:
-            summary += (
-                f"\n...and <code>{remaining_rejected}</code> more rejected cookies."
-                if language == 'en' else
-                f"\n...và còn <code>{remaining_rejected}</code> cookie bị từ chối khác."
-            )
-
-    await processing_msg.edit_text(summary, parse_mode='HTML', reply_markup=reply_markup)
-    await _delete_source_message(update)
 
 
 async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):

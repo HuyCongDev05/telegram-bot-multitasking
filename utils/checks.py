@@ -9,7 +9,11 @@ from config import CHANNEL_USERNAME
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language, has_selected_language, tr
 
 logger = logging.getLogger(__name__)
+def is_group_chat(update: Update) -> bool:
+    """Kiểm tra xem đây có phải là trò chuyện nhóm hay không"""
+    chat = update.effective_chat
     return chat and chat.type in ("group", "supergroup")
+
 
 
 async def reject_group_command(update: Update, db=None) -> bool:
