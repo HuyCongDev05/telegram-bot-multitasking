@@ -463,21 +463,59 @@ def _normalize_cookie_content(cookie_content: str):
     return cookies, storage_cookie_text, ""
 
 
+_PROXY_ERROR_KEYWORDS = (
+    "timeout", "connection", "proxy", "refused",
+    "reset", "max retries", "remote end closed",
+    "failed to establish", "network", "unreachable",
+)
+_MAX_PROXY_RETRIES = 3
+
+
+def _is_proxy_error(result: dict) -> bool:
+    """Kiểm tra xem lỗi có phải do proxy/mạng không (để xoay proxy thay vì từ chối cookie)."""
+    # Nếu có error_code → lỗi từ Netflix (cookie hết hạn, không có gói...) → không phải lỗi proxy
+    if result.get("error_code"):
+        return False
+    error_msg = str(result.get("error", "")).lower()
+    return any(kw in error_msg for kw in _PROXY_ERROR_KEYWORDS)
+
+
 def _check_cookie_content(db: Database, cookie_content: str):
-    """Kiểm tra tính hợp lệ và trạng thái live của cookie."""
+    """Kiểm tra tính hợp lệ và trạng thái live của cookie.
+
+    Tự động xoay proxy và thử lại tối đa _MAX_PROXY_RETRIES lần nếu gặp
+    lỗi kết nối/proxy. Các lỗi từ phía Netflix (cookie hết hạn, không có
+    gói cước...) sẽ dừng ngay mà không thử lại.
+    """
     cookies, storage_cookie_text, error_message = _normalize_cookie_content(cookie_content)
     if not cookies:
         return False, {"error": error_message}, None, None
 
-    proxy = db.get_random_proxy()
-    proxy_url = format_proxy_url(proxy) if proxy else None
+    last_result = {"error": "Không có proxy khả dụng hoặc vượt quá số lần thử lại."}
 
-    checker = NetflixChecker(proxy_url=proxy_url)
-    success, result = checker.check(cookies)
-    if not success:
-        return False, result, None, None
+    for attempt in range(_MAX_PROXY_RETRIES):
+        proxy = db.get_random_proxy()
+        proxy_url = format_proxy_url(proxy) if proxy else None
 
-    return True, result, storage_cookie_text, storage_cookie_text
+        checker = NetflixChecker(proxy_url=proxy_url)
+        success, result = checker.check(cookies)
+
+        if success:
+            return True, result, storage_cookie_text, storage_cookie_text
+
+        # Lỗi từ Netflix (cookie hết hạn, không có gói...) → không cần thử lại
+        if not _is_proxy_error(result):
+            return False, result, None, None
+
+        # Lỗi proxy/mạng → thử lại với proxy khác
+        logger.warning(
+            "Proxy lỗi (lần %d/%d): %s. Đang xoay proxy mới...",
+            attempt + 1, _MAX_PROXY_RETRIES, result.get("error"),
+        )
+        last_result = result
+
+    logger.error("Đã thử %d lần nhưng vẫn bị lỗi proxy. Cookie bị bỏ qua.", _MAX_PROXY_RETRIES)
+    return False, last_result, None, None
 
 
 def _build_cookie_result_text(result: dict, language: str = DEFAULT_LANGUAGE) -> str:
@@ -922,17 +960,18 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
     processing_msg = await message.reply_text("⏳ Checking the cookie, please wait..." if language == 'en' else "⏳ Đang kiểm tra cookie, vui lòng đợi...")
 
     try:
-        cookies, _, error_message = _normalize_cookie_content(cookie_content)
-        if not cookies:
-            await processing_msg.edit_text(error_message, parse_mode='HTML')
+        success, result, _, _ = await asyncio.to_thread(_check_cookie_content, db, cookie_content)
+
+        if not success and result.get("error") and not result.get("error_code"):
+            # Lỗi proxy sau tất cả các lần thử lại
+            await processing_msg.edit_text(
+                "❌ Không thể kết nối để kiểm tra cookie. Vui lòng thử lại sau!"
+                if language != 'en'
+                else "❌ Could not connect to verify the cookie. Please try again later!"
+            )
             await show_main_menu_after_delay(update, context, db)
             return
 
-        proxy = db.get_random_proxy()
-        proxy_url = format_proxy_url(proxy) if proxy else None
-
-        checker = NetflixChecker(proxy_url=proxy_url)
-        success, result = checker.check(cookies)
 
         if success:
             if db.deduct_balance(user_id, VERIFY_COST):

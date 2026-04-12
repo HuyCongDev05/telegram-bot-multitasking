@@ -1526,8 +1526,19 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
 
     processing_msg = await reply_func("⏳ Generating your Netflix login link..." if language == 'en' else "⏳ Đang tạo link đăng nhập Netflix...")
 
+    # Lấy proxy ngẫu nhiên từ hệ thống
+    proxy_url = None
     try:
-        result_url = generate_nftoken(cookie_text)
+        random_proxy = db.get_random_proxy()
+        if random_proxy:
+            from utils.proxy_helper import format_proxy_url
+            proxy_url = format_proxy_url(random_proxy)
+            logger.info(f"Sử dụng proxy cho Netflix token: {random_proxy.get('address')}")
+    except Exception as pe:
+        logger.error(f"Lỗi khi lấy proxy: {pe}")
+
+    try:
+        result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
         # Xóa tin nhắn gốc của người dùng chứa cookie
         if update.message:
             try:
