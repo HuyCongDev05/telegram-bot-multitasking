@@ -114,8 +114,8 @@ def main():
         """Các công việc cần khởi động sau khi bot sẵn sàng."""
         from handlers.jobs import start_proxy_management_loop
         # Chạy vòng lặp quản lý proxy (Cập nhật + Dọn dẹp) trong task asyncio riêng biệt
-        asyncio.create_task(start_proxy_management_loop(app, db, interval=1800))
-        logger.info("🕒 Background Task: Đã kích hoạt vòng lặp quản lý proxy (Webshare Update + Cleanup - 30 phút/lần).")
+        asyncio.create_task(start_proxy_management_loop(app, db, interval=900))
+        logger.info("🕒 Background Task: Đã kích hoạt vòng lặp quản lý proxy (Webshare Update + Cleanup - 15 phút/lần).")
 
     application.post_init = post_init
 

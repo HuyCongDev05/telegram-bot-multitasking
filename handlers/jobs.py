@@ -1,6 +1,8 @@
 import asyncio
 import logging
+
 import httpx
+
 from config import ADMIN_USER_ID, WEBSHARE_TOKEN
 from database_mysql import Database
 from utils.proxy_helper import check_proxy_health
@@ -14,8 +16,8 @@ async def fetch_webshare_proxies(app, db: Database):
     """
     url = "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=10&plan_id=13162825"
     headers = {
-        "accept": "application/json, text/plain, */*",
-        "authorization": f"Token {WEBSHARE_TOKEN}"
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": f"Token {WEBSHARE_TOKEN.strip()}"
     }
     
     logger.info("📡 Đang gửi yêu cầu lấy proxy từ Webshare...")

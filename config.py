@@ -15,7 +15,7 @@ CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/")
 ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "123456789"))
 
 # Cấu hình Webshare Proxy
-WEBSHARE_TOKEN = os.getenv("WEBSHARE_TOKEN", "")
+WEBSHARE_TOKEN = os.getenv("WEBSHARE_TOKEN", "").strip()
 
 # Cấu hình tích điểm
 VERIFY_COST = 2  # Số điểm tiêu tốn khi xác thực
