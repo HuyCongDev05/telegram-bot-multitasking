@@ -1,4 +1,5 @@
 import requests
+import httpx
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,3 +49,24 @@ def format_proxy_url(proxy_dict):
     if user and passwd:
         return f"http://{user}:{passwd}@{address}:{port}"
     return f"http://{address}:{port}"
+
+async def check_proxy_health(proxy_dict: dict, timeout: int = 5) -> bool:
+    """
+    Kiểm tra xem proxy còn hoạt động hay không (async).
+    Thử kết nối tới một dịch vụ nhẹ để xác minh.
+    """
+    proxy_url = format_proxy_url(proxy_dict)
+    
+    # httpx require proxy URL to be specified per-protocol in a dict or as a string for all
+    proxies = {
+        "http://": proxy_url,
+        "https://": proxy_url,
+    }
+    
+    try:
+        async with httpx.AsyncClient(proxies=proxies, timeout=timeout) as client:
+            # Kiểm tra tới một URL tin cậy và nhẹ
+            response = await client.get("http://www.google.com", follow_redirects=True)
+            return response.status_code == 200
+    except Exception:
+        return False

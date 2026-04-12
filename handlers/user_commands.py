@@ -998,9 +998,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         await to_up_command(update, context, db)
 
     elif action in ('convert_url_login_app_netflix', 'login_app_netflix', 'netflix_verify'):
-        from utils.checks import check_maintenance
-        if await check_maintenance(update, db, 'convert_url_login_app_netflix'): return
-        await convertNetflixUrl_command(update, context, db)
+        await _handle_netflix_random_login(update, context, db)
         return
 
     elif action == 'get_cookie_netflix':
@@ -1432,10 +1430,105 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         await genkey_command(update, context, db)
         await show_admin_key_menu_after_delay(update, context, db=db)
 
-    # [ĐOẠN NÀY ĐÃ ĐƯỢC DỌN DẸP - use_key_step_1 đã xử lý ở trên (dòng ~757)]
+# [ĐOẠN NÀY ĐÃ ĐƯỢC DỌN DẸP - use_key_step_1 đã xử lý ở trên (dòng ~1250)]
 
 
 # --- Netflix Cookie Helper ---
+async def _handle_netflix_random_login(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
+    """
+    Tự động lấy một cookie từ DB và tạo link đăng nhập Netflix.
+    """
+    from utils.checks import check_maintenance
+    if await check_maintenance(update, db, 'convert_url_login_app_netflix'):
+        return
+
+    user_id = update.effective_user.id
+    cost = VERIFY_COST
+    language = get_current_language(context, db, user_id)
+
+    # Hàm xử lý reply chung cho cả callback và message
+    async def reply_func(text, **kwargs):
+        if update.callback_query:
+            return await update.callback_query.message.reply_text(text, **kwargs)
+        elif update.message:
+            return await update.message.reply_text(text, **kwargs)
+        else:
+            return await context.bot.send_message(chat_id=update.effective_chat.id, text=text, **kwargs)
+
+    # 1. Kiểm tra số dư
+    user_info = db.get_user(user_id)
+    if user_info['balance'] < cost:
+        await reply_func(get_insufficient_balance_message(user_info['balance'], language))
+        await show_main_menu_after_delay(update, context, db)
+        return
+
+    # 2. Lấy cookie ngẫu nhiên
+    cookie_data = db.get_random_netflix_cookie()
+    if not cookie_data:
+        await reply_func(tr(language, "netflix.no_cookies_available"))
+        await show_main_menu_after_delay(update, context, db)
+        return
+
+    cookie_text = cookie_data['cookie_text']
+
+    # 3. Trừ điểm
+    if not db.deduct_balance(user_id, cost):
+        await reply_func(tr(language, "common.unknown_error"))
+        await show_main_menu_after_delay(update, context, db)
+        return
+
+    processing_msg = await reply_func(tr(language, "netflix.random_login.processing"))
+
+    # 4. Tạo link (sử dụng logic tương tự _process_netflix_cookie)
+    import requests as _requests
+    from netflix.nf_token_generator import generate_nftoken
+
+    proxy_url = None
+    try:
+        random_proxy = db.get_random_proxy()
+        if random_proxy:
+            from utils.proxy_helper import format_proxy_url
+            proxy_url = format_proxy_url(random_proxy)
+    except Exception:
+        pass
+
+    try:
+        result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
+        
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(get_back_main_button_label(language), callback_data='back_to_main')]
+        ])
+
+        await processing_msg.edit_text(
+            (
+                f"✅ <b>CONVERSION SUCCESSFUL!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🎬 <b>Your Netflix app login link:</b>\n"
+                f"<code>{result_url}</code>\n\n"
+                f"⏳ <i>This link will expire in <b>60 minutes</b>. Use it as soon as possible!</i>"
+                if language == 'en'
+                else f"✅ <b>CHUYỂN ĐỔI THÀNH CÔNG!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🎬 <b>Link đăng nhập App Netflix của bạn:</b>\n"
+                f"<code>{result_url}</code>\n\n"
+                f"⏳ <i>Link này sẽ hết hạn sau <b>60 phút</b>. Hãy sử dụng ngay!</i>"
+            ),
+            parse_mode='HTML',
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        db.add_balance(user_id, cost) # Hoàn tiền
+        logger.error(f"Lỗi tạo token Netflix tự động: {e}")
+        await processing_msg.edit_text(
+            (
+                f"❌ Error: {str(e)}\nRefunded {cost} points."
+                if language == 'en'
+                else f"❌ Lỗi: {str(e)}\nĐã hoàn lại {cost} điểm."
+            )
+        )
+        await show_main_menu_after_delay(update, context, db)
+
+
 async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, cookie_text: str):
     """
     Validate cookie Netflix, gọi API lấy nftoken và gửi URL kết quả.

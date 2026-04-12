@@ -1059,6 +1059,11 @@ class MySQLDatabase:
             cursor.close()
             conn.close()
 
+    def get_random_netflix_cookie(self) -> Optional[Dict]:
+        """Lấy một cookie Netflix ngẫu nhiên từ kho."""
+        cookies = self.get_netflix_cookies(limit=1, randomize=True)
+        return cookies[0] if cookies else None
+
     def delete_netflix_cookie(self, cookie_id: int) -> bool:
         """Xóa một cookie Netflix khỏi kho."""
         conn = self.get_connection()

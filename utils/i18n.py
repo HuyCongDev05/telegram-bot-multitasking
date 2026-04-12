@@ -177,6 +177,7 @@ TRANSLATIONS = {
         "key.already_used": "Bạn đã dùng mã này rồi.",
         "common.unknown_error": "Lỗi không xác định.",
         "key.success": "Sử dụng mã thẻ thành công! +{amount} điểm.\n💰 Số dư hiện tại: {balance} điểm.",
+        "key.one_use_per_user_hint": "Lưu ý: Mỗi người dùng chỉ có thể sử dụng mã này một lần duy nhất.",
         "verify.usage": (
             "Bạn đã chọn xác thực: {service_name}\n\n"
             "Vui lòng nhập hoặc dán liên kết SheerID vào tin nhắn trả lời bên dưới:"
@@ -207,6 +208,8 @@ TRANSLATIONS = {
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Hiện tại tính năng này đang được bảo trì để nâng cấp. Vui lòng quay lại sau ít phút!"
         ),
+        "netflix.no_cookies_available": "❌ Hiện tại không có cookie Netflix nào khả dụng trong hệ thống. Vui lòng quay lại sau!",
+        "netflix.random_login.processing": "⏳ Đang lấy cookie ngẫu nhiên và tạo link đăng nhập Netflix cho bạn...",
         "maintenance.menu": (
             "🛠 <b>QUẢN LÝ BẢO TRÌ DỊCH VỤ</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -394,6 +397,7 @@ TRANSLATIONS = {
         "key.already_used": "You have already used this key.",
         "common.unknown_error": "Unknown error.",
         "key.success": "Card key used successfully! +{amount} points.\n💰 Current balance: {balance} points.",
+        "key.one_use_per_user_hint": "Note: Each user can only use this key once.",
         "verify.usage": (
             "You selected verification: {service_name}\n\n"
             "Please enter or paste the SheerID link in the reply message below:"
@@ -424,6 +428,8 @@ TRANSLATIONS = {
             "━━━━━━━━━━━━━━━━━━━━\n"
             "This feature is currently under maintenance for upgrades. Please try again in a few minutes."
         ),
+        "netflix.no_cookies_available": "❌ No Netflix cookies are currently available in the system. Please check back later!",
+        "netflix.random_login.processing": "⏳ Picking a random cookie and generating your Netflix login link...",
         "maintenance.menu": (
             "🛠 <b>SERVICE MAINTENANCE</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"

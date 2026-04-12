@@ -264,15 +264,19 @@ async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
         if db.create_card_key(key_code, balance, user_id, max_uses, expire_days):
             msg = (
                 "✅ Key created successfully!\n\n"
-                f"Key code: <code>{key_code}</code>\n"
-                f"💰 Points: {balance}\n"
-                f"Uses: {max_uses}\n"
-                if language == 'en' else
-                "✅ Tạo mã thẻ thành công!\n\n"
                 f"Mã thẻ: <code>{key_code}</code>\n"
                 f"💰 Số điểm: {balance}\n"
                 f"Số lần dùng: {max_uses} lần\n"
+                f"ℹ️ <i>Lưu ý: Mỗi người dùng chỉ có thể sử dụng mã này 1 lần.</i>\n"
             )
+            if language == 'en':
+                msg = (
+                    "✅ Key created successfully!\n\n"
+                    f"Key code: <code>{key_code}</code>\n"
+                    f"💰 Points: {balance}\n"
+                    f"Total Uses: {max_uses}\n"
+                    f"ℹ️ <i>Note: Each user can only use this key once.</i>\n"
+                )
             if expire_days:
                 msg += f"Expiration: {expire_days} days\n" if language == 'en' else f"Thời hạn: {expire_days} ngày\n"
             else:

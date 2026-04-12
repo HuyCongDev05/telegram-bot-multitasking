@@ -1,5 +1,6 @@
 """Chương trình chính của Telegram Bot"""
 import logging
+import asyncio
 from functools import partial
 
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
@@ -108,6 +109,15 @@ def main():
 
     # Đăng ký trình xử lý lỗi
     application.add_error_handler(error_handler)
+
+    async def post_init(app: Application):
+        """Các công việc cần khởi động sau khi bot sẵn sàng."""
+        from handlers.jobs import start_proxy_cleanup_loop
+        # Chạy vòng lặp dọn dẹp proxy trong task asyncio riêng biệt (Background Task)
+        asyncio.create_task(start_proxy_cleanup_loop(app, db, interval=3600))
+        logger.info("🕒 Background Task: Đã kích hoạt vòng lặp dọn dẹp proxy chết (1 giờ/lần).")
+
+    application.post_init = post_init
 
     logger.info("Bot đang khởi động...")
     application.run_polling(drop_pending_updates=True)
