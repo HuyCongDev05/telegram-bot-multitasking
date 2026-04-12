@@ -1,10 +1,66 @@
 import asyncio
 import logging
-from config import ADMIN_USER_ID
+import httpx
+from config import ADMIN_USER_ID, WEBSHARE_TOKEN
 from database_mysql import Database
 from utils.proxy_helper import check_proxy_health
 
 logger = logging.getLogger(__name__)
+
+async def fetch_webshare_proxies(app, db: Database):
+    """
+    Gọi Webshare API để lấy danh sách proxy mới và lưu vào database.
+    Nếu có lỗi sẽ báo ngay cho Admin.
+    """
+    url = "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=10&plan_id=13162825"
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "authorization": f"Token {WEBSHARE_TOKEN}"
+    }
+    
+    logger.info("📡 Đang gửi yêu cầu lấy proxy từ Webshare...")
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                error_msg = f"❌ <b>LỖI WEBSHARE API</b>\nStatus code: {response.status_code}\nResponse: {response.text[:200]}"
+                await app.bot.send_message(chat_id=ADMIN_USER_ID, text=error_msg, parse_mode='HTML')
+                logger.error(f"Webshare API returned {response.status_code}: {response.text}")
+                return False
+
+            data = response.json()
+            results = data.get("results", [])
+            
+            if not results:
+                logger.warning("⚠️ Webshare API trả về danh sách trống.")
+                return True
+
+            added_count = 0
+            for p in results:
+                address = p.get("proxy_address")
+                port = p.get("port")
+                username = p.get("username")
+                password = p.get("password")
+                city = p.get("city_name")
+                country = p.get("country_code")
+                
+                if db.add_proxy(address, port, username, password, city, country):
+                    added_count += 1
+            
+            logger.info(f"✅ Đã nạp thành công {added_count}/{len(results)} proxy từ Webshare.")
+            return True
+
+    except Exception as e:
+        error_msg = f"⚠️ <b>LỖI HỆ THỐNG (PROXY UPDATE)</b>\n━━━━━━━━━━━━━━━━━━━━\nChi tiết: <code>{str(e)}</code>"
+        try:
+            await app.bot.send_message(chat_id=ADMIN_USER_ID, text=error_msg, parse_mode='HTML')
+        except Exception as se:
+            logger.error(f"Không thể gửi thông báo lỗi tới Admin: {se}")
+        
+        logger.error(f"Lỗi khi fetch proxy từ Webshare: {e}")
+        return False
 
 async def run_proxy_cleanup_job(app, db: Database):
     """
@@ -21,14 +77,9 @@ async def run_proxy_cleanup_job(app, db: Database):
         dead_count = 0
         total_count = len(proxies)
         
-        # Chúng ta sẽ kiểm tra tuần tự để không làm quá tải hệ thống nếu có quá nhiều proxy
-        # Hoặc dùng asyncio.Semaphore nếu muốn nhanh hơn
-        
         for idx, proxy in enumerate(proxies):
             address = proxy.get('address')
             port = proxy.get('port')
-            
-            logger.debug(f"[{idx+1}/{total_count}] Đang kiểm tra proxy {address}:{port}...")
             
             is_alive = await check_proxy_health(proxy)
             
@@ -49,20 +100,26 @@ async def run_proxy_cleanup_job(app, db: Database):
                     "🚀 Vui lòng nạp thêm proxy mới để các dịch vụ (Netflix, v.v.) hoạt động bình thường!"
                 )
                 await app.bot.send_message(chat_id=ADMIN_USER_ID, text=alert_msg, parse_mode='HTML')
-                logger.warning("📢 Đã gửi thông báo hết sạch proxy tới Admin.")
             except Exception as se:
                 logger.error(f"Không thể gửi thông báo tới Admin: {se}")
         
     except Exception as e:
         logger.error(f"⚠️ Lỗi xảy ra trong quá trình chạy proxy cleanup job: {e}")
 
-async def start_proxy_cleanup_loop(app, db: Database, interval: int = 3600):
+async def start_proxy_management_loop(app, db: Database, interval: int = 3600):
     """
-    Vòng lặp vô hạn chạy ngầm để dọn dẹp proxy định kỳ.
+    Vòng lặp quản lý proxy:
+    1. Lấy proxy mới từ Webshare
+    2. Dọn dẹp proxy chết
     Mặc định: 1 giờ (3600 giây)
     """
-    logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp kiểm tra proxy định kỳ ({interval}s/lần)")
+    logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp quản lý proxy định kỳ ({interval}s/lần)")
     
     while True:
+        # 1. Dọn dẹp các proxy chết hiện có trong database trước
         await run_proxy_cleanup_job(app, db)
+        
+        # 2. Sau đó mới nạp thêm proxy mới từ Webshare
+        await fetch_webshare_proxies(app, db)
+        
         await asyncio.sleep(interval)

@@ -14,6 +14,9 @@ CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/")
 # Cấu hình Admin
 ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "123456789"))
 
+# Cấu hình Webshare Proxy
+WEBSHARE_TOKEN = os.getenv("WEBSHARE_TOKEN", "")
+
 # Cấu hình tích điểm
 VERIFY_COST = 2  # Số điểm tiêu tốn khi xác thực
 DISCORD_QUEST_COST = 5  # Số điểm tiêu tốn khi dùng Discord Quest Auto

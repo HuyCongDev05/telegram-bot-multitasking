@@ -112,10 +112,10 @@ def main():
 
     async def post_init(app: Application):
         """Các công việc cần khởi động sau khi bot sẵn sàng."""
-        from handlers.jobs import start_proxy_cleanup_loop
-        # Chạy vòng lặp dọn dẹp proxy trong task asyncio riêng biệt (Background Task)
-        asyncio.create_task(start_proxy_cleanup_loop(app, db, interval=3600))
-        logger.info("🕒 Background Task: Đã kích hoạt vòng lặp dọn dẹp proxy chết (1 giờ/lần).")
+        from handlers.jobs import start_proxy_management_loop
+        # Chạy vòng lặp quản lý proxy (Cập nhật + Dọn dẹp) trong task asyncio riêng biệt
+        asyncio.create_task(start_proxy_management_loop(app, db, interval=1800))
+        logger.info("🕒 Background Task: Đã kích hoạt vòng lặp quản lý proxy (Webshare Update + Cleanup - 30 phút/lần).")
 
     application.post_init = post_init
 
