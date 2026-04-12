@@ -9,12 +9,12 @@ from utils.proxy_helper import check_proxy_health
 
 logger = logging.getLogger(__name__)
 
-async def fetch_webshare_proxies(app, db: Database):
+async def fetch_webshare_proxies(db: Database):
     """
     Gọi Webshare API để lấy danh sách proxy mới và lưu vào database.
-    Nếu có lỗi sẽ báo ngay cho Admin.
+    Không gửi tin nhắn cho Admin ở đây để tránh spam.
     """
-    url = "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=10&plan_id=13162825"
+    url = "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=100&plan_id=13162825"
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Authorization": f"Token {WEBSHARE_TOKEN.strip()}"
@@ -27,8 +27,6 @@ async def fetch_webshare_proxies(app, db: Database):
             response = await client.get(url, headers=headers)
             
             if response.status_code != 200:
-                error_msg = f"❌ <b>LỖI WEBSHARE API</b>\nStatus code: {response.status_code}\nResponse: {response.text[:200]}"
-                await app.bot.send_message(chat_id=ADMIN_USER_ID, text=error_msg, parse_mode='HTML')
                 logger.error(f"Webshare API returned {response.status_code}: {response.text}")
                 return False
 
@@ -37,7 +35,7 @@ async def fetch_webshare_proxies(app, db: Database):
             
             if not results:
                 logger.warning("⚠️ Webshare API trả về danh sách trống.")
-                return True
+                return False
 
             added_count = 0
             for p in results:
@@ -52,15 +50,9 @@ async def fetch_webshare_proxies(app, db: Database):
                     added_count += 1
             
             logger.info(f"✅ Đã nạp thành công {added_count}/{len(results)} proxy từ Webshare.")
-            return True
+            return added_count > 0
 
     except Exception as e:
-        error_msg = f"⚠️ <b>LỖI HỆ THỐNG (PROXY UPDATE)</b>\n━━━━━━━━━━━━━━━━━━━━\nChi tiết: <code>{str(e)}</code>"
-        try:
-            await app.bot.send_message(chat_id=ADMIN_USER_ID, text=error_msg, parse_mode='HTML')
-        except Exception as se:
-            logger.error(f"Không thể gửi thông báo lỗi tới Admin: {se}")
-        
         logger.error(f"Lỗi khi fetch proxy từ Webshare: {e}")
         return False
 
@@ -99,33 +91,41 @@ async def run_proxy_cleanup_job(app, db: Database):
 
 async def start_proxy_management_loop(app, db: Database, interval: int = 3600):
     """
-    Vòng lặp quản lý proxy:
-    1. Lấy proxy mới từ Webshare
-    2. Dọn dẹp proxy chết
-    Mặc định: 1 giờ (3600 giây)
+    Vòng lặp quản lý proxy định kỳ.
+    1. Xóa proxy chết.
+    2. Thử nạp proxy mới (thử lại 3 lần).
     """
-    logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp quản lý proxy định kỳ ({interval}s/lần)")
+    logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp quản lý proxy ({interval}s/lần)")
     
     while True:
-        # 1. Nạp thêm proxy mới từ Webshare trước để đảm bảo kho luôn có hàng
-        await fetch_webshare_proxies(app, db)
-        
-        # 2. Sau đó mới dọn dẹp các proxy chết (bao gồm cả đóng cũ và đóng mới nếu lỗi)
+        # 1. Xóa sạch các proxy chết trong database trước
         await run_proxy_cleanup_job(app, db)
         
-        # 3. Chỉ cảnh báo Admin nếu THỰC SỰ hết sạch proxy sau cả 2 bước trên
+        # 2. Thử nạp thêm proxy mới từ Webshare
+        success = False
+        for attempt in range(1, 4):
+            logger.info(f"🔄 Đang thử nạp proxy từ Webshare (Lần {attempt}/3)...")
+            if await fetch_webshare_proxies(db):
+                success = True
+                break
+            
+            if attempt < 3:
+                # Nếu thất bại, đợi 10 giây trước khi thử lại
+                await asyncio.sleep(10)
+        
+        # 3. Chỉ cảnh báo Admin nếu THỰC SỰ hết sạch proxy sau khi đã thử 3 lần
         try:
-            remaining = db.get_all_proxies()
-            if not remaining:
+            remaining_proxies = db.get_all_proxies()
+            if not remaining_proxies:
                 alert_msg = (
                     "⚠️ <b>CẢNH BÁO HỆ THỐNG</b>\n"
                     "━━━━━━━━━━━━━━━━━━━━\n"
-                    "Hệ thống đã cố gắng nạp và dọn dẹp nhưng <b>KHÔNG CÒN</b> proxy nào hoạt động.\n\n"
+                    "Đã thử nạp proxy 3 lần nhưng <b>KHÔNG THÀNH CÔNG</b> và database đang trống sạch.\n\n"
                     "🚀 Vui lòng kiểm tra lại tài khoản Webshare hoặc nạp thủ công!"
                 )
                 await app.bot.send_message(chat_id=ADMIN_USER_ID, text=alert_msg, parse_mode='HTML')
-                logger.warning("📢 Đã gửi thông báo HẾT SẠCH proxy (sau khi đã nạp) tới Admin.")
+                logger.warning("📢 Đã gửi thông báo HẾT SẠCH PROXY tới Admin sau 3 lần thử thất bại.")
         except Exception as ae:
-            logger.error(f"Lỗi khi kiểm tra cảnh báo cuối chu kỳ: {ae}")
+            logger.error(f"Lỗi khi gửi cảnh báo cuối chu kỳ: {ae}")
 
         await asyncio.sleep(interval)
