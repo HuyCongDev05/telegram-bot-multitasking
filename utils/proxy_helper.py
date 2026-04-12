@@ -41,6 +41,9 @@ def get_proxy_geoip(address, port, username=None, password=None, timeout=10):
 
 def format_proxy_url(proxy_dict):
     """Chuyển đổi dict proxy từ DB sang chuỗi URL cho requests"""
+    if not proxy_dict:
+        return None
+        
     address = proxy_dict.get('address')
     port = proxy_dict.get('port')
     user = proxy_dict.get('username')
