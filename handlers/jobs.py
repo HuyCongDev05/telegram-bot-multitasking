@@ -92,18 +92,7 @@ async def run_proxy_cleanup_job(app, db: Database):
         
         logger.info(f"✅ Hoàn tất dọn dẹp proxy. Tổng cộng: {total_count}, Đã xóa: {dead_count}, Còn lại: {total_count - dead_count}")
         
-        # Thông báo cho Admin nếu hết sạch proxy
-        if total_count > 0 and (total_count - dead_count) == 0:
-            try:
-                alert_msg = (
-                    "⚠️ <b>CẢNH BÁO HỆ THỐNG</b>\n"
-                    "━━━━━━━━━━━━━━━━━━━━\n"
-                    "Tất cả proxy trong database đã dừng hoạt động và bị xóa.\n\n"
-                    "🚀 Vui lòng nạp thêm proxy mới để các dịch vụ (Netflix, v.v.) hoạt động bình thường!"
-                )
-                await app.bot.send_message(chat_id=ADMIN_USER_ID, text=alert_msg, parse_mode='HTML')
-            except Exception as se:
-                logger.error(f"Không thể gửi thông báo tới Admin: {se}")
+        logger.info(f"✅ Hoàn tất dọn dẹp proxy. Tổng cộng: {total_count}, Đã xóa: {dead_count}, Còn lại: {total_count - dead_count}")
         
     except Exception as e:
         logger.error(f"⚠️ Lỗi xảy ra trong quá trình chạy proxy cleanup job: {e}")
@@ -118,10 +107,25 @@ async def start_proxy_management_loop(app, db: Database, interval: int = 3600):
     logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp quản lý proxy định kỳ ({interval}s/lần)")
     
     while True:
-        # 1. Dọn dẹp các proxy chết hiện có trong database trước
-        await run_proxy_cleanup_job(app, db)
-        
-        # 2. Sau đó mới nạp thêm proxy mới từ Webshare
+        # 1. Nạp thêm proxy mới từ Webshare trước để đảm bảo kho luôn có hàng
         await fetch_webshare_proxies(app, db)
         
+        # 2. Sau đó mới dọn dẹp các proxy chết (bao gồm cả đóng cũ và đóng mới nếu lỗi)
+        await run_proxy_cleanup_job(app, db)
+        
+        # 3. Chỉ cảnh báo Admin nếu THỰC SỰ hết sạch proxy sau cả 2 bước trên
+        try:
+            remaining = db.get_all_proxies()
+            if not remaining:
+                alert_msg = (
+                    "⚠️ <b>CẢNH BÁO HỆ THỐNG</b>\n"
+                    "━━━━━━━━━━━━━━━━━━━━\n"
+                    "Hệ thống đã cố gắng nạp và dọn dẹp nhưng <b>KHÔNG CÒN</b> proxy nào hoạt động.\n\n"
+                    "🚀 Vui lòng kiểm tra lại tài khoản Webshare hoặc nạp thủ công!"
+                )
+                await app.bot.send_message(chat_id=ADMIN_USER_ID, text=alert_msg, parse_mode='HTML')
+                logger.warning("📢 Đã gửi thông báo HẾT SẠCH proxy (sau khi đã nạp) tới Admin.")
+        except Exception as ae:
+            logger.error(f"Lỗi khi kiểm tra cảnh báo cuối chu kỳ: {ae}")
+
         await asyncio.sleep(interval)
