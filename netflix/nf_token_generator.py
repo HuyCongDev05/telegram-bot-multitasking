@@ -2,6 +2,7 @@
 
 import json
 import urllib.parse
+import uuid
 
 import requests
 
@@ -10,14 +11,13 @@ from .cookie_utils import REQUIRED_COOKIES, build_cookie_header, extract_cookie_
 _MOD_SIG = "687579636f6e676465763035"
 
 
-API_URL = "https://android13.prod.ftl.netflix.com/graphql"
+API_URL = "https://android13.prod.ftl.netflix.com/graphql?netka=true"
 
 HEADERS = {
     "User-Agent": "com.netflix.mediaclient/63884 (Linux; U; Android 13; ro; M2007J3SG; Build/TQ1A.230205.001.A2; Cronet/143.0.7445.0)",
     "Accept": "multipart/mixed;deferSpec=20220824, application/graphql-response+json, application/json",
     "Content-Type": "application/json",
-    "Origin": "https://www.netflix.com",
-    "Referer": "https://www.netflix.com/",
+    "X-Netflix.client.type": "ANDROID",
 }
 PAYLOAD = {
     "operationName": "CreateAutoLoginToken",
@@ -45,6 +45,8 @@ def fetch_nftoken(cookie_dict, proxy_url=None):
         raise ValueError("Thiếu các cookie bắt buộc: " + ", ".join(missing))
 
     headers = dict(HEADERS)
+    headers["X-Netflix.client.request.id"] = str(uuid.uuid4())
+    headers["X-Netflix.request.client.user.agent"] = HEADERS["User-Agent"]
     headers["Cookie"] = build_cookie_header(cookie_dict)
     proxies = _build_proxies(proxy_url)
 
