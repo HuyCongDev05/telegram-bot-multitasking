@@ -801,6 +801,9 @@ async def convertNetflixUrl_command(update: Update, context: ContextTypes.DEFAUL
         await _process_netflix_cookie(update, context, db, cookie_text)
         return
 
+    await _handle_netflix_random_login(update, context, db)
+    return
+
     context.user_data['action_service_type'] = 'convert_url_login_app_netflix'
     language = get_current_language(context, db, update.effective_user.id)
     service_label = get_ui_label('convert_url_login_app_netflix', language)
