@@ -609,3 +609,63 @@ async def handle_proxy_file_upload(update: Update, context: ContextTypes.DEFAULT
     )
 
     await processing_msg.edit_text(res_msg, parse_mode='HTML', reply_markup=reply_markup)
+
+
+async def export_all_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
+    """Xử lý lệnh in toàn bộ user ra file .txt"""
+    user_id = update.effective_user.id
+    language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
+
+    if user_id != ADMIN_USER_ID:
+        if update.effective_message:
+            await update.effective_message.reply_text(pick_text(language, "Bạn không có quyền sử dụng lệnh này.", "You are not allowed to use this command."))
+        return
+
+    query = update.callback_query
+    if query:
+        await query.answer()
+
+    status_msg = None
+    if update.effective_message:
+        status_msg = await update.effective_message.reply_text(
+            pick_text(language, "⏳ Đang trích xuất dữ liệu người dùng...", "⏳ Extracting user data...")
+        )
+
+    users = db.get_all_users()
+    if not users:
+        if status_msg:
+            await status_msg.edit_text(pick_text(language, "❌ Không có người dùng nào trong hệ thống.", "❌ No users found in the system."))
+        return
+
+    # Header cho file
+    fields = ["user_id", "username", "full_name", "language", "balance", "is_blocked", "invited_by", "created_at", "last_checkin"]
+    header = "|".join(fields)
+
+    output_lines = [header]
+    for user in users:
+        line_parts = []
+        for field in fields:
+            val = user.get(field)
+            if val is None:
+                val = ""
+            line_parts.append(str(val))
+        output_lines.append("|".join(line_parts))
+
+    file_content = "\n".join(output_lines)
+    file_stream = io.BytesIO(file_content.encode('utf-8'))
+    file_stream.name = f"all_users_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+
+    if update.effective_message:
+        await update.effective_chat.send_document(
+            document=file_stream,
+            caption=pick_text(
+                language,
+                f"📊 Danh sách toàn bộ {len(users)} người dùng.",
+                f"📊 List of all {len(users)} users."
+            )
+        )
+        if status_msg:
+            try:
+                await status_msg.delete()
+            except Exception:
+                pass

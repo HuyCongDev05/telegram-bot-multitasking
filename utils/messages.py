@@ -192,9 +192,11 @@ def get_admin_users_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboard
             InlineKeyboardButton(get_ui_label('admin_unblock', language), callback_data='admin_unblock'),
         ],
         [InlineKeyboardButton(get_ui_label('admin_blacklist', language), callback_data='admin_blacklist')],
+        [InlineKeyboardButton(get_ui_label('admin_export_users', language), callback_data='admin_export_users')],
         [InlineKeyboardButton(get_back_admin_button_label(language), callback_data='admin_menu')],
     ]
     return InlineKeyboardMarkup(keyboard)
+
 
 
 def get_admin_key_menu_message(language: str = DEFAULT_LANGUAGE) -> str:

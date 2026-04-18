@@ -956,6 +956,28 @@ class MySQLDatabase:
             cursor.close()
             conn.close()
 
+    def get_all_users(self) -> List[Dict]:
+        """Lấy tất cả thông tin người dùng"""
+        conn = self.get_connection()
+        cursor = conn.cursor(DictCursor)
+
+        try:
+            cursor.execute("SELECT * FROM users ORDER BY created_at DESC")
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                user_data = dict(row)
+                if user_data.get('created_at'):
+                    user_data['created_at'] = user_data['created_at'].isoformat()
+                if user_data.get('last_checkin'):
+                    user_data['last_checkin'] = user_data['last_checkin'].isoformat()
+                result.append(user_data)
+            return result
+        finally:
+            cursor.close()
+            conn.close()
+
+
     def add_live_cc(self, bin_num: str, month: str, year: str, cvv: str, status: str) -> bool:
         """Lưu thẻ Live hoặc Real vào database"""
         conn = self.get_connection()

@@ -1073,6 +1073,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
         elif action == 'admin_list_keys':
             from handlers.admin_commands import listkeys_command
             await listkeys_command(update, db)
+        elif action == 'admin_export_users':
+            from handlers.admin_commands import export_all_users_command
+            await export_all_users_command(update, context, db)
         elif action == 'admin_list_live_cc':
             from handlers.admin_commands import list_live_cc_command
             await list_live_cc_command(update, db)
