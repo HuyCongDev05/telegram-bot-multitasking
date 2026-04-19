@@ -387,21 +387,16 @@ async def list_live_cc_command(update: Update, db: Database):
 
         output_content += f"{bin_num}|{month}|{year}|{cvv} - [{status.upper()}] - {brand} {card_type} {level} - {bank} ({country}) - {check_at}\n"
 
-    if len(live_ccs) <= 20:
-        if update.effective_message:
-            await update.effective_message.reply_text(
-                f"{'Live CC list' if language == 'en' else 'Danh sách CC Live'}:\n<code>{output_content}</code>",
-                parse_mode='HTML',
-            )
-        return
-
+    # Luôn gửi file thay vì gửi text (theo yêu cầu user)
     file_stream = io.BytesIO(output_content.encode('utf-8'))
     file_stream.name = "live_cc.txt"
     if update.effective_message:
         await update.effective_message.reply_document(
             document=file_stream,
-            caption=f"Latest {len(live_ccs)} live CCs." if language == 'en' else f"Danh sách {len(live_ccs)} CC Live mới nhất.",
+            caption=f"📊 <b>{'Live CC list' if language == 'en' else 'Danh sách CC Live'}</b> ({len(live_ccs)})",
+            parse_mode='HTML',
         )
+    return
 
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):

@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from checkCC.api_client import check_card_quick
-from checkCC.bin_lookup import format_bin_info
+from checkCC.bin_lookup import format_bin_info, get_clean_country_info
 from config import VERIFY_COST
 from database import Database
 from handlers.user_commands import is_user_busy, show_main_menu_after_delay
@@ -171,14 +171,14 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
             
             results.append(output_line)
             
-            # Lưu live hoặc real vào DB (bảng live_cc)
+                # Lưu live hoặc real vào DB (bảng live_cc)
             if status in ["charged", "approved"]:
                 lives.append(output_line)
                 # Lưu toàn bộ thẻ gốc vào trường bin kèm thông tin chi tiết
                 db.add_live_cc(
                     card_num, month.zfill(2), year, cvv, "live",
                     bank=bin_info.get("bank"),
-                    country=bin_info.get("country_name"),
+                    country=get_clean_country_info(bin_info),
                     brand=bin_info.get("brand"),
                     card_type=bin_info.get("type"),
                     level=bin_info.get("level")
@@ -191,7 +191,7 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
                 db.add_live_cc(
                     card_num, month.zfill(2), year, cvv, "real",
                     bank=bin_info.get("bank"),
-                    country=bin_info.get("country_name"),
+                    country=get_clean_country_info(bin_info),
                     brand=bin_info.get("brand"),
                     card_type=bin_info.get("type"),
                     level=bin_info.get("level")

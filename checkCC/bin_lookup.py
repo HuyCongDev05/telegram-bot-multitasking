@@ -163,6 +163,27 @@ def get_default_bin_info() -> Optional[Dict]:
     return None
 
 
+def get_clean_country_info(bin_info: Dict) -> Optional[str]:
+    """Lấy tên quốc gia kèm cờ, loại bỏ các mã code dư thừa (vd: vn)."""
+    country_name = bin_info.get("country_name")
+    country_flag = bin_info.get("country_flag")
+    
+    parts = []
+    if country_name:
+        parts.append(country_name)
+    
+    if country_flag:
+        import re
+        # Chỉ giữ lại các ký tự không phải alphabet (emoji)
+        flag_only = re.sub(r'[a-zA-Z]', '', country_flag).strip()
+        if flag_only:
+            parts.append(flag_only)
+        elif not country_name:
+            parts.append(country_flag)
+            
+    return " ".join(parts) if parts else None
+
+
 def format_bin_info(bin_info: Optional[Dict]) -> Optional[str]:
     """Định dạng thông tin BIN để hiển thị."""
     if not bin_info:
@@ -191,13 +212,8 @@ def format_bin_info(bin_info: Optional[Dict]) -> Optional[str]:
         parts.append(" - ".join(details))
         
     # 3. Country & Flag
-    country_part = []
-    if bin_info.get("country_name"):
-        country_part.append(bin_info["country_name"])
-    if bin_info.get("country_flag"):
-        country_part.append(bin_info["country_flag"])
-        
-    if country_part:
-        parts.append(" ".join(country_part))
+    country_str = get_clean_country_info(bin_info)
+    if country_str:
+        parts.append(country_str)
     
     return " | ".join(parts) if parts else None
