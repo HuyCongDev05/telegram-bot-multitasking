@@ -4,7 +4,7 @@ import logging
 import httpx
 
 from config import ADMIN_USER_ID, WEBSHARE_TOKEN
-from database_mysql import Database
+from database import Database
 from utils.proxy_helper import check_proxy_health
 
 logger = logging.getLogger(__name__)

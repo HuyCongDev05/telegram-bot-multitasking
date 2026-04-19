@@ -8,7 +8,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Upda
 from telegram.ext import ContextTypes
 
 from config import ADMIN_USER_ID, VERIFY_COST
-from database_mysql import Database
+from database import Database
 from netflix.cookie_utils import sanitize_cookie_text, validate_netflix_cookie
 from netflix.netflix_checker import NetflixChecker, NetscapeConverter
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language

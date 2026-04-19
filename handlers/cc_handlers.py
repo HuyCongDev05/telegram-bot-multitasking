@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes
 from checkCC.api_client import check_card_quick
 from checkCC.bin_lookup import format_bin_info
 from config import VERIFY_COST
-from database_mysql import Database
+from database import Database
 from handlers.user_commands import is_user_busy, show_main_menu_after_delay
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.messages import get_ui_label

@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from config import DISCORD_QUEST_COST
-from database_mysql import Database
+from database import Database
 from discordQuestAuto.discordQuestAuto import start_quest_auto
 from handlers.user_commands import is_user_busy, send_or_reply, show_main_menu_after_delay
 from utils.checks import is_not_blocked, check_maintenance

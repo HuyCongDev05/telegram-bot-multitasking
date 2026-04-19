@@ -7,7 +7,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from config import ADMIN_USER_ID
-from database_mysql import Database
+from database import Database
 from utils.checks import reject_group_command
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.messages import get_back_admin_button_label, get_back_button_label

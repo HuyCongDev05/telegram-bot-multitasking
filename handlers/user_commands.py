@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes
 
 from config import ADMIN_USER_ID
 from config import VERIFY_COST
-from database_mysql import Database
+from database import Database
 from utils.checks import is_not_blocked
 from utils.i18n import DEFAULT_LANGUAGE, get_user_language, normalize_language, tr
 from utils.messages import (
@@ -1486,7 +1486,6 @@ async def _handle_netflix_random_login(update: Update, context: ContextTypes.DEF
     processing_msg = await reply_func(tr(language, "netflix.random_login.processing"))
 
     # 4. Tạo link (sử dụng logic tương tự _process_netflix_cookie)
-    import requests as _requests
     from netflix.nf_token_generator import generate_nftoken
 
     proxy_url = None

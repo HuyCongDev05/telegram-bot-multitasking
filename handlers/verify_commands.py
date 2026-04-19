@@ -8,12 +8,12 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from config import VERIFY_COST
-from database_mysql import Database
+from database import Database
 from handlers.user_commands import is_user_busy, show_main_menu_after_delay
 from k12.sheerid_verifier import SheerIDVerifier as K12Verifier
 from spotify.sheerid_verifier import SheerIDVerifier as SpotifyVerifier
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.checks import is_not_blocked
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language
 from utils.messages import get_insufficient_balance_message, get_verify_usage_message
 
 try:

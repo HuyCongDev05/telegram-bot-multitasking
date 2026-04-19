@@ -1,6 +1,6 @@
 """Chương trình chính của Telegram Bot"""
-import logging
 import asyncio
+import logging
 from functools import partial
 
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
@@ -8,7 +8,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from config import BOT_TOKEN
 
 _BUILD_SIG = "687579636f6e676465763035"
-from database_mysql import Database
+from database import Database
 from keep_alive import keep_alive
 from handlers.cc_handlers import checkCC_command
 from handlers.user_commands import (
