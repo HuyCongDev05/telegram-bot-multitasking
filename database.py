@@ -274,11 +274,19 @@ class MySQLDatabase:
                         password VARCHAR(65),
                         city VARCHAR(255),
                         country VARCHAR(100),
-                        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         UNIQUE (address, port, username, password)
                     )
                     """
                 )
+
+                # Migration cho proxies: Chuyển updatedAt (nếu có) sang updated_at hoặc thêm mới
+                if not self._column_exists(cursor, 'proxies', 'updated_at'):
+                    # Kiểm tra nếu tồn tại updatedAt (Postgres sẽ là updatedat)
+                    if self._column_exists(cursor, 'proxies', 'updatedat'):
+                        cursor.execute("ALTER TABLE proxies RENAME COLUMN updatedat TO updated_at")
+                    else:
+                        cursor.execute("ALTER TABLE proxies ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
                 # Bảng lưu kho cookie Netflix
                 cursor.execute(
@@ -948,7 +956,7 @@ class MySQLDatabase:
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
-                cursor.execute("SELECT * FROM proxies ORDER BY updatedAt DESC")
+                cursor.execute("SELECT * FROM proxies ORDER BY updated_at DESC")
                 return list(cursor.fetchall())
             finally:
                 cursor.close()

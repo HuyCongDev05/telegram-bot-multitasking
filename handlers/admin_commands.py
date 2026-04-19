@@ -530,7 +530,7 @@ async def list_proxies_admin(update: Update, context: ContextTypes.DEFAULT_TYPE,
     for proxy in proxies[:15]:
         loc = f"[{proxy['country'] or 'N/A'}] {proxy['city'] or ''}"
         msg += f"• <code>{proxy['address']}:{proxy['port']}</code> - {loc}\n"
-        msg += f"  <i>{'Updated' if language == 'en' else 'Cập nhật'}: {proxy['updatedAt']}</i>\n"
+        msg += f"  <i>{'Updated' if language == 'en' else 'Cập nhật'}: {proxy['updated_at']}</i>\n"
         msg += "---\n"
 
     if len(proxies) > 15:
