@@ -23,7 +23,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 
 class MySQLDatabase:
-    """Lớp quản lý cơ sở dữ liệu MySQL (đã chuyển đổi sang PostgreSQL/Supabase)"""
+    """Lớp quản lý cơ sở dữ liệu PostgreSQL"""
 
     def __init__(self):
         """Khởi tạo kết nối cơ sở dữ liệu"""
@@ -240,10 +240,27 @@ class MySQLDatabase:
                         year VARCHAR(10),
                         cvv VARCHAR(10),
                         status VARCHAR(65),
+                        bank VARCHAR(255),
+                        country VARCHAR(100),
+                        brand VARCHAR(100),
+                        card_type VARCHAR(50),
+                        level VARCHAR(100),
                         checkAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                     """
                 )
+
+                # Đảm bảo các cột mới tồn tại cho các DB cũ
+                new_columns = [
+                    ('bank', 'VARCHAR(255)'),
+                    ('country', 'VARCHAR(100)'),
+                    ('brand', 'VARCHAR(100)'),
+                    ('card_type', 'VARCHAR(50)'),
+                    ('level', 'VARCHAR(100)')
+                ]
+                for col_name, col_type in new_columns:
+                    if not self._column_exists(cursor, 'live_cc', col_name):
+                        cursor.execute(f"ALTER TABLE live_cc ADD COLUMN {col_name} {col_type}")
 
                 # Bảng proxies
                 cursor.execute(
@@ -726,17 +743,21 @@ class MySQLDatabase:
             finally:
                 cursor.close()
 
-    def add_live_cc(self, bin_num: str, month: str, year: str, cvv: str, status: str) -> bool:
+    def add_live_cc(
+            self, bin_num: str, month: str, year: str, cvv: str, status: str,
+            bank: str = None, country: str = None, brand: str = None,
+            card_type: str = None, level: str = None
+    ) -> bool:
         """Lưu thẻ Live hoặc Real vào database"""
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(
                     """
-                    INSERT INTO live_cc (bin, month, year, cvv, status, checkAt)
-                    VALUES (%s, %s, %s, %s, %s, NOW())
+                    INSERT INTO live_cc (bin, month, year, cvv, status, bank, country, brand, card_type, level, checkAt)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                     """,
-                    (bin_num, month, year, cvv, status)
+                    (bin_num, month, year, cvv, status, bank, country, brand, card_type, level)
                 )
                 return True
             except Exception as e:

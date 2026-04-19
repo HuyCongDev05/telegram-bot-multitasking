@@ -169,11 +169,35 @@ def format_bin_info(bin_info: Optional[Dict]) -> Optional[str]:
         return None
     
     parts = []
-    if bin_info.get("brand"):
-        parts.append(bin_info["brand"])
-    if bin_info.get("type"):
-        parts.append(bin_info["type"])
-    if bin_info.get("level"):
-        parts.append(bin_info["level"])
     
-    return " - ".join(parts) if parts else None
+    # 1. Bank & Brand
+    bank_brand = []
+    if bin_info.get("bank"):
+        bank_brand.append(bin_info["bank"])
+    if bin_info.get("brand"):
+        bank_brand.append(bin_info["brand"])
+    
+    if bank_brand:
+        parts.append(" ".join(bank_brand))
+    
+    # 2. Type & Level
+    details = []
+    if bin_info.get("type"):
+        details.append(bin_info["type"])
+    if bin_info.get("level"):
+        details.append(bin_info["level"])
+    
+    if details:
+        parts.append(" - ".join(details))
+        
+    # 3. Country & Flag
+    country_part = []
+    if bin_info.get("country_name"):
+        country_part.append(bin_info["country_name"])
+    if bin_info.get("country_flag"):
+        country_part.append(bin_info["country_flag"])
+        
+    if country_part:
+        parts.append(" ".join(country_part))
+    
+    return " | ".join(parts) if parts else None

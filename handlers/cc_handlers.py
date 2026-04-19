@@ -174,14 +174,28 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
             # Lưu live hoặc real vào DB (bảng live_cc)
             if status in ["charged", "approved"]:
                 lives.append(output_line)
-                # Lưu toàn bộ thẻ gốc vào trường bin
-                db.add_live_cc(card_num, month.zfill(2), year, cvv, "live")
+                # Lưu toàn bộ thẻ gốc vào trường bin kèm thông tin chi tiết
+                db.add_live_cc(
+                    card_num, month.zfill(2), year, cvv, "live",
+                    bank=bin_info.get("bank"),
+                    country=bin_info.get("country_name"),
+                    brand=bin_info.get("brand"),
+                    card_type=bin_info.get("type"),
+                    level=bin_info.get("level")
+                )
                 
             elif status == "declined" and check_res.get("stripe_card_info"):
                 # Có stripe_card_info nghĩa là thẻ thật nhưng bị từ chối bởi cổng/ngân hàng
                 real_cards.append(output_line)
-                # Lưu toàn bộ thẻ gốc vào trường bin
-                db.add_live_cc(card_num, month.zfill(2), year, cvv, "real")
+                # Lưu toàn bộ thẻ gốc vào trường bin kèm thông tin chi tiết
+                db.add_live_cc(
+                    card_num, month.zfill(2), year, cvv, "real",
+                    bank=bin_info.get("bank"),
+                    country=bin_info.get("country_name"),
+                    brand=bin_info.get("brand"),
+                    card_type=bin_info.get("type"),
+                    level=bin_info.get("level")
+                )
                 
         except Exception as e:
             logger.error(f"Error checking CC {card_num}: {e}")

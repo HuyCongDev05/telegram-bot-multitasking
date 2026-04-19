@@ -374,13 +374,18 @@ async def list_live_cc_command(update: Update, db: Database):
         month = cc.get('month', 'xx')
         year = cc.get('year', 'xxxx')
         cvv = cc.get('cvv', 'xxx')
+        bank = cc.get('bank') or 'N/A'
+        country = cc.get('country') or 'N/A'
+        brand = cc.get('brand') or 'N/A'
+        card_type = cc.get('card_type') or 'N/A'
+        level = cc.get('level') or 'N/A'
         status = cc.get('status', 'Unknown')
         check_at = cc.get('checkAt', '')
 
         if isinstance(check_at, datetime):
             check_at = check_at.strftime('%Y-%m-%d %H:%M:%S')
 
-        output_content += f"{bin_num}|{month}|{year}|{cvv} - [{status.upper()}] - {check_at}\n"
+        output_content += f"{bin_num}|{month}|{year}|{cvv} - [{status.upper()}] - {brand} {card_type} {level} - {bank} ({country}) - {check_at}\n"
 
     if len(live_ccs) <= 20:
         if update.effective_message:
