@@ -9,6 +9,7 @@ from config import BOT_TOKEN
 
 _BUILD_SIG = "687579636f6e676465763035"
 from database_mysql import Database
+from keep_alive import keep_alive
 from handlers.cc_handlers import checkCC_command
 from handlers.user_commands import (
     start_command,
@@ -52,6 +53,9 @@ def main():
     """Hàm chính"""
     # Khởi tạo cơ sở dữ liệu
     db = Database()
+
+    # Khởi động Web Server Keep-Alive
+    keep_alive()
 
     # Tạo ứng dụng - Cho phép xử lý đồng thời
     application = (
@@ -116,6 +120,27 @@ def main():
         # Chạy vòng lặp quản lý proxy (Cập nhật + Dọn dẹp) trong task asyncio riêng biệt
         asyncio.create_task(start_proxy_management_loop(app, db, interval=900))
         logger.info("🕒 Background Task: Đã kích hoạt vòng lặp quản lý proxy (Webshare Update + Cleanup - 15 phút/lần).")
+
+        # Cơ chế Self-ping để chống ngủ trên Render
+        async def self_ping():
+            import httpx
+            import os
+            port = os.environ.get('PORT', '8080')
+            url = f"http://localhost:{port}/health"
+            # Đợi một chút cho server Flask khởi động hẳn
+            await asyncio.sleep(10)
+            while True:
+                try:
+                    async with httpx.AsyncClient() as client:
+                        response = await client.get(url)
+                        logger.info(f"❤️ Self-ping status: {response.status_code}")
+                except Exception as e:
+                    logger.error(f"❌ Self-ping failed: {e}")
+                # Ping mỗi 10 phút (600 giây)
+                await asyncio.sleep(600)
+
+        asyncio.create_task(self_ping())
+        logger.info("🚀 Background Task: Đã kích hoạt Self-ping để chống ngủ trên Render.")
 
     application.post_init = post_init
 

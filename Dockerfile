@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libgdk-pixbuf-xlib-2.0-0 \
     shared-mime-info \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Sao chép tệp yêu cầu
@@ -64,8 +65,9 @@ RUN find . -type f -name "*.pyc" -delete 2>/dev/null || true
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Cấu hình MySQL (Sẽ được truyền qua docker-compose.yml hoặc dòng lệnh)
-# Không ghi cứng tại đây, sử dụng biến môi trường
+# Cấu hình cổng cho Render (mặc định 8080)
+ENV PORT=8080
+EXPOSE 8080
 
 # Kiểm tra sức khỏe (Healthcheck) của bot
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

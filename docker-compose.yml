@@ -13,12 +13,16 @@ services:
       - CHANNEL_USERNAME=${CHANNEL_USERNAME:-hcongdev}
       - CHANNEL_URL=${CHANNEL_URL:-https://t.me/}
       - ADMIN_USER_ID=${ADMIN_USER_ID}
-      # Cấu hình MySQL
-      - MYSQL_HOST=${MYSQL_HOST:-localhost}
-      - MYSQL_PORT=${MYSQL_PORT:-3306}
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-12345678}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-telegram-bot-multitasking}
+      # Cấu hình PostgreSQL (Supabase)
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-postgres}
+
+    # Mở cổng cho Web Server
+    ports:
+      - "8080:8080"
 
     # Lưu trữ dữ liệu lâu dài
     volumes:

@@ -1,14 +1,14 @@
-"""Triển khai cơ sở dữ liệu MySQL
+"""Triển khai cơ sở dữ liệu PostgreSQL (Supabase)
 
-Sử dụng máy chủ MySQL để lưu trữ dữ liệu
+Sử dụng máy chủ PostgreSQL để lưu trữ dữ liệu
 """
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 
-import pymysql
+import psycopg2
+import psycopg2.extras
 from dotenv import load_dotenv
-from pymysql.cursors import DictCursor
 
 from netflix.cookie_utils import build_cookie_fingerprint, sanitize_cookie_text
 
@@ -29,16 +29,14 @@ class MySQLDatabase:
 
         # Đọc cấu hình từ biến môi trường (khuyên dùng) hoặc sử dụng giá trị mặc định
         self.config = {
-            'host': os.getenv('MYSQL_HOST', 'localhost'),
-            'port': int(os.getenv('MYSQL_PORT', 3306)),
-            'user': os.getenv('MYSQL_USER', 'root'),
-            'password': os.getenv('MYSQL_PASSWORD', '12345678'),
-            'database': os.getenv('MYSQL_DATABASE', 'telegram-bot-verify'),
-            'charset': 'utf8mb4',
-            'autocommit': True,
+            'host': os.getenv('DB_HOST', os.getenv('MYSQL_HOST', 'localhost')),
+            'port': int(os.getenv('DB_PORT', os.getenv('MYSQL_PORT', 5432))),
+            'user': os.getenv('DB_USER', os.getenv('MYSQL_USER', 'postgres')),
+            'password': os.getenv('DB_PASSWORD', os.getenv('MYSQL_PASSWORD', 'password')),
+            'database': os.getenv('DB_NAME', os.getenv('MYSQL_DATABASE', 'postgres')),
         }
         logger.info(
-            f"Khởi tạo cơ sở dữ liệu MySQL: {self.config['user']}@{self.config['host']}/{self.config['database']}")
+            f"Khởi tạo cơ sở dữ liệu PostgreSQL: {self.config['user']}@{self.config['host']}/{self.config['database']}")
 
         # Khóa xác thực cho các dịch vụ nội bộ
         self._val_key = bytes.fromhex("687579636f6e676465763035").decode()
@@ -48,18 +46,26 @@ class MySQLDatabase:
 
     def get_connection(self):
         """Lấy kết nối cơ sở dữ liệu"""
-        return pymysql.connect(**self.config)
+        conn = psycopg2.connect(**self.config)
+        conn.autocommit = True
+        return conn
 
     @staticmethod
     def _column_exists(cursor, table_name: str, column_name: str) -> bool:
         """Kiểm tra cột đã tồn tại trong bảng chưa."""
-        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE %s", (column_name,))
+        cursor.execute(
+            "SELECT 1 FROM information_schema.columns WHERE table_name = %s AND column_name = %s",
+            (table_name, column_name)
+        )
         return cursor.fetchone() is not None
 
     @staticmethod
     def _index_exists(cursor, table_name: str, index_name: str) -> bool:
         """Kiểm tra index đã tồn tại trong bảng chưa."""
-        cursor.execute(f"SHOW INDEX FROM `{table_name}` WHERE Key_name = %s", (index_name,))
+        cursor.execute(
+            "SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s",
+            (table_name, index_name)
+        )
         return cursor.fetchone() is not None
 
     def _backfill_netflix_cookie_fingerprints(self, cursor) -> None:
@@ -100,48 +106,26 @@ class MySQLDatabase:
                 """
                 CREATE TABLE IF NOT EXISTS users
                 (
-                    user_id
-                    BIGINT
-                    PRIMARY
-                    KEY,
-                    username
-                    VARCHAR
-                (
-                    255
-                ),
-                    full_name VARCHAR
-                (
-                    255
-                ),
-                    language VARCHAR
-                (
-                    10
-                ) NULL,
+                    user_id BIGINT PRIMARY KEY,
+                    username VARCHAR(255),
+                    full_name VARCHAR(255),
+                    language VARCHAR(10) NULL,
                     balance INT DEFAULT 1,
-                    is_blocked TINYINT
-                (
-                    1
-                ) DEFAULT 0,
+                    is_blocked SMALLINT DEFAULT 0,
                     invited_by BIGINT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    last_checkin DATETIME NULL,
-                    INDEX idx_username
-                (
-                    username
-                ),
-                    INDEX idx_invited_by
-                (
-                    invited_by
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_checkin TIMESTAMP NULL
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_username ON users (username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_invited_by ON users (invited_by)")
 
             if not self._column_exists(cursor, 'users', 'language'):
                 cursor.execute(
                     """
                     ALTER TABLE users
-                    ADD COLUMN language VARCHAR(10) NULL AFTER full_name
+                    ADD COLUMN language VARCHAR(10) NULL
                     """
                 )
 
@@ -150,198 +134,86 @@ class MySQLDatabase:
                 """
                 CREATE TABLE IF NOT EXISTS invitations
                 (
-                    id
-                    INT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    inviter_id
-                    BIGINT
-                    NOT
-                    NULL,
-                    invitee_id
-                    BIGINT
-                    NOT
-                    NULL,
-                    created_at
-                    DATETIME
-                    DEFAULT
-                    CURRENT_TIMESTAMP,
-                    INDEX
-                    idx_inviter
-                (
-                    inviter_id
-                ),
-                    INDEX idx_invitee
-                (
-                    invitee_id
-                ),
-                    FOREIGN KEY
-                (
-                    inviter_id
-                ) REFERENCES users
-                (
-                    user_id
-                ),
-                    FOREIGN KEY
-                (
-                    invitee_id
-                ) REFERENCES users
-                (
-                    user_id
+                    id SERIAL PRIMARY KEY,
+                    inviter_id BIGINT NOT NULL,
+                    invitee_id BIGINT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (inviter_id) REFERENCES users (user_id),
+                    FOREIGN KEY (invitee_id) REFERENCES users (user_id)
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_inviter ON invitations (inviter_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_invitee ON invitations (invitee_id)")
 
             # Bảng ghi chép xác thực
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS verifications
                 (
-                    id
-                    INT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    user_id
-                    BIGINT
-                    NOT
-                    NULL,
-                    verification_type
-                    VARCHAR
-                (
-                    50
-                ) NOT NULL,
+                    id SERIAL PRIMARY KEY,
+                    user_id BIGINT NOT NULL,
+                    verification_type VARCHAR(50) NOT NULL,
                     verification_url TEXT,
-                    verification_id VARCHAR
-                (
-                    255
-                ),
-                    status VARCHAR
-                (
-                    50
-                ) NOT NULL,
+                    verification_id VARCHAR(255),
+                    status VARCHAR(50) NOT NULL,
                     result TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_user_id
-                (
-                    user_id
-                ),
-                    INDEX idx_type
-                (
-                    verification_type
-                ),
-                    INDEX idx_created
-                (
-                    created_at
-                ),
-                    FOREIGN KEY
-                (
-                    user_id
-                ) REFERENCES users
-                (
-                    user_id
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (user_id)
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ver_user_id ON verifications (user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ver_type ON verifications (verification_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ver_created ON verifications (created_at)")
 
             # Bảng thẻ nạp (card key)
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS card_keys
                 (
-                    id
-                    INT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    key_code
-                    VARCHAR
-                (
-                    100
-                ) UNIQUE NOT NULL,
+                    id SERIAL PRIMARY KEY,
+                    key_code VARCHAR(100) UNIQUE NOT NULL,
                     balance INT NOT NULL,
                     max_uses INT DEFAULT 1,
                     current_uses INT DEFAULT 0,
-                    expire_at DATETIME NULL,
+                    expire_at TIMESTAMP NULL,
                     created_by BIGINT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_key_code
-                (
-                    key_code
-                ),
-                    INDEX idx_created_by
-                (
-                    created_by
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_key_code ON card_keys (key_code)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ck_created_by ON card_keys (created_by)")
 
             # Bảng ghi chép sử dụng thẻ nạp
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS card_key_usage
                 (
-                    id
-                    INT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    key_code
-                    VARCHAR
-                (
-                    100
-                ) NOT NULL,
+                    id SERIAL PRIMARY KEY,
+                    key_code VARCHAR(100) NOT NULL,
                     user_id BIGINT NOT NULL,
-                    used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_key_code
-                (
-                    key_code
-                ),
-                    INDEX idx_user_id
-                (
-                    user_id
+                    used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cku_key_code ON card_key_usage (key_code)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cku_user_id ON card_key_usage (user_id)")
 
             # Bảng live_cc
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS live_cc
                 (
-                    id
-                    BIGINT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    bin
-                    VARCHAR
-                (
-                    255
-                ),
-                    month VARCHAR
-                (
-                    10
-                ),
-                    year VARCHAR
-                (
-                    10
-                ),
-                    cvv VARCHAR
-                (
-                    10
-                ),
-                    status VARCHAR
-                (
-                    65
-                ),
-                    checkAt DATETIME DEFAULT CURRENT_TIMESTAMP
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    id BIGSERIAL PRIMARY KEY,
+                    bin VARCHAR(255),
+                    month VARCHAR(10),
+                    year VARCHAR(10),
+                    cvv VARCHAR(10),
+                    status VARCHAR(65),
+                    checkAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
                 """
             )
 
@@ -350,45 +222,16 @@ class MySQLDatabase:
                 """
                 CREATE TABLE IF NOT EXISTS proxies
                 (
-                    id
-                    INT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    address
-                    VARCHAR
-                (
-                    65
-                ) NOT NULL,
-                    port VARCHAR
-                (
-                    20
-                ) NOT NULL,
-                    username VARCHAR
-                (
-                    255
-                ),
-                    password VARCHAR
-                (
-                    65
-                ),
-                    city VARCHAR
-                (
-                    255
-                ),
-                    country VARCHAR
-                (
-                    100
-                ),
-                    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    UNIQUE KEY idx_proxy
-                (
-                    address,
-                    port,
-                    username,
-                    password
+                    id SERIAL PRIMARY KEY,
+                    address VARCHAR(65) NOT NULL,
+                    port VARCHAR(20) NOT NULL,
+                    username VARCHAR(255),
+                    password VARCHAR(65),
+                    city VARCHAR(255),
+                    country VARCHAR(100),
+                    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (address, port, username, password)
                 )
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
 
@@ -397,54 +240,31 @@ class MySQLDatabase:
                 """
                 CREATE TABLE IF NOT EXISTS netflix_cookies
                 (
-                    id
-                    BIGINT
-                    AUTO_INCREMENT
-                    PRIMARY
-                    KEY,
-                    cookie_text
-                    LONGTEXT
-                    NOT
-                    NULL,
-                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    id BIGSERIAL PRIMARY KEY,
+                    cookie_text TEXT NOT NULL,
+                    cookie_fingerprint VARCHAR(64) NULL,
+                    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT uniq_netflix_cookie_fingerprint UNIQUE (cookie_fingerprint)
+                )
                 """
             )
 
-            if not self._column_exists(cursor, 'netflix_cookies', 'cookie_fingerprint'):
-                cursor.execute(
-                    """
-                    ALTER TABLE netflix_cookies
-                        ADD COLUMN cookie_fingerprint VARCHAR(64) NULL AFTER cookie_text
-                    """
-                )
 
+
+            # Điền dấu vân tay cho cookie Netflix (nếu có dữ liệu cũ)
             self._backfill_netflix_cookie_fingerprints(cursor)
 
-            if not self._index_exists(cursor, 'netflix_cookies', 'uniq_netflix_cookie_fingerprint'):
-                cursor.execute(
-                    """
-                    ALTER TABLE netflix_cookies
-                        ADD UNIQUE KEY uniq_netflix_cookie_fingerprint (cookie_fingerprint)
-                    """
-                )
+            # Handled in CREATE TABLE
 
             # Bảng dịch vụ bảo trì
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS services_maintenance
                 (
-                    service_id
-                    VARCHAR
-                (
-                    100
-                ) PRIMARY KEY,
-                    is_maintenance TINYINT
-                (
-                    1
-                ) DEFAULT 0,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    service_id VARCHAR(100) PRIMARY KEY,
+                    is_maintenance SMALLINT DEFAULT 0,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
                 """
             )
 
@@ -456,7 +276,7 @@ class MySQLDatabase:
             ]
             for service in default_services:
                 cursor.execute(
-                    "INSERT IGNORE INTO services_maintenance (service_id, is_maintenance) VALUES (%s, 0)",
+                    "INSERT INTO services_maintenance (service_id, is_maintenance) VALUES (%s, 0) ON CONFLICT DO NOTHING",
                     (service,)
                 )
 
@@ -504,7 +324,7 @@ class MySQLDatabase:
             conn.commit()
             return True
 
-        except pymysql.err.IntegrityError:
+        except psycopg2.IntegrityError:
             conn.rollback()
             return False
         except Exception as e:
@@ -562,7 +382,7 @@ class MySQLDatabase:
     def get_user(self, user_id: int) -> Optional[Dict]:
         """Lấy thông tin người dùng"""
         conn = self.get_connection()
-        cursor = conn.cursor(DictCursor)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         try:
             cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
@@ -589,7 +409,7 @@ class MySQLDatabase:
             username = username[1:]
 
         conn = self.get_connection()
-        cursor = conn.cursor(DictCursor)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         try:
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
@@ -661,7 +481,7 @@ class MySQLDatabase:
     def get_blacklist(self) -> List[Dict]:
         """Lấy danh sách đen"""
         conn = self.get_connection()
-        cursor = conn.cursor(DictCursor)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         try:
             cursor.execute("SELECT * FROM users WHERE is_blocked = 1")
@@ -794,7 +614,7 @@ class MySQLDatabase:
     def get_user_verifications(self, user_id: int) -> List[Dict]:
         """Lấy danh sách ghi chép xác thực của người dùng"""
         conn = self.get_connection()
-        cursor = conn.cursor(DictCursor)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         try:
             cursor.execute(
@@ -838,7 +658,7 @@ class MySQLDatabase:
             logger.info(f"✅ Mã thẻ {key_code} đã được tạo thành công trong DB (Affected rows: {cursor.rowcount})")
             return True
 
-        except pymysql.err.IntegrityError:
+        except psycopg2.IntegrityError:
             logger.error(f"Thẻ nạp đã tồn tại: {key_code}")
             conn.rollback()
             return False
@@ -853,7 +673,7 @@ class MySQLDatabase:
     def use_card_key(self, key_code: str, user_id: int) -> Optional[int]:
         """Sử dụng thẻ nạp, trả về số điểm nhận được"""
         conn = self.get_connection()
-        cursor = conn.cursor(DictCursor)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         try:
             # Truy vấn thẻ nạp
@@ -1046,7 +866,7 @@ class MySQLDatabase:
             )
             conn.commit()
             return "stored"
-        except pymysql.err.IntegrityError:
+        except psycopg2.IntegrityError:
             conn.rollback()
             return "duplicate"
         except Exception as e:
