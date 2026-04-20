@@ -103,7 +103,7 @@ class MySQLDatabase:
             """
             SELECT id, cookie_text
             FROM netflix_cookies
-            ORDER BY "createdAt" ASC, id ASC
+            ORDER BY created_at ASC, id ASC
             """
         )
         rows = cursor.fetchall()
@@ -288,6 +288,18 @@ class MySQLDatabase:
                     else:
                         cursor.execute("ALTER TABLE proxies ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
+                # Migration cho netflix_cookies: Chuyển createdAt/createdat sang created_at
+                if self._column_exists(cursor, 'netflix_cookies', 'createdAt'):
+                    cursor.execute('ALTER TABLE netflix_cookies RENAME COLUMN "createdAt" TO created_at')
+                    logger.info("Migrated netflix_cookies column 'createdAt' to 'created_at'")
+                elif self._column_exists(cursor, 'netflix_cookies', 'createdat'):
+                    cursor.execute('ALTER TABLE netflix_cookies RENAME COLUMN createdat TO created_at')
+                    logger.info("Migrated netflix_cookies column 'createdat' to 'created_at'")
+
+                # Đảm bảo index cho fingerprint
+                if not self._index_exists(cursor, 'netflix_cookies', 'uniq_netflix_cookie_fingerprint'):
+                    cursor.execute("ALTER TABLE netflix_cookies ADD CONSTRAINT uniq_netflix_cookie_fingerprint UNIQUE (cookie_fingerprint)")
+
                 # Bảng lưu kho cookie Netflix
                 cursor.execute(
                     """
@@ -296,7 +308,7 @@ class MySQLDatabase:
                         id BIGSERIAL PRIMARY KEY,
                         cookie_text TEXT NOT NULL,
                         cookie_fingerprint VARCHAR(64) NULL,
-                        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         CONSTRAINT uniq_netflix_cookie_fingerprint UNIQUE (cookie_fingerprint)
                     )
                     """
@@ -809,7 +821,7 @@ class MySQLDatabase:
 
                 cursor.execute(
                     """
-                    INSERT INTO netflix_cookies (cookie_text, cookie_fingerprint, createdAt)
+                    INSERT INTO netflix_cookies (cookie_text, cookie_fingerprint, created_at)
                     VALUES (%s, %s, NOW())
                     """,
                     (normalized_cookie_text, cookie_fingerprint),
@@ -829,13 +841,13 @@ class MySQLDatabase:
 
     def get_netflix_cookies(self, limit: int = 20, randomize: bool = False) -> List[Dict]:
         """Lấy danh sách cookie Netflix."""
-        order_clause = "ORDER BY RANDOM()" if randomize else "ORDER BY createdAt ASC, id ASC"
+        order_clause = "ORDER BY RANDOM()" if randomize else "ORDER BY created_at ASC, id ASC"
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
                 cursor.execute(
                     f"""
-                    SELECT id, cookie_text, createdAt
+                    SELECT id, cookie_text, created_at
                     FROM netflix_cookies
                     {order_clause}
                     LIMIT %s
