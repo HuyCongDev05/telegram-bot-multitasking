@@ -1,4 +1,4 @@
-"""Create Netflix app-login links from stored Netflix cookies."""
+# Create Netflix app-login links from stored Netflix cookies.
 
 from __future__ import annotations
 

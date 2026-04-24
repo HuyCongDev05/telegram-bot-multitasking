@@ -6,10 +6,8 @@ _MOD_SIG = "687579636f6e676465763035"
 
 
 async def lookup_bin_system_api(session: aiohttp.ClientSession, bin_clean: str) -> Optional[Dict]:
-    """Thử dùng API system-api.pro.
-    
-    Trả về kết quả API trực tiếp hoặc None nếu thất bại.
-    """
+    # Thử dùng API system-api.pro.
+    # Trả về kết quả API trực tiếp hoặc None nếu thất bại.
     try:
         async with session.get(
             f"https://system-api.pro/bin/{bin_clean}",
@@ -35,10 +33,8 @@ async def lookup_bin_system_api(session: aiohttp.ClientSession, bin_clean: str) 
 
 
 async def lookup_bin_noxter(session: aiohttp.ClientSession, bin_clean: str) -> Optional[Dict]:
-    """Thử dùng API noxter.dev.
-    
-    Trả về kết quả API trực tiếp hoặc None nếu thất bại.
-    """
+    # Thử dùng API noxter.dev.
+    # Trả về kết quả API trực tiếp hoặc None nếu thất bại.
     try:
         async with session.get(
             f"https://noxter.dev/gate/bin?bin={bin_clean}",
@@ -66,7 +62,7 @@ async def lookup_bin_noxter(session: aiohttp.ClientSession, bin_clean: str) -> O
 
 
 def is_valid_bin_info(info: Optional[Dict]) -> bool:
-    """Kiểm tra xem thông tin BIN có dữ liệu hợp lệ không."""
+    # Kiểm tra xem thông tin BIN có dữ liệu hợp lệ không.
     if not info:
         return False
     
@@ -77,7 +73,7 @@ def is_valid_bin_info(info: Optional[Dict]) -> bool:
 
 
 def merge_bin_info(base: Optional[Dict], fallback: Optional[Dict]) -> Optional[Dict]:
-    """Hợp nhất thông tin BIN từ hai phản hồi API."""
+    # Hợp nhất thông tin BIN từ hai phản hồi API.
     if not base:
         return fallback
     if not fallback:
@@ -101,20 +97,15 @@ BIN_API_FUNCTIONS = [
 
 
 async def lookup_bin(bin_number: str) -> Dict:
-    """
-    Tra cứu thông tin BIN từ nhiều API theo cơ chế xoay vòng (round-robin).
-    
-    Mỗi yêu cầu bắt đầu từ một API khác nhau để phân phối tải.
-    Thử ít nhất 2 API để đảm bảo dữ liệu đầy đủ (đặc biệt là trường 'level').
-    Nếu một API thất bại hoặc trả về dữ liệu thiếu, sẽ thử cái tiếp theo.
-    Trả về None nếu tất cả API đều thất bại hoặc trả về dữ liệu không hợp lệ.
-    
-    Tham số:
-        bin_number: 6-8 chữ số đầu của số thẻ
-        
-    Trả về:
-        Dict chứa thông tin ngân hàng, quốc gia, thương hiệu, loại thẻ, hoặc None nếu thất bại.
-    """
+    # Tra cứu thông tin BIN từ nhiều API theo cơ chế xoay vòng (round-robin).
+    # Mỗi yêu cầu bắt đầu từ một API khác nhau để phân phối tải.
+    # Thử ít nhất 2 API để đảm bảo dữ liệu đầy đủ (đặc biệt là trường 'level').
+    # Nếu một API thất bại hoặc trả về dữ liệu thiếu, sẽ thử cái tiếp theo.
+    # Trả về None nếu tất cả API đều thất bại hoặc trả về dữ liệu không hợp lệ.
+    # Tham số:
+    # bin_number: 6-8 chữ số đầu của số thẻ
+    # Trả về:
+    # Dict chứa thông tin ngân hàng, quốc gia, thương hiệu, loại thẻ, hoặc None nếu thất bại.
     global _api_rotation_counter
     
     bin_clean = bin_number[:6]
@@ -154,17 +145,17 @@ async def lookup_bin(bin_number: str) -> Dict:
 
 
 def finalize_bin_info(info: Dict) -> Dict:
-    """Hoàn tất thông tin BIN - trả về dữ liệu từ API hoặc None nếu tất cả thất bại."""
+    # Hoàn tất thông tin BIN - trả về dữ liệu từ API hoặc None nếu tất cả thất bại.
     return info if info else None
 
 
 def get_default_bin_info() -> Optional[Dict]:
-    """Trả về None khi tra cứu thất bại - không dùng giá trị mặc định."""
+    # Trả về None khi tra cứu thất bại - không dùng giá trị mặc định.
     return None
 
 
 def get_clean_country_info(bin_info: Dict) -> Optional[str]:
-    """Lấy tên quốc gia kèm cờ, loại bỏ các mã code dư thừa (vd: vn)."""
+    # Lấy tên quốc gia kèm cờ, loại bỏ các mã code dư thừa (vd: vn).
     country_name = bin_info.get("country_name")
     country_flag = bin_info.get("country_flag")
     
@@ -185,7 +176,7 @@ def get_clean_country_info(bin_info: Dict) -> Optional[str]:
 
 
 def format_bin_info(bin_info: Optional[Dict]) -> Optional[str]:
-    """Định dạng thông tin BIN để hiển thị."""
+    # Định dạng thông tin BIN để hiển thị.
     if not bin_info:
         return None
     

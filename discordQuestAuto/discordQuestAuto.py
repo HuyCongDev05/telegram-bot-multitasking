@@ -147,39 +147,50 @@ def get_seconds_done(quest: dict) -> float:
 
 # Bộ tự động hoàn thành Quest (Bất đồng bộ)
 class AsyncQuestAutocompleter:
-    def __init__(self, api: AsyncDiscordAPI, bot=None, chat_id=None):
+    def __init__(self, api: AsyncDiscordAPI, bot=None, chat_id=None, initial_msg_id=None, language='vi'):
         self.api = api
         self.bot = bot
         self.chat_id = chat_id
         self.completed_ids = set()
         self.is_running = True
+        self.last_status_msg_id = initial_msg_id
+        self.language = language
 
     async def log_to_bot(self, msg: str, level: str = "info"):
-        datetime.now().strftime("%H:%M:%S")
-        _, emoji = {
-            "info":     ("[TIN]", "ℹ️"),
-            "ok":       ("[ OK]", "✅"),
-            "warn":     ("[CHÚ]", "⚠️"),
-            "error":    ("[LỖI]", "❌"),
-            "progress": ("[TĐ ]", "⏳"),
-            "debug":    ("[DBG]", "🔍"),
-        }.get(level, (f"[{level.upper()}]", "❓"))
-
         if level == "debug" and not quest_config.DEBUG:
             return
 
-        if quest_config.LOG_PROGRESS or level != "progress":
-            # bỏ qua đầu ra terminal theo yêu cầu
-            if self.bot and self.chat_id:
-                if level in ("ok", "warn", "error") or (level == "info" and "━━━" in msg):
-                    try:
-                        await self.bot.send_message(
-                            chat_id=self.chat_id,
-                            text=msg,
-                            parse_mode="HTML"
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending log to Telegram: {e}")
+        if self.bot and self.chat_id:
+            # Các level mà chúng ta muốn hiển thị
+            should_show = level in ("ok", "warn", "error") or (level == "info" and "━━━" in msg) or level == "progress"
+            
+            if should_show:
+                try:
+                    # Nếu là tin nhắn trạng thái đang chạy (info hoặc progress), chúng ta sẽ cố gắng xóa tin nhắn cũ
+                    is_transient = level in ("info", "progress")
+                    
+                    if hasattr(self, 'last_status_msg_id') and self.last_status_msg_id:
+                        try:
+                            await self.bot.delete_message(chat_id=self.chat_id, message_id=self.last_status_msg_id)
+                        except Exception:
+                            pass
+                        self.last_status_msg_id = None
+
+                    sent_msg = await self.bot.send_message(
+                        chat_id=self.chat_id,
+                        text=msg,
+                        parse_mode="HTML"
+                    )
+                    
+                    # Nếu tin nhắn vừa gửi là tin nhắn tạm thời, lưu ID để xóa sau
+                    if is_transient:
+                        self.last_status_msg_id = sent_msg.message_id
+                    else:
+                        # Nếu là tin nhắn kết quả (ok, warn, error), không cần lưu ID để xóa
+                        self.last_status_msg_id = None
+                        
+                except Exception as e:
+                    logger.error(f"Error sending/deleting log to Telegram: {e}")
 
     async def fetch_quests(self) -> list:
         try:
@@ -188,17 +199,23 @@ class AsyncQuestAutocompleter:
                     data = await r.json()
                     if isinstance(data, dict):
                         if data.get("quest_enrollment_blocked_until"):
-                            await self.log_to_bot(f"Bị chặn nhận quest đến: {data['quest_enrollment_blocked_until']}", "warn")
+                        msg_en = f"⚠️ Enrollment blocked until: {data['quest_enrollment_blocked_until']}"
+                        msg_vi = f"⚠️ Bị chặn nhận quest đến: {data['quest_enrollment_blocked_until']}"
+                        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "warn")
                         return data.get("quests", [])
                     return data if isinstance(data, list) else []
                 elif r.status == 429:
                     retry = (await r.json()).get("retry_after", 10)
-                    await self.log_to_bot(f"Giới hạn tốc độ – chờ {retry}s", "warn")
+                    msg_en = f"⏳ Rate limited – waiting {retry}s"
+                    msg_vi = f"⏳ Giới hạn tốc độ – chờ {retry}s"
+                    await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "warn")
                     await asyncio.sleep(retry)
                     return await self.fetch_quests()
                 return []
         except Exception as e:
-            await self.log_to_bot(f"Lỗi tải danh sách quest: {e}", "error")
+            msg_en = f"❌ Error fetching quests: {e}"
+            msg_vi = f"❌ Lỗi tải danh sách quest: {e}"
+            await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "error")
             return []
 
     async def enroll_quest(self, quest: dict) -> bool:
@@ -216,12 +233,18 @@ class AsyncQuestAutocompleter:
                         await asyncio.sleep(wait)
                         continue
                     if r.status in (200, 201, 204):
-                        await self.log_to_bot(f"Đã nhận: {name}", "ok")
+                        msg_en = f"✅ Enrolled: <b>{name}</b>"
+                        msg_vi = f"✅ Đã nhận: <b>{name}</b>"
+                        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "ok")
                         return True
-                    await self.log_to_bot(f"Lỗi nhận \"{name}\" ({r.status})", "warn")
+                    msg_en = f"⚠️ Enrollment error \"{name}\" ({r.status})"
+                    msg_vi = f"⚠️ Lỗi nhận \"{name}\" ({r.status})"
+                    await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "warn")
                     return False
             except Exception as e:
-                await self.log_to_bot(f"Lỗi nhận \"{name}\": {e}", "error")
+                msg_en = f"❌ Enrollment error \"{name}\": {e}"
+                msg_vi = f"❌ Lỗi nhận \"{name}\": {e}"
+                await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "error")
                 return False
         return False
 
@@ -229,7 +252,9 @@ class AsyncQuestAutocompleter:
         if not quest_config.AUTO_ACCEPT: return quests
         unaccepted = [q for q in quests if not is_enrolled(q) and not is_completed(q) and is_completable(q)]
         if not unaccepted: return quests
-        await self.log_to_bot(f"Phát hiện {len(unaccepted)} quest mới – đang nhận...", "info")
+        msg_en = f"ℹ️ Found {len(unaccepted)} new quests – enrolling..."
+        msg_vi = f"ℹ️ Phát hiện {len(unaccepted)} quest mới – đang nhận..."
+        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "info")
         for q in unaccepted:
             await self.enroll_quest(q)
             await asyncio.sleep(3)
@@ -243,7 +268,9 @@ class AsyncQuestAutocompleter:
         enrolled_at = _get(_get(quest, "userStatus", "user_status"), "enrolledAt", "enrolled_at")
         enrolled_ts = datetime.fromisoformat(enrolled_at.replace("Z", "+00:00")).timestamp() if enrolled_at else datetime.now().timestamp()
 
-        await self.log_to_bot(f"🎬 Video: {name} ({done:.0f}/{needed}s)", "info")
+        msg_en = f"🎬 Watching Video: <b>{name}</b> ({done:.0f}/{needed}s)"
+        msg_vi = f"🎬 Đang xem Video: <b>{name}</b> ({done:.0f}/{needed}s)"
+        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "info")
         while done < needed and self.is_running:
             max_allowed = (datetime.now().timestamp() - enrolled_ts) + 10
             ts = done + 7
@@ -253,10 +280,12 @@ class AsyncQuestAutocompleter:
                         if r.status == 200:
                             body = await r.json()
                             if body.get("completed_at"):
-                                await self.log_to_bot(f"Xong: {name}", "ok")
+                                msg_en = f"✅ Completed: <b>{name}</b>"
+                                msg_vi = f"✅ Hoàn thành: <b>{name}</b>"
+                                await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "ok")
                                 return
                             done = min(needed, ts)
-                            await self.log_to_bot(f"  {name}: {done:.0f}/{needed}s", "progress")
+                            await self.log_to_bot(f"⏳ {name}: {done:.0f}/{needed}s", "progress")
                         elif r.status == 429:
                             await asyncio.sleep((await r.json()).get("retry_after", 5) + 1)
                             continue
@@ -266,12 +295,16 @@ class AsyncQuestAutocompleter:
         
         async with await self.api.post(f"/quests/{qid}/video-progress", {"timestamp": needed}):
             pass
-        await self.log_to_bot(f"Xong: {name}", "ok")
+        msg_en = f"✅ Completed: <b>{name}</b>"
+        msg_vi = f"✅ Hoàn thành: <b>{name}</b>"
+        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "ok")
 
     async def complete_heartbeat(self, quest: dict):
         name, qid, tt = get_quest_name(quest), quest["id"], get_task_type(quest)
         needed, done = get_seconds_needed(quest), get_seconds_done(quest)
-        await self.log_to_bot(f"🎮 {tt}: {name} (~{(needed-done)//60} phút còn lại)", "info")
+        msg_en = f"🎮 {tt}: <b>{name}</b> (~{(needed-done)//60}m remaining)"
+        msg_vi = f"🎮 {tt}: <b>{name}</b> (~{(needed-done)//60} phút còn lại)"
+        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "info")
         pid = random.randint(1000, 30000)
         while done < needed and self.is_running:
             try:
@@ -279,9 +312,11 @@ class AsyncQuestAutocompleter:
                     if r.status == 200:
                         body = await r.json()
                         done = body.get("progress", {}).get(tt, {}).get("value", done)
-                        await self.log_to_bot(f"  {name}: {done:.0f}/{needed}s", "progress")
+                        await self.log_to_bot(f"⏳ {name}: {done:.0f}/{needed}s", "progress")
                         if body.get("completed_at") or done >= needed:
-                            await self.log_to_bot(f"Xong: {name}", "ok")
+                            msg_en = f"✅ Completed: <b>{name}</b>"
+                            msg_vi = f"✅ Hoàn thành: <b>{name}</b>"
+                            await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "ok")
                             return
                     elif r.status == 429:
                         await asyncio.sleep((await r.json()).get("retry_after", 10) + 1)
@@ -295,7 +330,9 @@ class AsyncQuestAutocompleter:
     async def process_quest(self, quest: dict):
         qid, name, tt = quest.get("id"), get_quest_name(quest), get_task_type(quest)
         if not tt or qid in self.completed_ids: return
-        await self.log_to_bot(f"━━━ Bắt đầu: {name} (nhiệm vụ: {tt}) ━━━", "info")
+        msg_en = f"🚀 ━━━ Start: <b>{name}</b> (task: {tt}) ━━━"
+        msg_vi = f"🚀 ━━━ Bắt đầu: <b>{name}</b> (nhiệm vụ: {tt}) ━━━"
+        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "info")
         if tt in ("WATCH_VIDEO", "WATCH_VIDEO_ON_MOBILE"): 
             await self.complete_video(quest)
         elif tt in ("PLAY_ON_DESKTOP", "STREAM_ON_DESKTOP", "PLAY_ACTIVITY"): 
@@ -311,7 +348,9 @@ class AsyncQuestAutocompleter:
             quests = await self.fetch_quests()
             if quests:
                 completed_count = sum(1 for q in quests if is_completed(q))
-                await self.log_to_bot(f"Tổng: {len(quests)} | Đã xong: {completed_count}", "info")
+                msg_en = f"📊 Total: {len(quests)} | Done: {completed_count}"
+                msg_vi = f"📊 Tổng: {len(quests)} | Đã xong: {completed_count}"
+                await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "info")
                 quests = await self.auto_accept(quests)
                 actionable = [q for q in quests if is_enrolled(q) and not is_completed(q) and is_completable(q) and q.get("id") not in self.completed_ids]
                 for q in actionable: 
@@ -324,7 +363,9 @@ class AsyncQuestAutocompleter:
             
             all_done = all(is_completed(q) or not is_completable(q) for q in (quests or []))
             if all_done and quests:
-                await self.log_to_bot("✅ Tất cả Quest hiện tại đã hoàn thành", "ok")
+                msg_en = "✅ All current quests completed"
+                msg_vi = "✅ Tất cả Quest hiện tại đã hoàn thành"
+                await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "ok")
                 break
 
             await asyncio.sleep(quest_config.POLL_INTERVAL)
@@ -332,14 +373,19 @@ class AsyncQuestAutocompleter:
     def stop(self):
         self.is_running = False
 
-async def start_quest_auto(token: str, bot=None, chat_id=None):
+async def start_quest_auto(token: str, bot=None, chat_id=None, initial_msg_id=None, language='vi'):
     async with aiohttp.ClientSession() as session:
         build_number = await fetch_latest_build_number(session)
         api = AsyncDiscordAPI(token, build_number, session)
         user_info = await api.validate_token()
         if user_info:
-            completer = AsyncQuestAutocompleter(api, bot, chat_id)
-            await completer.log_to_bot(f"🚀 Đã xác thực Discord: <b>{user_info['username']}</b>. Bắt đầu quét Quest...", "ok")
+            completer = AsyncQuestAutocompleter(api, bot, chat_id, initial_msg_id, language)
+            msg = (
+                f"🚀 Discord Authenticated: <b>{user_info['username']}</b>. Starting scan..."
+                if language == 'en'
+                else f"🚀 Đã xác thực Discord: <b>{user_info['username']}</b>. Bắt đầu quét Quest..."
+            )
+            await completer.log_to_bot(msg, "ok")
             await completer.run()
             return True
         else:

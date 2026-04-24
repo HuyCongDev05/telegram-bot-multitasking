@@ -1,4 +1,4 @@
-"""Netflix TV Login – đăng nhập Netflix trên TV/Smart TV bằng mã TV code."""
+# Netflix TV Login – đăng nhập Netflix trên TV/Smart TV bằng mã TV code.
 
 import re
 
@@ -24,14 +24,14 @@ REQUEST_HEADERS_BASE = {
 
 
 def _build_proxies(proxy_url: str | None) -> dict | None:
-    """Chuyển proxy URL sang dict cho requests."""
+    # Chuyển proxy URL sang dict cho requests.
     if not proxy_url:
         return None
     return {"http": proxy_url, "https": proxy_url}
 
 
 def _fetch_auth_url(cookie_header: str, proxies: dict | None, timeout: int = 15) -> str:
-    """GET trang /tv2 để lấy authURL động từ HTML."""
+    # GET trang /tv2 để lấy authURL động từ HTML.
     headers = {**REQUEST_HEADERS_BASE, "Cookie": cookie_header}
     response = requests.get(TV2_URL, headers=headers, proxies=proxies, timeout=timeout, allow_redirects=True)
     response.raise_for_status()
@@ -51,17 +51,14 @@ def _fetch_auth_url(cookie_header: str, proxies: dict | None, timeout: int = 15)
 
 
 def login_netflix_tv(tv_code: str, cookie_text: str, proxy_url: str | None = None) -> tuple[bool, str]:
-    """Đăng nhập Netflix TV bằng mã TV code và cookie account.
-
-    Args:
-        tv_code:     Mã TV hiển thị trên màn hình Netflix (ví dụ: "ABCD1234").
-        cookie_text: Nội dung cookie Netflix dạng Netscape hoặc JSON.
-        proxy_url:   (Tuỳ chọn) URL proxy dạng http://user:pass@host:port.
-
-    Returns:
-        (True, "OK")        nếu đăng nhập thành công.
-        (False, "lý do")    nếu thất bại.
-    """
+    # Đăng nhập Netflix TV bằng mã TV code và cookie account.
+    # Args:
+    # tv_code:     Mã TV hiển thị trên màn hình Netflix (ví dụ: "ABCD1234").
+    # cookie_text: Nội dung cookie Netflix dạng Netscape hoặc JSON.
+    # proxy_url:   (Tuỳ chọn) URL proxy dạng http://user:pass@host:port.
+    # Returns:
+    # (True, "OK")        nếu đăng nhập thành công.
+    # (False, "lý do")    nếu thất bại.
     # 1. Validate và parse cookie
     is_valid, error_msg = validate_netflix_cookie(cookie_text)
     if not is_valid:
@@ -111,7 +108,7 @@ def login_netflix_tv(tv_code: str, cookie_text: str, proxy_url: str | None = Non
 
 
 def _is_login_success(html: str) -> bool:
-    """True nếu HTML cho thấy đăng nhập TV thành công."""
+    # True nếu HTML cho thấy đăng nhập TV thành công.
     success_signals = [
         "tvLoginSuccess",
         "successIcon",
@@ -125,7 +122,7 @@ def _is_login_success(html: str) -> bool:
 
 
 def _extract_error_reason(html: str) -> str:
-    """Tìm thông báo lỗi trong HTML response."""
+    # Tìm thông báo lỗi trong HTML response.
     match = re.search(r'"message"\s*:\s*"([^"]{5,200})"', html)
     if match:
         return match.group(1)

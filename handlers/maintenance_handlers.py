@@ -13,7 +13,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 
 async def admin_maintenance_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db):
-    """Hiển thị menu quản lý bảo trì cho Admin"""
+    # Hiển thị menu quản lý bảo trì cho Admin
     query = update.callback_query
     await query.answer()
     language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE)
@@ -27,7 +27,7 @@ async def admin_maintenance_menu(update: Update, context: ContextTypes.DEFAULT_T
     )
 
 async def toggle_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE, db):
-    """Đảo ngược trạng thái bảo trì và gửi thông báo"""
+    # Đảo ngược trạng thái bảo trì và gửi thông báo
     query = update.callback_query
     await query.answer()
     language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE)
@@ -65,7 +65,7 @@ async def toggle_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE,
     asyncio.create_task(broadcast_maintenance_notice(context, db, service_id, new_status))
 
 async def broadcast_maintenance_notice(context, db, service_id: str, is_maintenance: bool):
-    """Gửi thông báo bảo trì cho toàn bộ user (có delay)"""
+    # Gửi thông báo bảo trì cho toàn bộ user (có delay)
     user_ids = db.get_all_user_ids()
     success_count = 0
 

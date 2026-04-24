@@ -1,4 +1,4 @@
-"""Công cụ kiểm tra và xác thực quyền hạn"""
+# Công cụ kiểm tra và xác thực quyền hạn
 import logging
 
 from telegram import Update
@@ -10,14 +10,14 @@ from utils.i18n import DEFAULT_LANGUAGE, get_user_language, has_selected_languag
 
 logger = logging.getLogger(__name__)
 def is_group_chat(update: Update) -> bool:
-    """Kiểm tra xem đây có phải là trò chuyện nhóm hay không"""
+    # Kiểm tra xem đây có phải là trò chuyện nhóm hay không
     chat = update.effective_chat
     return chat and chat.type in ("group", "supergroup")
 
 
 
 async def reject_group_command(update: Update, db=None) -> bool:
-    """Hạn chế nhóm: Yêu cầu người dùng nhắn tin riêng cho Bot"""
+    # Hạn chế nhóm: Yêu cầu người dùng nhắn tin riêng cho Bot
     language = DEFAULT_LANGUAGE
     if db and update.effective_user:
         language = get_user_language(db, update.effective_user.id)
@@ -33,7 +33,7 @@ async def reject_group_command(update: Update, db=None) -> bool:
 
 
 async def check_channel_membership(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """Kiểm tra xem người dùng đã tham gia kênh chưa"""
+    # Kiểm tra xem người dùng đã tham gia kênh chưa
     try:
         member = await context.bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
         return member.status in ["member", "administrator", "creator"]
@@ -43,11 +43,11 @@ async def check_channel_membership(user_id: int, context: ContextTypes.DEFAULT_T
 
 
 def is_not_blocked(func):
-    """Decorator để kiểm tra xem người dùng có bị chặn không"""
+    # Decorator để kiểm tra xem người dùng có bị chặn không
     from functools import wraps
 
     async def ensure_language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE, db, user: dict | None) -> bool:
-        """Yêu cầu chọn ngôn ngữ trước khi tiếp tục sử dụng bot."""
+        # Yêu cầu chọn ngôn ngữ trước khi tiếp tục sử dụng bot.
         if not update.effective_user:
             return False
 
@@ -108,7 +108,7 @@ def is_not_blocked(func):
 
 
 async def check_maintenance(update: Update, db, service_id: str) -> bool:
-    """Kiểm tra dịch vụ có đang bảo trì không và thông báo cho người dùng"""
+    # Kiểm tra dịch vụ có đang bảo trì không và thông báo cho người dùng
     if db.is_service_maintenance(service_id):
         language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE)
         msg = tr(language, "checks.maintenance")

@@ -1,4 +1,4 @@
-"""Trình xử lý lệnh Check CC"""
+# Trình xử lý lệnh Check CC
 import io
 import logging
 import re
@@ -12,8 +12,8 @@ from checkCC.bin_lookup import format_bin_info, get_clean_country_info
 from config import VERIFY_COST
 from database import Database
 from handlers.user_commands import is_user_busy, show_main_menu_after_delay
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language
-from utils.messages import get_ui_label
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language, tr
+from utils.messages import get_cc_prompt_message, get_ui_label
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 MAX_CC_PER_REQUEST = 50
 
 async def checkCC_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /check_cc"""
+    # Xử lý lệnh /check_cc
     if await is_user_busy(update, context, db):
         return
 
@@ -41,24 +41,13 @@ async def checkCC_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
 
     language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE)
     service_label = get_ui_label('check_cc', language)
-    prompt_text = (
-        f"<b>{service_label}</b>\n\n"
-        + (
-            "Please enter the CC list in the reply message below (or upload a .txt file).\n"
-            "Format: <code>Card Number|Month|Year|CVV</code>\n"
-            f"Note: Each check costs 💰 {VERIFY_COST} points (up to {MAX_CC_PER_REQUEST} CCs)."
-            if language == 'en'
-            else "Vui lòng nhập danh sách CC vào tin nhắn trả lời bên dưới (hoặc gửi file .txt).\n"
-            "Định dạng: <code>Số thẻ|Tháng|Năm|CVV</code>\n"
-            f"Lưu ý: Phí mỗi lần check là 💰 {VERIFY_COST} điểm (tối đa {MAX_CC_PER_REQUEST} CC)."
-        )
-    )
+    prompt_text = f"<b>{service_label}</b>\n\n" + get_cc_prompt_message(MAX_CC_PER_REQUEST, language)
 
     from handlers.user_commands import start_input_flow
     await start_input_flow(update, context, prompt_text, 'check_cc_step_1', 'cancel_to_main')
 
 async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, cc_text: str):
-    """Hàm xử lý chính cho yêu cầu check CC"""
+    # Hàm xử lý chính cho yêu cầu check CC
     # Kiểm tra bảo trì
     from utils.checks import check_maintenance
     if await check_maintenance(update, db, 'check_cc'):
@@ -261,5 +250,5 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Tự động gửi lại menu chính sau khi gửi file (Chờ 2s để người dùng thấy file)
 
 async def handle_cc_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, content: str):
-    """Bọc logic file input cho CC"""
+    # Bọc logic file input cho CC
     await _process_cc_request(update, context, db, content)

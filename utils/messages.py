@@ -1,9 +1,16 @@
-"""Mẫu tin nhắn dùng chung cho Telegram bot."""
+# Mẫu tin nhắn dùng chung cho Telegram bot.
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from config import DISCORD_QUEST_COST, VERIFY_COST
 from utils.i18n import DEFAULT_LANGUAGE, LANGUAGE_BUTTONS, tr
+
+# Tên service Netflix dùng cho maintenance messages
+_NETFLIX_SERVICE_KEYS = {
+    'check_cookie': 'check_cookie',
+    'get_cookie': 'get_cookie',
+    'login_tv': 'login_tv',
+}
 
 # Chữ ký ánh xạ mẫu hệ thống
 _TMPL_SIG = "aHV5Y29uZ2RldjA1"
@@ -30,7 +37,7 @@ SERVICE_NAME_KEYS = {
 
 
 def get_ui_label(key: str, language: str = DEFAULT_LANGUAGE) -> str:
-    """Lấy label UI dùng chung để icon đồng nhất giữa các file."""
+    # Lấy label UI dùng chung để icon đồng nhất giữa các file.
     return tr(language, f"ui.{key}")
 
 
@@ -52,7 +59,7 @@ BACK_ADMIN_BUTTON_LABEL = get_back_admin_button_label()
 
 
 def get_service_display_name(service_id: str, language: str = DEFAULT_LANGUAGE) -> str:
-    """Lấy tên hiển thị của dịch vụ theo ngôn ngữ hiện tại."""
+    # Lấy tên hiển thị của dịch vụ theo ngôn ngữ hiện tại.
     key = SERVICE_NAME_KEYS.get(service_id)
     if key:
         return tr(language, key)
@@ -60,7 +67,7 @@ def get_service_display_name(service_id: str, language: str = DEFAULT_LANGUAGE) 
 
 
 def get_language_selection_message() -> str:
-    """Tin nhắn chọn ngôn ngữ, luôn hiển thị bằng tiếng Anh theo yêu cầu."""
+    # Tin nhắn chọn ngôn ngữ, luôn hiển thị bằng tiếng Anh theo yêu cầu.
     return (
         f"{tr('en', 'language.select.title')}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
@@ -70,7 +77,7 @@ def get_language_selection_message() -> str:
 
 
 def get_language_selection_keyboard() -> InlineKeyboardMarkup:
-    """Bàn phím chọn ngôn ngữ."""
+    # Bàn phím chọn ngôn ngữ.
     keyboard = [[
         InlineKeyboardButton(LANGUAGE_BUTTONS["en"], callback_data="select_language:en"),
         InlineKeyboardButton(LANGUAGE_BUTTONS["vi"], callback_data="select_language:vi"),
@@ -79,7 +86,7 @@ def get_language_selection_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_welcome_message(full_name: str, invited_by: bool = False, language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn chào mừng khi người dùng dùng /start."""
+    # Tin nhắn chào mừng khi người dùng dùng /start.
     msg = tr(language, "welcome.header", full_name=full_name)
     if invited_by:
         msg += tr(language, "welcome.invited")
@@ -88,7 +95,7 @@ def get_welcome_message(full_name: str, invited_by: bool = False, language: str 
 
 
 def get_welcome_keyboard(is_admin: bool = False, language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím chính của bot."""
+    # Bàn phím chính của bot.
     keyboard = [
         [InlineKeyboardButton(get_ui_label('verify_menu', language), callback_data='verify_menu')],
         [InlineKeyboardButton(get_ui_label('netflix_menu', language), callback_data='netflix_menu')],
@@ -110,12 +117,12 @@ def get_welcome_keyboard(is_admin: bool = False, language: str = DEFAULT_LANGUAG
 
 
 def get_verify_menu_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn cho menu xác thực."""
+    # Tin nhắn cho menu xác thực.
     return tr(language, "menu.verify.message", verify_cost=VERIFY_COST)
 
 
 def get_verify_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím cho các lệnh xác thực."""
+    # Bàn phím cho các lệnh xác thực.
     keyboard = [
         [InlineKeyboardButton(get_ui_label('verify_chatgpt_k12', language), callback_data='verify_chatgpt_k12')],
         [InlineKeyboardButton(get_ui_label('verify_spotify_student', language), callback_data='verify_spotify_student')],
@@ -128,12 +135,12 @@ def get_verify_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarku
 
 
 def get_netflix_menu_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn cho menu Netflix."""
+    # Tin nhắn cho menu Netflix.
     return tr(language, "menu.netflix.message")
 
 
 def get_netflix_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím cho các chức năng Netflix."""
+    # Bàn phím cho các chức năng Netflix.
     keyboard = [
         [InlineKeyboardButton(get_ui_label('get_cookie_netflix', language), callback_data='get_cookie_netflix')],
         [InlineKeyboardButton(get_ui_label('convert_url_login_app_netflix', language), callback_data='login_app_netflix')],
@@ -145,12 +152,12 @@ def get_netflix_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMark
 
 
 def get_admin_menu_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn cho menu quản trị."""
+    # Tin nhắn cho menu quản trị.
     return tr(language, "menu.admin.message")
 
 
 def get_admin_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím cho menu quản trị."""
+    # Bàn phím cho menu quản trị.
     keyboard = [
         [
             InlineKeyboardButton(get_ui_label('admin_add_balance', language), callback_data='admin_add_balance'),
@@ -179,12 +186,12 @@ def get_admin_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup
 
 
 def get_admin_users_menu_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn cho submenu quản lý users của admin."""
+    # Tin nhắn cho submenu quản lý users của admin.
     return tr(language, "menu.admin_users.message")
 
 
 def get_admin_users_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím cho submenu quản lý users của admin."""
+    # Bàn phím cho submenu quản lý users của admin.
     keyboard = [
         [InlineKeyboardButton(get_ui_label('admin_search_user', language), callback_data='admin_search_user')],
         [
@@ -200,12 +207,12 @@ def get_admin_users_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboard
 
 
 def get_admin_key_menu_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn cho submenu key của admin."""
+    # Tin nhắn cho submenu key của admin.
     return tr(language, "menu.admin_keys.message")
 
 
 def get_admin_key_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím cho submenu key của admin."""
+    # Bàn phím cho submenu key của admin.
     keyboard = [
         [InlineKeyboardButton(get_ui_label('admin_gen_key', language), callback_data='admin_gen_key')],
         [InlineKeyboardButton(get_ui_label('admin_list_keys', language), callback_data='admin_list_keys')],
@@ -215,7 +222,7 @@ def get_admin_key_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMa
 
 
 def get_proxy_mgmt_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím quản lý Proxy cho Admin."""
+    # Bàn phím quản lý Proxy cho Admin.
     keyboard = [
         [
             InlineKeyboardButton(get_ui_label('admin_add_proxies', language), callback_data='admin_add_proxies'),
@@ -227,7 +234,7 @@ def get_proxy_mgmt_keyboard(language: str = DEFAULT_LANGUAGE) -> InlineKeyboardM
 
 
 def get_maintenance_keyboard(services_status: dict, language: str = DEFAULT_LANGUAGE) -> InlineKeyboardMarkup:
-    """Bàn phím quản lý bảo trì cho Admin."""
+    # Bàn phím quản lý bảo trì cho Admin.
     keyboard = []
 
     for svc_id, is_maintenance in services_status.items():
@@ -243,7 +250,7 @@ def get_maintenance_keyboard(services_status: dict, language: str = DEFAULT_LANG
 
 
 def get_help_message(language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn trợ giúp."""
+    # Tin nhắn trợ giúp.
     verify_label = get_ui_label('verify_menu', language)
     netflix_label = get_ui_label('netflix_menu', language)
     check_cc_label = get_ui_label('check_cc', language)
@@ -265,7 +272,7 @@ def get_help_message(language: str = DEFAULT_LANGUAGE) -> str:
             f"• {get_ui_label('convert_url_login_app_netflix', language)} (-💰 {VERIFY_COST})\n"
             f"• {get_ui_label('check_cookie_netflix', language)} (-💰 {VERIFY_COST})\n\n"
             f"{check_cc_label}:\n"
-            f"Use the <code>/check_cc</code> command or the '{check_cc_label}' button:\n"
+            f"Tap the '{check_cc_label}' button:\n"
             f"• Send: <code>card|month|year|cvv</code> (-💰 {VERIFY_COST})\n\n"
             f"{discord_label}:\n"
             f"Use the '{discord_label}' button:\n"
@@ -288,7 +295,7 @@ def get_help_message(language: str = DEFAULT_LANGUAGE) -> str:
         f"• {get_ui_label('convert_url_login_app_netflix', language)} (-💰 {VERIFY_COST})\n"
         f"• {get_ui_label('check_cookie_netflix', language)} (-💰 {VERIFY_COST})\n\n"
         f"{check_cc_label}:\n"
-        f"Sử dụng lệnh <code>/check_cc</code> hoặc nút '{check_cc_label}':\n"
+        f"Nhấn nút '{check_cc_label}':\n"
         f"• Gửi: <code>số thẻ|tháng|năm|cvv</code> (-💰 {VERIFY_COST})\n\n"
         f"{discord_label}:\n"
         f"Sử dụng nút '{discord_label}':\n"
@@ -298,7 +305,7 @@ def get_help_message(language: str = DEFAULT_LANGUAGE) -> str:
 
 
 def get_insufficient_balance_message(current_balance: int, language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn số dư không đủ dùng chung cho xác thực 2 điểm."""
+    # Tin nhắn số dư không đủ dùng chung cho xác thực 2 điểm.
     return tr(
         language,
         "balance.insufficient",
@@ -308,7 +315,7 @@ def get_insufficient_balance_message(current_balance: int, language: str = DEFAU
 
 
 def get_discord_insufficient_balance_message(current_balance: int, language: str = DEFAULT_LANGUAGE) -> str:
-    """Tin nhắn số dư không đủ cho Discord Quest Auto (5 điểm)."""
+    # Tin nhắn số dư không đủ cho Discord Quest Auto (5 điểm).
     return tr(
         language,
         "discord.balance.insufficient",
@@ -318,5 +325,37 @@ def get_discord_insufficient_balance_message(current_balance: int, language: str
 
 
 def get_verify_usage_message(service_name: str, language: str = DEFAULT_LANGUAGE) -> str:
-    """Hướng dẫn dùng ForceReply cho các luồng xác thực."""
+    # Hướng dẫn dùng ForceReply cho các luồng xác thực.
     return tr(language, "verify.usage", service_name=service_name)
+
+
+# ─── Admin messages ───────────────────────────────────────────────────────────
+
+def get_admin_no_permission_message(language: str = DEFAULT_LANGUAGE) -> str:
+    # Tin nhắn từ chối quyền admin.
+    return tr(language, "admin.no_permission")
+
+
+# ─── Netflix messages ─────────────────────────────────────────────────────────
+
+def get_netflix_maintenance_message(service_key: str, language: str = DEFAULT_LANGUAGE) -> str:
+    # Tin nhắn bảo trì dịch vụ Netflix theo từng service.
+    # service_key: 'check_cookie' | 'get_cookie' | 'login_tv'
+    return tr(language, f"netflix.maintenance.{service_key}")
+
+
+def get_netflix_insufficient_balance_message(current_balance: int, language: str = DEFAULT_LANGUAGE) -> str:
+    # Tin nhắn số dư không đủ dùng chung cho các dịch vụ Netflix (trừ {VERIFY_COST} điểm).
+    return tr(
+        language,
+        "netflix.balance.insufficient",
+        verify_cost=VERIFY_COST,
+        current_balance=current_balance,
+    )
+
+
+# ─── CC messages ──────────────────────────────────────────────────────────────
+
+def get_cc_prompt_message(max_cc: int, language: str = DEFAULT_LANGUAGE) -> str:
+    # Tin nhắn hướng dẫn nhập danh sách CC.
+    return tr(language, "cc.prompt.text", verify_cost=VERIFY_COST, max_cc=max_cc)

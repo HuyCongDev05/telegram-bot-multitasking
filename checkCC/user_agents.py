@@ -38,14 +38,14 @@ OS_VARIANTS = [
 
 
 def generate_chrome_ua() -> str:
-    """Tạo User-Agent cho Chrome."""
+    # Tạo User-Agent cho Chrome.
     os_variant = random.choice(OS_VARIANTS)
     chrome_ver = random.choice(CHROME_VERSIONS)
     return f"Mozilla/5.0 ({os_variant}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36"
 
 
 def generate_edge_ua() -> str:
-    """Tạo User-Agent cho Edge."""
+    # Tạo User-Agent cho Edge.
     os_variant = random.choice(OS_VARIANTS)
     chrome_ver = random.choice(CHROME_VERSIONS)
     edge_ver = random.choice(EDGE_VERSIONS)
@@ -53,14 +53,14 @@ def generate_edge_ua() -> str:
 
 
 def generate_firefox_ua() -> str:
-    """Tạo User-Agent cho Firefox."""
+    # Tạo User-Agent cho Firefox.
     os_variant = random.choice(OS_VARIANTS)
     firefox_ver = random.choice(FIREFOX_VERSIONS)
     return f"Mozilla/5.0 ({os_variant}; rv:{firefox_ver}) Gecko/20100101 Firefox/{firefox_ver}"
 
 
 def generate_safari_ua() -> str:
-    """Tạo User-Agent cho Safari (chỉ macOS)."""
+    # Tạo User-Agent cho Safari (chỉ macOS).
     macos_variants = [v for v in OS_VARIANTS if "Macintosh" in v]
     os_variant = random.choice(macos_variants)
     safari_ver = random.choice(SAFARI_VERSIONS)
@@ -76,14 +76,14 @@ UA_GENERATORS = [
 
 
 def get_random_user_agent() -> str:
-    """Lấy ngẫu nhiên một chuỗi User-Agent."""
+    # Lấy ngẫu nhiên một chuỗi User-Agent.
     generators, weights = zip(*UA_GENERATORS)
     generator = random.choices(generators, weights=weights, k=1)[0]
     return generator()
 
 
 def get_user_agent_for_stripe() -> str:
-    """Lấy User-Agent định dạng cho Stripe payment_user_agent."""
+    # Lấy User-Agent định dạng cho Stripe payment_user_agent.
     return get_random_user_agent()
 
 
@@ -91,5 +91,5 @@ USER_AGENT_POOL: List[str] = [get_random_user_agent() for _ in range(100)]
 
 
 def get_fast_random_ua() -> str:
-    """Lấy nhanh một User-Agent từ danh sách đã tạo sẵn."""
+    # Lấy nhanh một User-Agent từ danh sách đã tạo sẵn.
     return random.choice(USER_AGENT_POOL)

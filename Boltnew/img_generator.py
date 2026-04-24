@@ -1,4 +1,4 @@
-"""Module tạo chứng nhận giáo viên PNG - Bolt.now / PSU"""
+# Module tạo chứng nhận giáo viên PNG - Bolt.now / PSU
 import random
 from datetime import datetime
 
@@ -6,15 +6,13 @@ _MOD_SIG = "687579636f6e676465763035"
 
 
 def generate_psu_id():
-    """Tạo PSU ID ngẫu nhiên (9 chữ số)"""
+    # Tạo PSU ID ngẫu nhiên (9 chữ số)
     return f"9{random.randint(10000000, 99999999)}"
 
 
 def generate_psu_email(first_name, last_name):
-    """
-    Tạo email PSU
-    Định dạng: firstName.lastName + 3-4 chữ số @psu.edu
-    """
+    # Tạo email PSU
+    # Định dạng: firstName.lastName + 3-4 chữ số @psu.edu
     digit_count = random.choice([3, 4])
     digits = ''.join([str(random.randint(0, 9)) for _ in range(digit_count)])
     email = f"{first_name.lower()}.{last_name.lower()}{digits}@psu.edu"
@@ -26,7 +24,7 @@ _page_pool = []
 
 
 def _get_browser_context():
-    """Lấy hoặc tạo ngữ cảnh trình duyệt (mẫu Singleton)"""
+    # Lấy hoặc tạo ngữ cảnh trình duyệt (mẫu Singleton)
     global _browser_context
     if _browser_context is None:
         try:
@@ -52,7 +50,7 @@ def _get_browser_context():
 
 
 def _html_to_png(html_content: str, width: int = 1200, height: int = None) -> bytes:
-    """Chuyển đổi HTML sang ảnh chụp màn hình PNG (phiên bản tối ưu: dùng lại phiên trình duyệt)"""
+    # Chuyển đổi HTML sang ảnh chụp màn hình PNG (phiên bản tối ưu: dùng lại phiên trình duyệt)
     try:
         context = _get_browser_context()
         page = context.new_page()
@@ -83,7 +81,7 @@ def _html_to_png(html_content: str, width: int = 1200, height: int = None) -> by
 
 
 def generate_teacher_card_html(first_name: str, last_name: str, psu_id: str) -> str:
-    """Tạo HTML cho thẻ giáo viên."""
+    # Tạo HTML cho thẻ giáo viên.
     int(datetime.now().timestamp())
     name = f"{first_name} {last_name}"
     return f"""<!DOCTYPE html>
@@ -291,13 +289,9 @@ def generate_teacher_card_html(first_name: str, last_name: str, psu_id: str) -> 
 
 </body>
 </html>
-"""
-
-
-def generate_employment_letter_html(
-        first_name: str, last_name: str, title: str, dept: str
-) -> str:
-    """Tạo HTML cho giấy xác nhận công tác."""
+# def generate_employment_letter_html(
+# first_name: str, last_name: str, title: str, dept: str
+# ) -> str:
     name = f"{first_name} {last_name}"
     now = datetime.now()
     date_str = now.strftime("%B %d, %Y")
@@ -510,11 +504,7 @@ def generate_employment_letter_html(
 
 </body>
 </html>
-"""
-
-
-def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
-    """
+# def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
     Tạo hàng loạt ảnh PNG đồng thời (phiên bản tối ưu hiệu năng)
 
     Args:
@@ -522,12 +512,9 @@ def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
 
     Returns:
         list[bytes]: Danh sách dữ liệu PNG
-    """
-    import asyncio
-    from playwright.async_api import async_playwright
-
-    async def render_single(html_content: str, width: int, height: int):
-        """Xử lý render một ảnh duy nhất không đồng bộ"""
+    # import asyncio
+    # from playwright.async_api import async_playwright
+    # async def render_single(html_content: str, width: int, height: int):
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=True,
@@ -561,7 +548,7 @@ def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
                 await browser.close()
 
     async def render_all():
-        """Render tất cả các ảnh đồng thời"""
+        # Render tất cả các ảnh đồng thời
         tasks = [render_single(html, w, h) for html, w, h in html_list]
         return await asyncio.gather(*tasks)
 
@@ -569,17 +556,13 @@ def _html_to_png_batch(html_list: list[tuple[str, int, int]]) -> list[bytes]:
 
 
 def generate_images(first_name: str, last_name: str):
-    """
-    Tạo hai ảnh PNG: Thẻ giáo viên + Giấy xác nhận công tác (phiên bản tối ưu đồng thời)
-
-    Args:
-        first_name: Tên
-        last_name: Họ
-        school_id: ID trường (giữ nguyên tính tương thích)
-
-    Returns:
-        list[dict]: [{"file_name": str, "data": bytes}]
-    """
+    # Tạo hai ảnh PNG: Thẻ giáo viên + Giấy xác nhận công tác (phiên bản tối ưu đồng thời)
+    # Args:
+    # first_name: Tên
+    # last_name: Họ
+    # school_id: ID trường (giữ nguyên tính tương thích)
+    # Returns:
+    # list[dict]: [{"file_name": str, "data": bytes}]
     psu_id = generate_psu_id()
     titles = [
         "Associate Professor",

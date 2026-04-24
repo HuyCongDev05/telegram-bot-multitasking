@@ -6,7 +6,7 @@ load_dotenv()
 
 
 class Config:
-    """Cấu hình Bot được tải từ biến môi trường."""
+    # Cấu hình Bot được tải từ biến môi trường.
     
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
     STRIPE_PUBLIC_KEY: str = os.getenv("STRIPE_PUBLIC_KEY", "pk_live_Irb4yGPLHhRyXxBAJrpImLLE")
@@ -20,7 +20,7 @@ class Config:
     
     @classmethod
     def load(cls) -> "Config":
-        """Tải và kiểm tra tính hợp lệ của cấu hình."""
+        # Tải và kiểm tra tính hợp lệ của cấu hình.
         allowed_users_str = os.getenv("ALLOWED_USERS", "")
         if allowed_users_str:
             cls.ALLOWED_USERS = [
@@ -41,7 +41,7 @@ class Config:
     
     @classmethod
     def validate(cls) -> bool:
-        """Kiểm tra các cấu hình bắt buộc."""
+        # Kiểm tra các cấu hình bắt buộc.
         errors = []
         
         if not cls.BOT_TOKEN or cls.BOT_TOKEN == "your_bot_token_here":

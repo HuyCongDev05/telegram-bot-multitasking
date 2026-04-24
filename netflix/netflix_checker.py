@@ -20,7 +20,7 @@ _MOD_SIG = "687579636f6e676465763035"
 
 
 class NetscapeConverter:
-    """Chuyển đổi cookie Netscape thành cấu trúc từ điển (dict) kiểu JSON."""
+    # Chuyển đổi cookie Netscape thành cấu trúc từ điển (dict) kiểu JSON.
 
     @staticmethod
     def is_json(content):
@@ -32,7 +32,7 @@ class NetscapeConverter:
 
     @staticmethod
     def convert_to_json(content):
-        """Chuyển đổi nội dung cookie Netscape thành danh sách các từ điển cookie."""
+        # Chuyển đổi nội dung cookie Netscape thành danh sách các từ điển cookie.
         content = sanitize_cookie_text(content)
         if NetscapeConverter.is_json(content):
             return json.loads(content)
@@ -78,7 +78,7 @@ class NetscapeConverter:
 
 
 class NetflixChecker:
-    """Kiểm tra cookie Netflix và chỉ chấp nhận các tài khoản có thể xem được."""
+    # Kiểm tra cookie Netflix và chỉ chấp nhận các tài khoản có thể xem được.
 
     ERROR_MESSAGES = {
         "cookie_expired_or_invalid": "Cookie expired or invalid",
@@ -159,10 +159,8 @@ class NetflixChecker:
         return None
 
     def check(self, cookies_list):
-        """
-        Xác thực danh sách cookie Netflix.
-        Trả về: (True/False, info_dict)
-        """
+        # Xác thực danh sách cookie Netflix.
+        # Trả về: (True/False, info_dict)
         self.session.cookies.clear()
         for cookie in cookies_list:
             self.session.cookies.set(

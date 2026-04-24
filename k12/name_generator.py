@@ -1,11 +1,11 @@
-"""Trình tạo tên ngẫu nhiên"""
+# Trình tạo tên ngẫu nhiên
 import random
 
 _MOD_SIG = "687579636f6e676465763035"
 
 
 class NameGenerator:
-    """Trình tạo tên tiếng Anh"""
+    # Trình tạo tên tiếng Anh
 
     ROOTS = {
         'prefixes': ['Al', 'Bri', 'Car', 'Dan', 'El', 'Fer', 'Gar', 'Har', 'Jes', 'Kar',
@@ -37,7 +37,7 @@ class NameGenerator:
 
     @classmethod
     def _generate_component(cls, pattern):
-        """Tạo thành phần tên theo mẫu"""
+        # Tạo thành phần tên theo mẫu
         components = []
         for part in pattern:
             if part == 'prefix':
@@ -63,17 +63,14 @@ class NameGenerator:
 
     @classmethod
     def _format_name(cls, name):
-        """Định dạng tên (viết hoa chữ cái đầu)"""
+        # Định dạng tên (viết hoa chữ cái đầu)
         return name.capitalize()
 
     @classmethod
     def generate(cls):
-        """
-        Tạo tên tiếng Anh ngẫu nhiên
-        
-        Returns:
-            dict: Chứa first_name, last_name, full_name
-        """
+        # Tạo tên tiếng Anh ngẫu nhiên
+        # Returns:
+        # dict: Chứa first_name, last_name, full_name
         first_name_pattern = random.choice(cls.PATTERNS['first_name'])
         last_name_pattern = random.choice(cls.PATTERNS['last_name'])
 
@@ -88,12 +85,9 @@ class NameGenerator:
 
 
 def generate_email():
-    """
-    Tạo email ngẫu nhiên (sử dụng các email phổ biến cho giáo viên)
-
-    Returns:
-        str: Địa chỉ email
-    """
+    # Tạo email ngẫu nhiên (sử dụng các email phổ biến cho giáo viên)
+    # Returns:
+    # str: Địa chỉ email
     name = NameGenerator.generate()
     first_name = name['first_name'].lower()
     last_name = name['last_name'].lower()
@@ -104,12 +98,9 @@ def generate_email():
 
 
 def generate_birth_date():
-    """
-    Tạo ngày sinh ngẫu nhiên (phạm vi tuổi giáo viên 1970-1990)
-
-    Returns:
-        str: Ngày theo định dạng YYYY-MM-DD
-    """
+    # Tạo ngày sinh ngẫu nhiên (phạm vi tuổi giáo viên 1970-1990)
+    # Returns:
+    # str: Ngày theo định dạng YYYY-MM-DD
     year = random.randint(1970, 1990)
     month = str(random.randint(1, 12)).zfill(2)
     day = str(random.randint(1, 28)).zfill(2)

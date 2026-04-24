@@ -1,4 +1,4 @@
-"""Chương trình chính xác thực giáo viên SheerID (Bolt.now)"""
+# Chương trình chính xác thực giáo viên SheerID (Bolt.now)
 import logging
 import random
 import re
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class SheerIDVerifier:
-    """Trình xác thực danh tính giáo viên SheerID"""
+    # Trình xác thực danh tính giáo viên SheerID
 
     def __init__(self, install_page_url: str, verification_id: Optional[str] = None):
         self.install_page_url = self.normalize_url(install_page_url)
@@ -42,7 +42,7 @@ class SheerIDVerifier:
 
     @staticmethod
     def normalize_url(url: str) -> str:
-        """Chuẩn hóa URL (giữ nguyên, tương thích với giao diện hiện tại)"""
+        # Chuẩn hóa URL (giữ nguyên, tương thích với giao diện hiện tại)
         return url
 
     @staticmethod
@@ -60,7 +60,7 @@ class SheerIDVerifier:
         return None
 
     def create_verification(self) -> str:
-        """Yêu cầu verificationId mới thông qua installPageUrl"""
+        # Yêu cầu verificationId mới thông qua installPageUrl
         body = {
             "programId": config.PROGRAM_ID,
             "installPageUrl": self.install_page_url,
@@ -78,7 +78,7 @@ class SheerIDVerifier:
     def _sheerid_request(
             self, method: str, url: str, body: Optional[Dict] = None
     ) -> Tuple[Dict, int]:
-        """Gửi yêu cầu API SheerID"""
+        # Gửi yêu cầu API SheerID
         headers = {
             "Content-Type": "application/json",
         }
@@ -93,7 +93,7 @@ class SheerIDVerifier:
         return data, response.status_code
 
     def _upload_to_s3(self, upload_url: str, img_data: bytes) -> bool:
-        """Tải PNG lên S3"""
+        # Tải PNG lên S3
         try:
             headers = {"Content-Type": "image/png"}
             response = self.http_client.put(
@@ -112,7 +112,7 @@ class SheerIDVerifier:
             birth_date: str = None,
             school_id: str = None,
     ) -> Dict:
-        """Thực hiện quy trình xác thực giáo viên"""
+        # Thực hiện quy trình xác thực giáo viên
         try:
             current_step = "initial"
 
@@ -268,7 +268,7 @@ class SheerIDVerifier:
 
 
 def main():
-    """Hàm chính - Giao diện dòng lệnh"""
+    # Hàm chính - Giao diện dòng lệnh
     import sys
 
     print("=" * 60)

@@ -1,4 +1,4 @@
-"""Chương trình chính xác thực giáo viên SheerID"""
+# Chương trình chính xác thực giáo viên SheerID
 import logging
 import os
 import random
@@ -40,38 +40,35 @@ logger = logging.getLogger(__name__)
 
 
 class SheerIDVerifier:
-    """Trình xác thực danh tính giáo viên SheerID"""
+    # Trình xác thực danh tính giáo viên SheerID
 
     def __init__(self, verification_id: str):
-        """
-        Khởi tạo trình xác thực
-
-        Args:
-            verification_id: ID xác thực SheerID
-        """
+        # Khởi tạo trình xác thực
+        # Args:
+        # verification_id: ID xác thực SheerID
         self.verification_id = verification_id
         self.device_fingerprint = self._generate_device_fingerprint()
         self.http_client = httpx.Client(timeout=30.0)
 
     def __del__(self):
-        """Dọn dẹp hằng số HTTP client"""
+        # Dọn dẹp hằng số HTTP client
         if hasattr(self, 'http_client'):
             self.http_client.close()
 
     @staticmethod
     def _generate_device_fingerprint() -> str:
-        """Tạo dấu vân tay thiết bị"""
+        # Tạo dấu vân tay thiết bị
         chars = '0123456789abcdef'
         return ''.join(random.choice(chars) for _ in range(32))
 
     @staticmethod
     def normalize_url(url: str) -> str:
-        """Chuẩn hóa URL"""
+        # Chuẩn hóa URL
         return url
 
     @staticmethod
     def parse_verification_id(url: str) -> Optional[str]:
-        """Giải mã ID xác thực từ URL"""
+        # Giải mã ID xác thực từ URL
         match = re.search(r'verificationId=([a-f0-9]+)', url, re.IGNORECASE)
         if match:
             return match.group(1)
@@ -79,9 +76,7 @@ class SheerIDVerifier:
 
     def _sheerid_request(self, method: str, url: str,
                          body: Optional[Dict] = None) -> Tuple[Dict, int]:
-        """
-        Gửi yêu cầu API SheerID
-        """
+        # Gửi yêu cầu API SheerID
         headers = {
             'Content-Type': 'application/json',
         }
@@ -105,9 +100,7 @@ class SheerIDVerifier:
             raise
 
     def _upload_to_s3(self, upload_url: str, content: bytes, mime_type: str) -> bool:
-        """
-        Tải tệp lên S3
-        """
+        # Tải tệp lên S3
         try:
             headers = {
                 'Content-Type': mime_type,
@@ -126,9 +119,7 @@ class SheerIDVerifier:
     def verify(self, first_name: str = None, last_name: str = None,
                email: str = None, birth_date: str = None,
                school_id: str = None) -> Dict:
-        """
-        Thực hiện quy trình xác thực hoàn chỉnh, loại bỏ vòng lặp kiểm tra trạng thái để giảm thời gian tiêu tốn
-        """
+        # Thực hiện quy trình xác thực hoàn chỉnh, loại bỏ vòng lặp kiểm tra trạng thái để giảm thời gian tiêu tốn
         try:
             current_step = 'initial'
 

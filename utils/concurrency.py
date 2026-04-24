@@ -1,11 +1,9 @@
-"""Công cụ kiểm soát đồng thời (Phiên bản tối ưu hóa)
-
-Cải thiện hiệu suất:
-1. Giới hạn đồng thời động (dựa trên tải hệ thống)
-2. Tách biệt kiểm soát đồng thời cho các loại xác thực khác nhau
-3. Hỗ trợ số lượng đồng thời cao hơn
-4. Giám sát tải và tự động điều chỉnh
-"""
+# Công cụ kiểm soát đồng thời (Phiên bản tối ưu hóa)
+# Cải thiện hiệu suất:
+# 1. Giới hạn đồng thời động (dựa trên tải hệ thống)
+# 2. Tách biệt kiểm soát đồng thời cho các loại xác thực khác nhau
+# 3. Hỗ trợ số lượng đồng thời cao hơn
+# 4. Giám sát tải và tự động điều chỉnh
 import asyncio
 import logging
 from typing import Dict
@@ -19,7 +17,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 # Tính toán động số lượng đồng thời tối đa
 def _calculate_max_concurrency() -> int:
-    """Tính toán số lượng đồng thời tối đa dựa trên tài nguyên hệ thống"""
+    # Tính toán số lượng đồng thời tối đa dựa trên tài nguyên hệ thống
     try:
         cpu_count = psutil.cpu_count() or 4
         memory_gb = psutil.virtual_memory().total / (1024 ** 3)
@@ -61,14 +59,11 @@ _verification_semaphores: Dict[str, asyncio.Semaphore] = {
 
 
 def get_verification_semaphore(verification_type: str) -> asyncio.Semaphore:
-    """Lấy semaphore cho loại xác thực chỉ định
-    
-    Args:
-        verification_type: Loại xác thực
-        
-    Returns:
-        asyncio.Semaphore: Semaphore tương ứng
-    """
+    # Lấy semaphore cho loại xác thực chỉ định
+    # Args:
+    # verification_type: Loại xác thực
+    # Returns:
+    # asyncio.Semaphore: Semaphore tương ứng
     semaphore = _verification_semaphores.get(verification_type)
 
     if semaphore is None:
@@ -84,11 +79,9 @@ def get_verification_semaphore(verification_type: str) -> asyncio.Semaphore:
 
 
 def get_concurrency_stats() -> Dict[str, Dict[str, int]]:
-    """Lấy thông tin thống kê đồng thời
-    
-    Returns:
-        dict: Thông tin đồng thời của từng loại xác thực
-    """
+    # Lấy thông tin thống kê đồng thời
+    # Returns:
+    # dict: Thông tin đồng thời của từng loại xác thực
     stats = {}
     for vtype, semaphore in _verification_semaphores.items():
         # Lưu ý: _value là thuộc tính nội bộ, có thể thay đổi trong các phiên bản Python khác nhau
@@ -111,11 +104,9 @@ def get_concurrency_stats() -> Dict[str, Dict[str, int]]:
 
 
 async def monitor_system_load() -> Dict[str, float]:
-    """Giám sát tải hệ thống
-    
-    Returns:
-        dict: Thông tin tải hệ thống
-    """
+    # Giám sát tải hệ thống
+    # Returns:
+    # dict: Thông tin tải hệ thống
     try:
         cpu_percent = psutil.cpu_percent(interval=0.1)
         memory_percent = psutil.virtual_memory().percent
@@ -135,11 +126,9 @@ async def monitor_system_load() -> Dict[str, float]:
 
 
 def adjust_concurrency_limits(multiplier: float = 1.0):
-    """Điều chỉnh động giới hạn đồng thời
-    
-    Args:
-        multiplier: Hệ số điều chỉnh (0.5-2.0)
-    """
+    # Điều chỉnh động giới hạn đồng thời
+    # Args:
+    # multiplier: Hệ số điều chỉnh (0.5-2.0)
     global _verification_semaphores, _base_concurrency
 
     # Giới hạn phạm vi hệ số
@@ -163,11 +152,9 @@ _monitor_task = None
 
 
 async def start_load_monitoring(interval: float = 60.0):
-    """Bắt đầu tác vụ giám sát tải
-    
-    Args:
-        interval: Khoảng thời gian giám sát (giây)
-    """
+    # Bắt đầu tác vụ giám sát tải
+    # Args:
+    # interval: Khoảng thời gian giám sát (giây)
     global _monitor_task
 
     if _monitor_task is not None:
@@ -206,7 +193,7 @@ async def start_load_monitoring(interval: float = 60.0):
 
 
 async def stop_load_monitoring():
-    """Dừng tác vụ giám sát tải"""
+    # Dừng tác vụ giám sát tải
     global _monitor_task
 
     if _monitor_task is not None:

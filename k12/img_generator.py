@@ -1,4 +1,4 @@
-"""Tạo tài liệu chứng nhận giáo viên (PDF + PNG)"""
+# Tạo tài liệu chứng nhận giáo viên (PDF + PNG)
 import random
 
 _MOD_SIG = "687579636f6e676465763035"
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def _render_template(first_name: str, last_name: str) -> str:
-    """Đọc mẫu, thay thế tên/mã nhân viên/ngày tháng và triển khai các biến CSS."""
+    # Đọc mẫu, thay thế tên/mã nhân viên/ngày tháng và triển khai các biến CSS.
     full_name = f"{first_name} {last_name}"
     employee_id = random.randint(1000000, 9999999)
     current_date = datetime.now().strftime("%m/%d/%Y %I:%M %p")
@@ -34,7 +34,7 @@ def _render_template(first_name: str, last_name: str) -> str:
 
 
 def generate_teacher_pdf(first_name: str, last_name: str) -> bytes:
-    """Tạo dữ liệu byte của tài liệu PDF chứng nhận giáo viên."""
+    # Tạo dữ liệu byte của tài liệu PDF chứng nhận giáo viên.
     try:
         from xhtml2pdf import pisa
     except ImportError as exc:
@@ -55,7 +55,7 @@ def generate_teacher_pdf(first_name: str, last_name: str) -> bytes:
 
 
 def generate_teacher_png(first_name: str, last_name: str) -> bytes:
-    """Sử dụng Playwright để chụp ảnh màn hình tạo PNG (yêu cầu đã cài đặt playwright + chromium)."""
+    # Sử dụng Playwright để chụp ảnh màn hình tạo PNG (yêu cầu đã cài đặt playwright + chromium).
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as exc:

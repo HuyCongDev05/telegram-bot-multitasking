@@ -16,14 +16,14 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 
 class APIClient:
-    """Client API bất đồng bộ cho quá trình tạo token Stripe và đăng ký Thum.io."""
+    # Client API bất đồng bộ cho quá trình tạo token Stripe và đăng ký Thum.io.
     
     def __init__(self):
         self._session: Optional[aiohttp.ClientSession] = None
         self._connector: Optional[aiohttp.TCPConnector] = None
     
     async def _get_session(self) -> aiohttp.ClientSession:
-        """Lấy hoặc tạo một phiên aiohttp với cơ chế pooling kết nối."""
+        # Lấy hoặc tạo một phiên aiohttp với cơ chế pooling kết nối.
         if self._session is None or self._session.closed:
             self._connector = aiohttp.TCPConnector(
                 limit=100,
@@ -39,25 +39,25 @@ class APIClient:
         return self._session
     
     async def close(self):
-        """Đóng phiên làm việc."""
+        # Đóng phiên làm việc.
         if self._session and not self._session.closed:
             await self._session.close()
         if self._connector:
             await self._connector.close()
     
     def _generate_guids(self) -> Tuple[str, str, str]:
-        """Tạo các GUID duy nhất cho yêu cầu Stripe."""
+        # Tạo các GUID duy nhất cho yêu cầu Stripe.
         guid = str(uuid.uuid4()).replace("-", "") + str(uuid.uuid4()).replace("-", "")[:12]
         muid = str(uuid.uuid4()).replace("-", "") + str(uuid.uuid4()).replace("-", "")[:12]
         sid = str(uuid.uuid4()).replace("-", "") + str(uuid.uuid4()).replace("-", "")[:12]
         return guid, muid, sid
     
     def _random_time_on_page(self) -> int:
-        """Tạo thời gian on-page ngẫu nhiên (5-30 giây tính theo ms)."""
+        # Tạo thời gian on-page ngẫu nhiên (5-30 giây tính theo ms).
         return random.randint(5000, 30000)
     
     def _current_timestamp(self) -> int:
-        """Lấy dấu thời gian hiện tại tính theo mili giây."""
+        # Lấy dấu thời gian hiện tại tính theo mili giây.
         return int(time.time() * 1000)
     
     async def create_stripe_token(
@@ -68,19 +68,15 @@ class APIClient:
         cvv: str,
         email: str = "test@gmail.com"
     ) -> Dict:
-        """
-        Tạo Stripe token từ thông tin thẻ.
-        
-        Tham số:
-             card_number: Số thẻ (chỉ số hoặc có dấu cách)
-             exp_month: Tháng hết hạn (1-12)
-             exp_year: Năm hết hạn (4 chữ số)
-             cvv: Mã CVV/CVC của thẻ
-             email: Email cho token
-             
-        Trả về:
-            Dict chứa phản hồi từ Stripe API hoặc lỗi
-        """
+        # Tạo Stripe token từ thông tin thẻ.
+        # Tham số:
+        # card_number: Số thẻ (chỉ số hoặc có dấu cách)
+        # exp_month: Tháng hết hạn (1-12)
+        # exp_year: Năm hết hạn (4 chữ số)
+        # cvv: Mã CVV/CVC của thẻ
+        # email: Email cho token
+        # Trả về:
+        # Dict chứa phản hồi từ Stripe API hoặc lỗi
         session = await self._get_session()
         
         user_agent = get_random_user_agent()
@@ -164,19 +160,15 @@ class APIClient:
         description: str = "Upgrade to Good Plan",
         auth_mode: bool = False
     ) -> Dict:
-        """
-        Đăng ký gói Thum.io bằng Stripe token.
-        
-        Tham số:
-            token: ID của Stripe token (tok_xxx)
-            plan: Tên gói (plan)
-            amount: Số tiền tính theo cent
-            description: Nội dung mô tả
-            auth_mode: Nếu True, gửi gói tin rút gọn để kiểm tra AUTH
-            
-        Trả về:
-            Dict chứa phản hồi từ Thum.io API hoặc lỗi
-        """
+        # Đăng ký gói Thum.io bằng Stripe token.
+        # Tham số:
+        # token: ID của Stripe token (tok_xxx)
+        # plan: Tên gói (plan)
+        # amount: Số tiền tính theo cent
+        # description: Nội dung mô tả
+        # auth_mode: Nếu True, gửi gói tin rút gọn để kiểm tra AUTH
+        # Trả về:
+        # Dict chứa phản hồi từ Thum.io API hoặc lỗi
         session = await self._get_session()
         user_agent = get_random_user_agent()
         
@@ -253,9 +245,7 @@ class APIClient:
         description: str = "Upgrade to Good Plan",
         auth_mode: bool = False
     ) -> Dict:
-        """
-        Quy trình kiểm tra thẻ đầy đủ: tạo token sau đó đăng ký/auth.
-        """
+        # Quy trình kiểm tra thẻ đầy đủ: tạo token sau đó đăng ký/auth.
         start_time = time.time()
         
         exp_month_fmt = exp_month.zfill(2)
@@ -396,7 +386,7 @@ async def check_card_quick(
     subscribe: bool = True,
     mode: str = "default"  # mặc định, 5, auth, auth5
 ) -> Dict:
-    """Wrapper để kiểm tra nhanh với các chế độ khác nhau."""
+    # Wrapper để kiểm tra nhanh với các chế độ khác nhau.
     parts = card_data.split("|")
     if len(parts) != 4:
         return {"status": "error", "message": "Invalid format"}

@@ -1,4 +1,4 @@
-"""Trình xử lý Discord Quest Auto"""
+# Trình xử lý Discord Quest Auto
 import asyncio
 import logging
 
@@ -20,7 +20,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 @is_not_blocked
 async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /discord_quest_auto"""
+    # Xử lý lệnh /discord_quest_auto
     if await is_user_busy(update, context, db):
         return
 
@@ -66,7 +66,7 @@ async def discord_quest_command(update: Update, context: ContextTypes.DEFAULT_TY
     await start_input_flow(update, context, prompt_text, 'discord_quest_step_1', 'cancel_to_main')
 
 async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, token: str):
-    """Xử lý token Discord và bắt đầu tác vụ chạy ngầm"""
+    # Xử lý token Discord và bắt đầu tác vụ chạy ngầm
     # Kiểm tra bảo trì
     from utils.checks import check_maintenance
     if await check_maintenance(update, db, 'discord_quest_auto'):
@@ -105,7 +105,7 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
         await return_to_main_menu("❌ Failed to deduct points." if language == 'en' else "❌ Trừ điểm thất bại.")
         return
 
-    await context.bot.send_message(
+    verify_msg = await context.bot.send_message(
         chat_id=chat_id,
         text=(
             f"✅ Deducted {DISCORD_QUEST_COST} points. Verifying the token..."
@@ -119,7 +119,7 @@ async def process_discord_token(update: Update, context: ContextTypes.DEFAULT_TY
     # Lưu ý: start_quest_auto là async, chúng ta sẽ create_task để không làm treo bot
     async def run_quest_task():
         try:
-            success = await start_quest_auto(token, context.bot, chat_id)
+            success = await start_quest_auto(token, context.bot, chat_id, verify_msg.message_id)
             if not success:
                 # Nếu xác thực thất bại ngay từ đầu, hoàn tiền
                 db.add_balance(user_id, DISCORD_QUEST_COST)

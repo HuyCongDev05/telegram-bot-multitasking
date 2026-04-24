@@ -11,7 +11,7 @@ from config import ADMIN_USER_ID, VERIFY_COST
 from database import Database
 from netflix.cookie_utils import sanitize_cookie_text, validate_netflix_cookie
 from netflix.netflix_checker import NetflixChecker, NetscapeConverter
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language, tr
 from utils.messages import get_back_admin_button_label, get_ui_label
 from utils.proxy_helper import format_proxy_url
 
@@ -430,12 +430,12 @@ def get_country_name(code, language: str = DEFAULT_LANGUAGE):
 
 
 def _is_watchability_failure(result: dict) -> bool:
-    """Kiểm tra xem lỗi trả về có phải là lỗi về quyền xem (watchability) hay không."""
+    # Kiểm tra xem lỗi trả về có phải là lỗi về quyền xem (watchability) hay không.
     return isinstance(result, dict) and result.get("error_code") in WATCHABILITY_ERROR_CODES
 
 
 def _get_cookie_error_message(result: dict, language: str = DEFAULT_LANGUAGE) -> str:
-    """Lấy thông báo lỗi cookie được bản địa hóa."""
+    # Lấy thông báo lỗi cookie được bản địa hóa.
     if isinstance(result, dict):
         error_code = result.get("error_code")
         localized = COOKIE_ERROR_MESSAGES.get(error_code)
@@ -450,7 +450,7 @@ def _get_cookie_error_message(result: dict, language: str = DEFAULT_LANGUAGE) ->
 
 
 def _normalize_cookie_content(cookie_content: str):
-    """Làm sạch và chuẩn hóa nội dung cookie từ văn bản thô."""
+    # Làm sạch và chuẩn hóa nội dung cookie từ văn bản thô.
     storage_cookie_text = sanitize_cookie_text(cookie_content)
     is_valid, error_message = validate_netflix_cookie(storage_cookie_text)
     if not is_valid:
@@ -472,7 +472,7 @@ _MAX_PROXY_RETRIES = 3
 
 
 def _is_proxy_error(result: dict) -> bool:
-    """Kiểm tra xem lỗi có phải do proxy/mạng không (để xoay proxy thay vì từ chối cookie)."""
+    # Kiểm tra xem lỗi có phải do proxy/mạng không (để xoay proxy thay vì từ chối cookie).
     # Nếu có error_code → lỗi từ Netflix (cookie hết hạn, không có gói...) → không phải lỗi proxy
     if result.get("error_code"):
         return False
@@ -481,12 +481,10 @@ def _is_proxy_error(result: dict) -> bool:
 
 
 def _check_cookie_content(db: Database, cookie_content: str):
-    """Kiểm tra tính hợp lệ và trạng thái live của cookie.
-
-    Tự động xoay proxy và thử lại tối đa _MAX_PROXY_RETRIES lần nếu gặp
-    lỗi kết nối/proxy. Các lỗi từ phía Netflix (cookie hết hạn, không có
-    gói cước...) sẽ dừng ngay mà không thử lại.
-    """
+    # Kiểm tra tính hợp lệ và trạng thái live của cookie.
+    # Tự động xoay proxy và thử lại tối đa _MAX_PROXY_RETRIES lần nếu gặp
+    # lỗi kết nối/proxy. Các lỗi từ phía Netflix (cookie hết hạn, không có
+    # gói cước...) sẽ dừng ngay mà không thử lại.
     cookies, storage_cookie_text, error_message = _normalize_cookie_content(cookie_content)
     if not cookies:
         return False, {"error": error_message}, None, None
@@ -519,7 +517,7 @@ def _check_cookie_content(db: Database, cookie_content: str):
 
 
 def _build_cookie_result_text(result: dict, language: str = DEFAULT_LANGUAGE) -> str:
-    """Xây dựng văn bản hiển thị kết quả kiểm tra cookie."""
+    # Xây dựng văn bản hiển thị kết quả kiểm tra cookie.
     if language == 'en':
         return (
             "✅ <b>LIVE NETFLIX COOKIE</b>\n"
@@ -540,7 +538,7 @@ def _build_cookie_result_text(result: dict, language: str = DEFAULT_LANGUAGE) ->
 
 
 async def _delete_source_message(update: Update):
-    """Xóa tin nhắn nguồn để giữ sạch giao diện chat."""
+    # Xóa tin nhắn nguồn để giữ sạch giao diện chat.
     message = update.effective_message
     if not message:
         return
@@ -552,7 +550,7 @@ async def _delete_source_message(update: Update):
 
 
 def _extract_cookie_entries(file_name: str, file_bytes: bytes):
-    """Trích xuất danh sách cookie từ file upload (hỗ trợ .txt và .zip)."""
+    # Trích xuất danh sách cookie từ file upload (hỗ trợ .txt và .zip).
     lower_name = (file_name or "").lower()
 
     if lower_name.endswith(".zip"):
@@ -590,7 +588,7 @@ def _extract_cookie_entries(file_name: str, file_bytes: bytes):
 
 
 def _run_admin_cookie_batch(db: Database, entries, language: str):
-    """Xử lý nạp cookie theo lô cho Admin."""
+    # Xử lý nạp cookie theo lô cho Admin.
     checked = 0
     stored = 0
     rejected = 0
@@ -637,7 +635,7 @@ def _run_admin_cookie_batch(db: Database, entries, language: str):
 
 
 def _build_admin_upload_summary(result_summary: dict, ignored_count: int, language: str) -> str:
-    """Tạo báo cáo tổng kết quá trình nạp cookie cho Admin."""
+    # Tạo báo cáo tổng kết quá trình nạp cookie cho Admin.
     checked = result_summary["checked"]
     stored = result_summary["stored"]
     rejected = result_summary["rejected"]
@@ -695,7 +693,7 @@ async def _run_admin_cookie_upload_task(
         ignored_count: int,
         language: str,
 ):
-    """Tác vụ chạy ngầm để xử lý nạp cookie Netflix."""
+    # Tác vụ chạy ngầm để xử lý nạp cookie Netflix.
     try:
         result_summary = await asyncio.to_thread(_run_admin_cookie_batch, db, entries, language)
         reply_markup = InlineKeyboardMarkup(
@@ -732,18 +730,14 @@ async def _run_admin_cookie_upload_task(
 
 
 async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Bắt đầu luồng kiểm tra cookie Netflix."""
+    # Bắt đầu luồng kiểm tra cookie Netflix.
     user_id = update.effective_user.id
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
 
     if db.is_service_maintenance('check_cookie_netflix') and user_id != ADMIN_USER_ID:
         if update.effective_message:
             await update.effective_message.reply_text(
-                (
-                    "❌ <b>Notice:</b> The Netflix Cookie Check service is currently under maintenance. Please try again later!"
-                    if language == 'en'
-                    else "❌ <b>Thông báo:</b> Dịch vụ Check Cookie Netflix hiện đang bảo trì. Vui lòng quay lại sau!"
-                ),
+                tr(language, "netflix.maintenance.check_cookie"),
                 parse_mode='HTML',
             )
         return
@@ -752,11 +746,7 @@ async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEF
     if user['balance'] < VERIFY_COST:
         if update.effective_message:
             await update.effective_message.reply_text(
-                (
-                    f"❌ Insufficient balance! Each check costs <b>{VERIFY_COST} points</b>. Current balance: {user['balance']} points."
-                    if language == 'en'
-                    else f"❌ Số dư không đủ! Mỗi lượt check tốn <b>{VERIFY_COST} điểm</b>. Hiện có: {user['balance']} điểm."
-                ),
+                tr(language, "netflix.balance.insufficient", verify_cost=VERIFY_COST, current_balance=user['balance']),
                 parse_mode='HTML',
             )
         return
@@ -779,7 +769,7 @@ async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEF
 
 
 async def upload_netflix_cookies_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Bắt đầu luồng admin nạp cookie Netflix vào kho."""
+    # Bắt đầu luồng admin nạp cookie Netflix vào kho.
     if update.effective_user.id != ADMIN_USER_ID:
         return
 
@@ -821,7 +811,7 @@ async def process_admin_netflix_cookie_upload(
         file_name: str,
         file_bytes: bytes,
 ):
-    """Xử lý file admin nạp cookie Netflix vào kho."""
+    # Xử lý file admin nạp cookie Netflix vào kho.
     if update.effective_user.id != ADMIN_USER_ID:
         return
 
@@ -856,7 +846,7 @@ async def process_admin_netflix_cookie_upload(
 
 
 async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Lấy lần lượt một cookie Netflix live từ kho DB."""
+    # Lấy lần lượt một cookie Netflix live từ kho DB.
     from handlers.user_commands import show_main_menu_after_delay
 
     user_id = update.effective_user.id
@@ -864,11 +854,7 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
     if db.is_service_maintenance('get_cookie_netflix') and user_id != ADMIN_USER_ID:
         if update.effective_message:
             await update.effective_message.reply_text(
-                (
-                    "❌ <b>Notice:</b> The Get Netflix Cookie service is currently under maintenance. Please try again later!"
-                    if language == 'en'
-                    else "❌ <b>Thông báo:</b> Dịch vụ Lấy Cookie Netflix hiện đang bảo trì. Vui lòng quay lại sau!"
-                ),
+                tr(language, "netflix.maintenance.get_cookie"),
                 parse_mode='HTML',
             )
         return
@@ -877,11 +863,7 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
     if user['balance'] < VERIFY_COST:
         if update.effective_message:
             await update.effective_message.reply_text(
-                (
-                    f"❌ Insufficient balance! Each request costs <b>{VERIFY_COST} points</b>. Current balance: {user['balance']} points."
-                    if language == 'en'
-                    else f"❌ Số dư không đủ! Mỗi lần lấy cookie tốn <b>{VERIFY_COST} điểm</b>. Hiện có: {user['balance']} điểm."
-                ),
+                tr(language, "netflix.balance.insufficient", verify_cost=VERIFY_COST, current_balance=user['balance']),
                 parse_mode='HTML',
             )
         return
@@ -951,7 +933,7 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
 
 
 async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, cookie_content: str):
-    """Logic xử lý và kiểm tra cookie Netflix."""
+    # Logic xử lý và kiểm tra cookie Netflix.
     from handlers.user_commands import show_main_menu_after_delay
 
     user_id = update.effective_user.id
@@ -1024,7 +1006,7 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def login_tv_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Bắt đầu luồng đăng nhập Netflix TV — yêu cầu nhập mã TV."""
+    # Bắt đầu luồng đăng nhập Netflix TV — yêu cầu nhập mã TV.
     from utils.i18n import tr
 
     user_id = update.effective_user.id
@@ -1033,11 +1015,7 @@ async def login_tv_netflix_command(update: Update, context: ContextTypes.DEFAULT
     if db.is_service_maintenance('login_tv_netflix') and user_id != ADMIN_USER_ID:
         if update.effective_message:
             await update.effective_message.reply_text(
-                (
-                    "❌ <b>Notice:</b> The Netflix TV Login service is currently under maintenance. Please try again later!"
-                    if language == 'en'
-                    else "❌ <b>Thông báo:</b> Dịch vụ Đăng nhập Netflix TV hiện đang bảo trì. Vui lòng quay lại sau!"
-                ),
+                tr(language, "netflix.maintenance.login_tv"),
                 parse_mode='HTML',
             )
         return
@@ -1049,13 +1027,11 @@ async def login_tv_netflix_command(update: Update, context: ContextTypes.DEFAULT
 
 
 async def process_tv_login(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, tv_code: str):
-    """Xử lý mã TV nhập vào và thực hiện đăng nhập Netflix TV.
-
-    - Lấy cookie ngẫu nhiên từ kho DB, thử tuần tự cho đến khi thành công.
-    - Cookie chết (lỗi SERVER/network, không phải lỗi TV code) bị xóa khỏi kho.
-    - Proxy ngẫu nhiên từ DB xoay 1 lần cho cả request — mỗi user chạy
-      độc lập qua asyncio.to_thread, không block lẫn nhau.
-    """
+    # Xử lý mã TV nhập vào và thực hiện đăng nhập Netflix TV.
+    # - Lấy cookie ngẫu nhiên từ kho DB, thử tuần tự cho đến khi thành công.
+    # - Cookie chết (lỗi SERVER/network, không phải lỗi TV code) bị xóa khỏi kho.
+    # - Proxy ngẫu nhiên từ DB xoay 1 lần cho cả request — mỗi user chạy
+    # độc lập qua asyncio.to_thread, không block lẫn nhau.
     from handlers.user_commands import show_main_menu_after_delay
     from utils.i18n import tr
 
@@ -1079,9 +1055,7 @@ async def process_tv_login(update: Update, context: ContextTypes.DEFAULT_TYPE, d
     user = db.get_user(user_id)
     if user['balance'] < VERIFY_COST:
         await processing_msg.edit_text(
-            f"❌ Insufficient balance! Need <b>{VERIFY_COST} points</b>. Current: {user['balance']} points."
-            if language == 'en'
-            else f"❌ Số dư không đủ! Cần <b>{VERIFY_COST} điểm</b>. Hiện có: {user['balance']} điểm.",
+            tr(language, "netflix.balance.insufficient", verify_cost=VERIFY_COST, current_balance=user['balance']),
             parse_mode='HTML',
         )
         await show_main_menu_after_delay(update, context, db)

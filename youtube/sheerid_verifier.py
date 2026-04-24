@@ -1,4 +1,4 @@
-"""Chương trình chính xác thực sinh viên SheerID"""
+# Chương trình chính xác thực sinh viên SheerID
 import logging
 import random
 import re
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class SheerIDVerifier:
-    """Trình xác thực danh tính sinh viên SheerID"""
+    # Trình xác thực danh tính sinh viên SheerID
 
     def __init__(self, verification_id: str):
         self.verification_id = verification_id
@@ -40,7 +40,7 @@ class SheerIDVerifier:
 
     @staticmethod
     def normalize_url(url: str) -> str:
-        """Chuẩn hóa URL (giữ nguyên gốc)"""
+        # Chuẩn hóa URL (giữ nguyên gốc)
         return url
 
     @staticmethod
@@ -53,7 +53,7 @@ class SheerIDVerifier:
     def _sheerid_request(
             self, method: str, url: str, body: Optional[Dict] = None
     ) -> Tuple[Dict, int]:
-        """Gửi yêu cầu API SheerID"""
+        # Gửi yêu cầu API SheerID
         headers = {
             "Content-Type": "application/json",
         }
@@ -72,7 +72,7 @@ class SheerIDVerifier:
             raise
 
     def _upload_to_s3(self, upload_url: str, img_data: bytes) -> bool:
-        """Tải PNG lên S3"""
+        # Tải PNG lên S3
         try:
             headers = {"Content-Type": "image/png"}
             response = self.http_client.put(
@@ -91,7 +91,7 @@ class SheerIDVerifier:
             birth_date: str = None,
             school_id: str = None,
     ) -> Dict:
-        """Thực hiện quy trình xác thực, loại bỏ vòng lặp kiểm tra trạng thái để giảm thời gian tiêu tốn"""
+        # Thực hiện quy trình xác thực, loại bỏ vòng lặp kiểm tra trạng thái để giảm thời gian tiêu tốn
         try:
             current_step = "initial"
 
@@ -213,7 +213,7 @@ class SheerIDVerifier:
 
 
 def main():
-    """Hàm chính - Giao diện dòng lệnh"""
+    # Hàm chính - Giao diện dòng lệnh
     import sys
 
     print("=" * 60)

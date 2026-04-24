@@ -1,4 +1,4 @@
-"""Các công cụ hỗ trợ đăng nhập ứng dụng công khai cho Netflix."""
+# Các công cụ hỗ trợ đăng nhập ứng dụng công khai cho Netflix.
 
 from .cookie_utils import REQUIRED_COOKIES, build_cookie_header, extract_cookie_dict, validate_netflix_cookie
 from .nf_token_generator import build_nftoken_link, fetch_nftoken, generate_nftoken

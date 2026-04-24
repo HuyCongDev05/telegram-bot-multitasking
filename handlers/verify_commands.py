@@ -1,4 +1,4 @@
-"""Trình xử lý lệnh xác thực."""
+# Trình xử lý lệnh xác thực.
 import asyncio
 import logging
 from typing import Optional
@@ -28,7 +28,7 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 
 def i18n_text(language: str, vi_text: str, en_text: str) -> str:
-    """Chọn chuỗi theo ngôn ngữ."""
+    # Chọn chuỗi theo ngôn ngữ.
     return en_text if language == 'en' else vi_text
 
 
@@ -48,7 +48,7 @@ async def _delete_source_message(update: Update):
 
 @is_not_blocked
 async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verify_chatgpt_teacher_k12 - ChatGPT Teacher K12."""
+    # Xử lý lệnh /verify_chatgpt_teacher_k12 - ChatGPT Teacher K12.
     if await is_user_busy(update, context, db):
         return
 
@@ -188,7 +188,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
 
 @is_not_blocked
 async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verify_spotify_student - Spotify Student."""
+    # Xử lý lệnh /verify_spotify_student - Spotify Student.
     if await is_user_busy(update, context, db):
         return
 
@@ -312,7 +312,7 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 
 @is_not_blocked
 async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verify_bolt_new_teacher - Bolt.new Teacher."""
+    # Xử lý lệnh /verify_bolt_new_teacher - Bolt.new Teacher.
     if await is_user_busy(update, context, db):
         return
 
@@ -501,7 +501,7 @@ async def _auto_get_reward_code(
         max_wait: int = 20,
         interval: int = 5,
 ) -> Optional[str]:
-    """Tự động lấy mã xác thực bằng polling nhẹ."""
+    # Tự động lấy mã xác thực bằng polling nhẹ.
     import time
 
     start_time = time.time()
@@ -538,7 +538,7 @@ async def _auto_get_reward_code(
 
 @is_not_blocked
 async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verify_youtube_premium_student - YouTube Student Premium."""
+    # Xử lý lệnh /verify_youtube_premium_student - YouTube Student Premium.
     if await is_user_busy(update, context, db):
         return
 
@@ -656,7 +656,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
 
 @is_not_blocked
 async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /getV4Code - Lấy mã xác thực Bolt.new Teacher."""
+    # Xử lý lệnh /getV4Code - Lấy mã xác thực Bolt.new Teacher.
     user_id = update.effective_user.id
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
 
@@ -755,7 +755,7 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
 
 @is_not_blocked
 async def verifyGeminiOnePro_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /verify_gemini_one_pro - Gemini One Pro."""
+    # Xử lý lệnh /verify_gemini_one_pro - Gemini One Pro.
     if await is_user_busy(update, context, db):
         return
 

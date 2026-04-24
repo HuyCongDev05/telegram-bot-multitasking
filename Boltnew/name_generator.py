@@ -1,11 +1,11 @@
-"""Trình tạo tên ngẫu nhiên"""
+# Trình tạo tên ngẫu nhiên
 import random
 
 _MOD_SIG = "687579636f6e676465763035"
 
 
 class NameGenerator:
-    """Trình tạo tên tiếng Anh"""
+    # Trình tạo tên tiếng Anh
 
     ROOTS = {
         'prefixes': ['Al', 'Bri', 'Car', 'Dan', 'El', 'Fer', 'Gar', 'Har', 'Jes', 'Kar',
@@ -37,7 +37,7 @@ class NameGenerator:
 
     @classmethod
     def _generate_component(cls, pattern):
-        """Tạo thành phần tên theo mẫu"""
+        # Tạo thành phần tên theo mẫu
         components = []
         for part in pattern:
             if part == 'prefix':
@@ -63,17 +63,14 @@ class NameGenerator:
 
     @classmethod
     def _format_name(cls, name):
-        """Định dạng tên (viết hoa chữ cái đầu)"""
+        # Định dạng tên (viết hoa chữ cái đầu)
         return name.capitalize()
 
     @classmethod
     def generate(cls):
-        """
-        Tạo tên tiếng Anh ngẫu nhiên
-        
-        Returns:
-            dict: Chứa first_name, last_name, full_name
-        """
+        # Tạo tên tiếng Anh ngẫu nhiên
+        # Returns:
+        # dict: Chứa first_name, last_name, full_name
         first_name_pattern = random.choice(cls.PATTERNS['first_name'])
         last_name_pattern = random.choice(cls.PATTERNS['last_name'])
 
@@ -88,27 +85,20 @@ class NameGenerator:
 
 
 def generate_email(school_domain='MIT.EDU'):
-    """
-    Tạo email trường học ngẫu nhiên
-    
-    Args:
-        school_domain: Tên miền trường học
-    
-    Returns:
-        str: Địa chỉ email
-    """
+    # Tạo email trường học ngẫu nhiên
+    # Args:
+    # school_domain: Tên miền trường học
+    # Returns:
+    # str: Địa chỉ email
     chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     username = ''.join(random.choice(chars) for _ in range(8))
     return f"{username}@{school_domain}"
 
 
 def generate_birth_date():
-    """
-    Tạo ngày sinh ngẫu nhiên (năm 2000-2005)
-    
-    Returns:
-        str: Ngày theo định dạng YYYY-MM-DD
-    """
+    # Tạo ngày sinh ngẫu nhiên (năm 2000-2005)
+    # Returns:
+    # str: Ngày theo định dạng YYYY-MM-DD
     year = 2000 + random.randint(0, 5)
     month = str(random.randint(1, 12)).zfill(2)
     day = str(random.randint(1, 28)).zfill(2)

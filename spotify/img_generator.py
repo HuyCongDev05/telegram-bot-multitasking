@@ -1,4 +1,4 @@
-"""Module tạo thẻ sinh viên PNG - Penn State LionPATH"""
+# Module tạo thẻ sinh viên PNG - Penn State LionPATH
 import random
 from datetime import datetime
 
@@ -6,15 +6,13 @@ _MOD_SIG = "687579636f6e676465763035"
 
 
 def generate_psu_id():
-    """Tạo PSU ID ngẫu nhiên (9 chữ số)"""
+    # Tạo PSU ID ngẫu nhiên (9 chữ số)
     return f"9{random.randint(10000000, 99999999)}"
 
 
 def generate_psu_email(first_name, last_name):
-    """
-    Tạo email PSU
-    Định dạng: firstName.lastName + 3-4 chữ số @psu.edu
-    """
+    # Tạo email PSU
+    # Định dạng: firstName.lastName + 3-4 chữ số @psu.edu
     digit_count = random.choice([3, 4])
     digits = ''.join([str(random.randint(0, 9)) for _ in range(digit_count)])
     email = f"{first_name.lower()}.{last_name.lower()}{digits}@psu.edu"
@@ -22,17 +20,13 @@ def generate_psu_email(first_name, last_name):
 
 
 def generate_html(first_name, last_name):
-    """
-    Tạo HTML Penn State LionPATH
-
-    Args:
-        first_name: Tên
-        last_name: Họ
-        school_id: ID trường
-
-    Returns:
-        str: Nội dung HTML
-    """
+    # Tạo HTML Penn State LionPATH
+    # Args:
+    # first_name: Tên
+    # last_name: Họ
+    # school_id: ID trường
+    # Returns:
+    # str: Nội dung HTML
     psu_id = generate_psu_id()
     name = f"{first_name} {last_name}"
     date = datetime.now().strftime('%m/%d/%Y, %I:%M:%S %p')
@@ -336,22 +330,12 @@ def generate_html(first_name, last_name):
 </body>
 </html>
 """
-
     return html
 
 
 def generate_image(first_name, last_name, school_id='2565'):
-    """
-    Tạo ảnh chụp màn hình Penn State LionPATH dạng PNG
+    # Tạo ảnh chụp màn hình Penn State LionPATH dạng PNG
 
-    Args:
-        first_name: Tên
-        last_name: Họ
-        school_id: ID trường
-
-    Returns:
-        bytes: Dữ liệu ảnh PNG
-    """
     try:
         from playwright.sync_api import sync_playwright
 

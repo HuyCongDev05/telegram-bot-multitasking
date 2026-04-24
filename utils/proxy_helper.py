@@ -5,10 +5,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_proxy_geoip(address, port, username=None, password=None, timeout=10):
-    """
-    Sử dụng proxy để gọi API GeoIP và lấy thông tin vị trí.
-    Đồng thời kiểm tra xem proxy có hoạt động không.
-    """
+    # Sử dụng proxy để gọi API GeoIP và lấy thông tin vị trí.
+    # Đồng thời kiểm tra xem proxy có hoạt động không.
     proxy_url = f"http://{address}:{port}"
     if username and password:
         proxy_url = f"http://{username}:{password}@{address}:{port}"
@@ -40,7 +38,7 @@ def get_proxy_geoip(address, port, username=None, password=None, timeout=10):
         return {"success": False, "error": str(e)}
 
 def format_proxy_url(proxy_dict):
-    """Chuyển đổi dict proxy từ DB sang chuỗi URL cho requests"""
+    # Chuyển đổi dict proxy từ DB sang chuỗi URL cho requests
     if not proxy_dict:
         return None
         
@@ -54,10 +52,8 @@ def format_proxy_url(proxy_dict):
     return f"http://{address}:{port}"
 
 async def check_proxy_health(proxy_dict: dict, timeout: int = 5) -> bool:
-    """
-    Kiểm tra xem proxy còn hoạt động hay không (async).
-    Thử kết nối tới một dịch vụ nhẹ để xác minh.
-    """
+    # Kiểm tra xem proxy còn hoạt động hay không (async).
+    # Thử kết nối tới một dịch vụ nhẹ để xác minh.
     proxy_url = format_proxy_url(proxy_dict)
     
     # httpx require proxy URL to be specified per-protocol in a dict or as a string for all

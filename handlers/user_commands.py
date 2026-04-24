@@ -1,4 +1,4 @@
-"""Trình xử lý lệnh người dùng"""
+# Trình xử lý lệnh người dùng
 import asyncio
 import logging
 from typing import Optional
@@ -46,7 +46,7 @@ def get_current_language(
         user_id: Optional[int] = None,
         default: str = DEFAULT_LANGUAGE,
 ) -> str:
-    """Lấy ngôn ngữ hiện tại, ưu tiên DB rồi tới cache trong context."""
+    # Lấy ngôn ngữ hiện tại, ưu tiên DB rồi tới cache trong context.
     language = None
 
     if db and user_id is not None:
@@ -62,7 +62,7 @@ def get_current_language(
 
 
 def build_main_menu_text(language: str, balance: int, message_text: str = "") -> str:
-    """Ghép text menu chính theo ngôn ngữ."""
+    # Ghép text menu chính theo ngôn ngữ.
     final_message_parts = []
     if message_text:
         final_message_parts.append(message_text)
@@ -74,7 +74,7 @@ def build_main_menu_text(language: str, balance: int, message_text: str = "") ->
 
 
 async def clear_user_state(context: ContextTypes.DEFAULT_TYPE, keep_data: bool = False):
-    """Xóa trạng thái hội thoại của người dùng."""
+    # Xóa trạng thái hội thoại của người dùng.
     # Luôn xóa các trạng thái bước tiếp theo và message_id
     keys_to_delete = ['action_next_step', 'prompt_message_id']
 
@@ -88,7 +88,7 @@ async def clear_user_state(context: ContextTypes.DEFAULT_TYPE, keep_data: bool =
 
 
 def register_cleanup_message(context: ContextTypes.DEFAULT_TYPE, message_id: int):
-    """Đăng ký một tin nhắn vào danh sách dọn dẹp để xóa sau này."""
+    # Đăng ký một tin nhắn vào danh sách dọn dẹp để xóa sau này.
     if 'messages_to_cleanup' not in context.user_data:
         context.user_data['messages_to_cleanup'] = []
     if message_id not in context.user_data['messages_to_cleanup']:
@@ -100,7 +100,7 @@ async def cleanup_input_messages(
         context: ContextTypes.DEFAULT_TYPE,
         keep_data: bool = False,
 ):
-    """Xóa tất cả tin nhắn trong luồng nhập liệu hiện tại và gỡ keyboard (Đặc trị Mobile)."""
+    # Xóa tất cả tin nhắn trong luồng nhập liệu hiện tại và gỡ keyboard (Đặc trị Mobile).
     chat_id = update.effective_chat.id
     messages = context.user_data.get('messages_to_cleanup', [])
     prompt_id = context.user_data.get('prompt_message_id')
@@ -150,7 +150,7 @@ async def cleanup_input_messages(
 
 
 def get_active_service_name(context: ContextTypes.DEFAULT_TYPE, language: str = DEFAULT_LANGUAGE) -> str:
-    """Lấy tên hiển thị của dịch vụ đang thực hiện."""
+    # Lấy tên hiển thị của dịch vụ đang thực hiện.
     service_type = context.user_data.get('action_service_type')
     next_step = context.user_data.get('action_next_step')
     if service_type:
@@ -161,7 +161,7 @@ def get_active_service_name(context: ContextTypes.DEFAULT_TYPE, language: str = 
 
 
 async def is_user_busy(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Optional[Database] = None) -> bool:
-    """Kiểm tra xem người dùng có đang trong một luồng thực hiện nào không."""
+    # Kiểm tra xem người dùng có đang trong một luồng thực hiện nào không.
     next_step = context.user_data.get('action_next_step')
     if not next_step:
         return False
@@ -198,7 +198,7 @@ async def show_language_selection(
         context: ContextTypes.DEFAULT_TYPE,
         db: Database,
 ):
-    """Hiển thị màn chọn ngôn ngữ cho user chưa có language."""
+    # Hiển thị màn chọn ngôn ngữ cho user chưa có language.
     chat_id = update.effective_chat.id
     query = update.callback_query
 
@@ -241,7 +241,7 @@ async def show_language_selection(
 
 @is_not_blocked
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, message_text: str = ""):
-    """Hiển thị menu chính và xóa trạng thái."""
+    # Hiển thị menu chính và xóa trạng thái.
     # Chỉ gọi dọn dẹp nếu người dùng chưa vừa mới nhấn nút Hủy (đã dọn dẹp rồi)
     if context.user_data.get('messages_to_cleanup') or context.user_data.get('action_next_step'):
         await cleanup_input_messages(update, context)
@@ -286,7 +286,7 @@ async def _delete_tracked_menu(
         chat_id: int,
         menu_key: str,
 ):
-    """Xoa menu da luu de tranh lap giao dien."""
+    # Xoa menu da luu de tranh lap giao dien.
     menu_id = context.user_data.get(menu_key)
     if not menu_id:
         return
@@ -301,7 +301,7 @@ async def _delete_tracked_menu(
 
 async def start_input_flow(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str, next_step: str,
                            cancel_callback: str):
-    """Hàm helper để bắt đầu một luồng nhập liệu, hỗ trợ cả Message và CallbackQuery."""
+    # Hàm helper để bắt đầu một luồng nhập liệu, hỗ trợ cả Message và CallbackQuery.
     chat_id = update.effective_chat.id
     query = update.callback_query
     language = get_current_language(context)
@@ -396,7 +396,7 @@ async def show_admin_dashboard(
         message_text: str = "",
         db: Optional[Database] = None,
 ):
-    """Hiển thị menu quản trị (dashboard) và xóa trạng thái."""
+    # Hiển thị menu quản trị (dashboard) và xóa trạng thái.
     await cleanup_input_messages(update, context)
     query = update.callback_query
     user_id = update.effective_user.id
@@ -436,7 +436,7 @@ async def show_admin_users_menu(
         message_text: str = "",
         db: Optional[Database] = None,
 ):
-    """Hiển thị submenu quản lý users của admin."""
+    # Hiển thị submenu quản lý users của admin.
     await cleanup_input_messages(update, context)
     query = update.callback_query
     user_id = update.effective_user.id
@@ -474,7 +474,7 @@ async def show_admin_key_menu(
         message_text: str = "",
         db: Optional[Database] = None,
 ):
-    """Hiển thị submenu key của admin."""
+    # Hiển thị submenu key của admin.
     await cleanup_input_messages(update, context)
     query = update.callback_query
     user_id = update.effective_user.id
@@ -512,7 +512,7 @@ async def show_verify_menu(
         message_text: str = "",
         db: Optional[Database] = None,
 ):
-    """Hiển thị menu xác thực theo một flow thống nhất."""
+    # Hiển thị menu xác thực theo một flow thống nhất.
     if context.user_data.get('messages_to_cleanup') or context.user_data.get('action_next_step'):
         await cleanup_input_messages(update, context)
 
@@ -552,7 +552,7 @@ async def show_netflix_menu(
         message_text: str = "",
         db: Optional[Database] = None,
 ):
-    """Hiển thị menu Netflix theo một flow thống nhất."""
+    # Hiển thị menu Netflix theo một flow thống nhất.
     if context.user_data.get('messages_to_cleanup') or context.user_data.get('action_next_step'):
         await cleanup_input_messages(update, context)
 
@@ -593,7 +593,7 @@ async def show_main_menu_after_delay(
         message_text: str = "",
         delay: float = 2,
 ):
-    """Hiển thị menu chính sau một khoảng trễ ngắn."""
+    # Hiển thị menu chính sau một khoảng trễ ngắn.
     await asyncio.sleep(delay)
     await show_main_menu(update, context, db, message_text)
 
@@ -605,7 +605,7 @@ async def show_admin_dashboard_after_delay(
         delay: float = 2,
         db: Optional[Database] = None,
 ):
-    """Hiển thị dashboard admin sau một khoảng trễ ngắn."""
+    # Hiển thị dashboard admin sau một khoảng trễ ngắn.
     await asyncio.sleep(delay)
     await show_admin_dashboard(update, context, message_text, db=db)
 
@@ -617,13 +617,13 @@ async def show_admin_key_menu_after_delay(
         delay: float = 2,
         db: Optional[Database] = None,
 ):
-    """Hiển thị submenu key của admin sau một khoảng trễ ngắn."""
+    # Hiển thị submenu key của admin sau một khoảng trễ ngắn.
     await asyncio.sleep(delay)
     await show_admin_key_menu(update, context, message_text, db=db)
 
 
 async def send_or_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, **kwargs):
-    """Helper để gửi tin nhắn, hoạt động cả khi dùng lệnh và bấm nút."""
+    # Helper để gửi tin nhắn, hoạt động cả khi dùng lệnh và bấm nút.
     if update.message:
         return await update.message.reply_text(text, **kwargs)
     else:
@@ -633,7 +633,7 @@ async def send_or_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, text
 # --- Command Handlers ---
 @is_not_blocked
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /start, hiển thị menu chính."""
+    # Xử lý lệnh /start, hiển thị menu chính.
     if await is_user_busy(update, context, db):
         return
 
@@ -685,7 +685,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
 
 @is_not_blocked
 async def invite_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Optional[Database] = None):
-    """Xử lý lệnh /invite"""
+    # Xử lý lệnh /invite
     user_id = update.effective_user.id
     bot_username = context.bot.username
     invite_link = f"https://t.me/{bot_username}?start={user_id}"
@@ -696,7 +696,7 @@ async def invite_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
 
 @is_not_blocked
 async def checkin_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /checkin"""
+    # Xử lý lệnh /checkin
     if await is_user_busy(update, context, db):
         return
 
@@ -712,7 +712,7 @@ async def checkin_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
 
 @is_not_blocked
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /balance"""
+    # Xử lý lệnh /balance
     if await is_user_busy(update, context, db):
         return
 
@@ -725,7 +725,7 @@ async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
 
 @is_not_blocked
 async def to_up_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /to_up"""
+    # Xử lý lệnh /to_up
     if await is_user_busy(update, context, db):
         return
 
@@ -756,7 +756,7 @@ async def to_up_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
 
 @is_not_blocked
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Optional[Database] = None):
-    """Xử lý lệnh /help"""
+    # Xử lý lệnh /help
     if await is_user_busy(update, context, db):
         return
 
@@ -767,7 +767,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: O
 
 @is_not_blocked
 async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /check_cookie_netflix"""
+    # Xử lý lệnh /check_cookie_netflix
     if await is_user_busy(update, context, db):
         return
 
@@ -780,7 +780,7 @@ async def check_cookie_netflix_command(update: Update, context: ContextTypes.DEF
 
 @is_not_blocked
 async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /get_cookie_netflix"""
+    # Xử lý lệnh /get_cookie_netflix
     if await is_user_busy(update, context, db):
         return
 
@@ -791,7 +791,7 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
 
 @is_not_blocked
 async def convertNetflixUrl_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /convertNetflixUrl"""
+    # Xử lý lệnh /convertNetflixUrl
     if await is_user_busy(update, context, db):
         return
 
@@ -826,7 +826,7 @@ async def convertNetflixUrl_command(update: Update, context: ContextTypes.DEFAUL
 
 @is_not_blocked
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý tất cả các sự kiện bấm nút."""
+    # Xử lý tất cả các sự kiện bấm nút.
     query = update.callback_query
     action = query.data
     user_id = query.from_user.id
@@ -1111,7 +1111,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, db
 # --- Trình xử lý nhập văn bản ---
 @is_not_blocked
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý tất cả các tin nhắn văn bản không phải lệnh, dựa trên trạng thái."""
+    # Xử lý tất cả các tin nhắn văn bản không phải lệnh, dựa trên trạng thái.
     next_step = context.user_data.get('action_next_step')
     if not next_step or not update.message.reply_to_message:
         return
@@ -1125,7 +1125,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     register_cleanup_message(context, update.message.message_id)
 
     async def cleanup_after_input(force: bool = False):
-        """Dọn dẹp các tin nhắn trong luồng nhập liệu."""
+        # Dọn dẹp các tin nhắn trong luồng nhập liệu.
         if force:
             await cleanup_input_messages(update, context, keep_data=True)
         return
@@ -1276,7 +1276,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         broadcast_command
 
     async def continue_admin_flow(prompt: str, next_step_name: str):
-        """Hàm helper để tiếp tục luồng admin."""
+        # Hàm helper để tiếp tục luồng admin.
         # await cleanup_after_input() # Không xóa ngay, để dọn dẹp một lần khi xong
         await cleanup_after_input(force=True)
         cancel_callback = 'cancel_to_admin_menu'
@@ -1441,9 +1441,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 # --- Netflix Cookie Helper ---
 async def _handle_netflix_random_login(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """
-    Tự động lấy một cookie từ DB và tạo link đăng nhập Netflix.
-    """
+    # Tự động lấy một cookie từ DB và tạo link đăng nhập Netflix.
     from utils.checks import check_maintenance
     if await check_maintenance(update, db, 'convert_url_login_app_netflix'):
         return
@@ -1485,21 +1483,44 @@ async def _handle_netflix_random_login(update: Update, context: ContextTypes.DEF
 
     processing_msg = await reply_func(tr(language, "netflix.random_login.processing"))
 
-    # 4. Tạo link (sử dụng logic tương tự _process_netflix_cookie)
+    # 4. Tạo link (Thử lại tối đa 10 lần với cookie và proxy khác nhau)
     from netflix.nf_token_generator import generate_nftoken
+    from utils.proxy_helper import format_proxy_url
 
-    proxy_url = None
-    try:
-        random_proxy = db.get_random_proxy()
-        if random_proxy:
-            from utils.proxy_helper import format_proxy_url
-            proxy_url = format_proxy_url(random_proxy)
-    except Exception:
-        pass
+    max_retries = 10
+    success = False
+    result_url = None
+    last_error = ""
 
-    try:
-        result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
-        
+    for attempt in range(max_retries):
+        if attempt > 0:
+            # Lấy cookie mới cho mỗi lần thử lại
+            cookie_data = db.get_random_netflix_cookie()
+            if not cookie_data:
+                break
+            cookie_text = cookie_data['cookie_text']
+            await processing_msg.edit_text(
+                f"⏳ {'Retrying' if language == 'en' else 'Đang thử lại'} ({attempt+1}/{max_retries})..."
+            )
+
+        proxy_url = None
+        try:
+            random_proxy = db.get_random_proxy()
+            if random_proxy:
+                proxy_url = format_proxy_url(random_proxy)
+        except Exception:
+            pass
+
+        try:
+            result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
+            success = True
+            break
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"Lỗi tạo token Netflix (lần {attempt+1}): {last_error}")
+            await asyncio.sleep(1) # Nghỉ ngắn trước khi thử lại
+
+    if success and result_url:
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(get_back_main_button_label(language), callback_data='back_to_main')]
         ])
@@ -1521,24 +1542,22 @@ async def _handle_netflix_random_login(update: Update, context: ContextTypes.DEF
             parse_mode='HTML',
             reply_markup=keyboard
         )
-    except Exception as e:
+    else:
         db.add_balance(user_id, cost) # Hoàn tiền
-        logger.error(f"Lỗi tạo token Netflix tự động: {e}")
+        error_display = "Please try again later. (All cookies/proxies failed)" if language == 'en' else "Vui lòng thử lại sau. (Tất cả cookie/proxy đều gặp lỗi)"
         await processing_msg.edit_text(
             (
-                f"❌ Error: {str(e)}\nRefunded {cost} points."
-                if language == 'en'
-                else f"❌ Lỗi: {str(e)}\nĐã hoàn lại {cost} điểm."
-            )
+                f"❌ <b>{error_display}</b>\n\n"
+                f"💰 {'Refunded' if language == 'en' else 'Đã hoàn lại'} {cost} {'points' if language == 'en' else 'điểm'}."
+            ),
+            parse_mode='HTML'
         )
         await show_main_menu_after_delay(update, context, db)
 
 
 async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, cookie_text: str):
-    """
-    Validate cookie Netflix, gọi API lấy nftoken và gửi URL kết quả.
-    Dùng chung cho cả luồng text và file.
-    """
+    # Validate cookie Netflix, gọi API lấy nftoken và gửi URL kết quả.
+    # Dùng chung cho cả luồng text và file.
     # Kiểm tra bảo trì
     from utils.checks import check_maintenance
     if await check_maintenance(update, db, 'convert_url_login_app_netflix'):
@@ -1624,88 +1643,84 @@ async def _process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_
 
     processing_msg = await reply_func("⏳ Generating your Netflix login link..." if language == 'en' else "⏳ Đang tạo link đăng nhập Netflix...")
 
-    # Lấy proxy ngẫu nhiên từ hệ thống
-    proxy_url = None
-    try:
-        random_proxy = db.get_random_proxy()
-        if random_proxy:
-            from utils.proxy_helper import format_proxy_url
-            proxy_url = format_proxy_url(random_proxy)
-            logger.info(f"Sử dụng proxy cho Netflix token: {random_proxy.get('address')}")
-    except Exception as pe:
-        logger.error(f"Lỗi khi lấy proxy: {pe}")
+    from netflix.nf_token_generator import generate_nftoken
+    from utils.proxy_helper import format_proxy_url
+    import requests as _requests
 
-    try:
-        result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
-        # Xóa tin nhắn gốc của người dùng chứa cookie
-        if update.message:
+    max_retries = 10
+    success = False
+    result_url = None
+    last_error = ""
+
+    for attempt in range(max_retries):
+        if attempt > 0:
             try:
-                await update.message.delete()
-            except Exception:
-                pass
+                await processing_msg.edit_text(
+                    f"⏳ {'Retrying with different proxy' if language == 'en' else 'Đang thử lại với proxy khác'} ({attempt+1}/{max_retries})..."
+                )
+            except Exception: pass
 
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(get_back_main_button_label(language), callback_data='back_to_main')]
-        ])
+        proxy_url = None
+        try:
+            random_proxy = db.get_random_proxy()
+            if random_proxy:
+                proxy_url = format_proxy_url(random_proxy)
+        except Exception: pass
 
+        try:
+            result_url = generate_nftoken(cookie_text, proxy_url=proxy_url)
+            success = True
+            break
+        except Exception as e:
+            last_error = str(e)
+            if "Missing required cookies" in last_error or "Invalid" in last_error:
+                break
+            logger.warning(f"Lỗi tạo token Netflix (lần {attempt+1}): {last_error}")
+            await asyncio.sleep(0.5)
+
+    if success and result_url:
+        if update.message:
+            try: await update.message.delete()
+            except Exception: pass
+
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(get_back_main_button_label(language), callback_data='back_to_main')]])
         await processing_msg.edit_text(
             (
                 f"✅ <b>CONVERSION SUCCESSFUL!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"🎬 <b>Your Netflix app login link:</b>\n"
                 f"<code>{result_url}</code>\n\n"
-                f"⏳ <i>This link will expire in <b>60 minutes</b>. Use it as soon as possible!</i>\n"
-                f"💡 <i>Tip: Open this link on a phone that already has the Netflix app installed for automatic sign-in.</i>"
+                f"⏳ <i>This link will expire in <b>60 minutes</b>. Use it as soon as possible!</i>"
                 if language == 'en'
                 else f"✅ <b>CHUYỂN ĐỔI THÀNH CÔNG!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"🎬 <b>Link đăng nhập App Netflix của bạn:</b>\n"
                 f"<code>{result_url}</code>\n\n"
-                f"⏳ <i>Link này sẽ hết hạn sau <b>60 phút</b>. Hãy sử dụng ngay!</i>\n"
-                f"💡 <i>Mẹo: Hãy nhấn vào link trên điện thoại đã cài sẵn App Netflix để đăng nhập tự động.</i>"
+                f"⏳ <i>Link này sẽ hết hạn sau <b>60 phút</b>. Hãy sử dụng ngay!</i>"
             ),
             parse_mode='HTML',
             reply_markup=keyboard
         )
-    except _requests.RequestException as e:
-        db.add_balance(user_id, cost)  # Hoàn lại điểm nếu API request thất bại
-        logger.warning(f"Netflix API request failed: {e}")
+    else:
+        db.add_balance(user_id, cost)
+        error_display = "Please try again later. (All proxies failed or cookie blocked)" if language == 'en' else "Vui lòng thử lại sau. (Tất cả proxy đều lỗi hoặc cookie bị chặn)"
         await processing_msg.edit_text(
             (
-                f"❌ Could not connect to Netflix. Please try again later.\nRefunded {cost} points. 💰 Current balance: {db.get_user(user_id)['balance']} points."
-                if language == 'en'
-                else f"❌ Không thể kết nối tới Netflix. Vui lòng thử lại sau.\nĐã hoàn lại {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm."
-            )
-        )
-        # Xóa tin nhắn gốc của người dùng chứa cookie
-        if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu_after_delay(update, context, db, "Could not connect to Netflix." if language == 'en' else "Không thể kết nối tới Netflix.")
-    except ValueError as e:
-        db.add_balance(user_id, cost)  # Hoàn lại điểm nếu có lỗi giá trị
-        await processing_msg.edit_text(
-            (
-                f"{str(e)}\nRefunded {cost} points. 💰 Current balance: {db.get_user(user_id)['balance']} points."
-                if language == 'en'
-                else f"{str(e)}\nĐã hoàn lại {cost} điểm. 💰 Số dư hiện tại: {db.get_user(user_id)['balance']} điểm."
+                f"❌ <b>{error_display}</b>\n\n"
+                f"💰 {'Refunded' if language == 'en' else 'Đã hoàn lại'} {cost} điểm."
             ),
-            parse_mode='HTML')
-        # Xóa tin nhắn gốc của người dùng chứa cookie
+            parse_mode='HTML'
+        )
         if update.message:
-            try:
-                await update.message.delete()
-            except Exception as e:
-                logger.error(f"Không thể xóa tin nhắn gốc chứa cookie (ID: {update.message.message_id}): {e}")
-        await show_main_menu_after_delay(update, context, db, "Error while generating the link." if language == 'en' else "Lỗi trong quá trình tạo link.")
+            try: await update.message.delete()
+            except Exception: pass
+        await show_main_menu_after_delay(update, context, db)
 
 
 # --- File Input Handler ---
 @is_not_blocked
 async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý tin nhắn có đính kèm file khi người dùng đang ở luồng nhập liệu."""
+    # Xử lý tin nhắn có đính kèm file khi người dùng đang ở luồng nhập liệu.
     next_step = context.user_data.get('action_next_step')
     service_type = context.user_data.get('action_service_type')
     language = get_current_language(context, db, update.effective_user.id)
@@ -1817,7 +1832,7 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 
 async def handle_admin_search_result(update: Update, context: ContextTypes.DEFAULT_TYPE, user_info: dict, db: Optional[Database] = None):
-    """Hiển thị thông tin chi tiết và bảng điều khiển cho tìm kiếm Admin."""
+    # Hiển thị thông tin chi tiết và bảng điều khiển cho tìm kiếm Admin.
     chat_id = update.effective_chat.id
     target_id = user_info['user_id']
     language = get_current_language(context, db, update.effective_user.id if update.effective_user else None)

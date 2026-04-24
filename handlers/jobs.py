@@ -10,10 +10,8 @@ from utils.proxy_helper import check_proxy_health
 logger = logging.getLogger(__name__)
 
 async def fetch_webshare_proxies(db: Database):
-    """
-    Gọi Webshare API để lấy danh sách proxy mới và lưu vào database.
-    Không gửi tin nhắn cho Admin ở đây để tránh spam.
-    """
+    # Gọi Webshare API để lấy danh sách proxy mới và lưu vào database.
+    # Không gửi tin nhắn cho Admin ở đây để tránh spam.
     url = "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=100&plan_id=13162825"
     headers = {
         "Accept": "application/json, text/plain, */*",
@@ -57,9 +55,7 @@ async def fetch_webshare_proxies(db: Database):
         return False
 
 async def run_proxy_cleanup_job(app, db: Database):
-    """
-    Quét toàn bộ database và loại bỏ các proxy không hoạt động.
-    """
+    # Quét toàn bộ database và loại bỏ các proxy không hoạt động.
     logger.info("🚀 Đang khởi động tiến trình quét sạch proxy chết...")
     
     try:
@@ -90,11 +86,9 @@ async def run_proxy_cleanup_job(app, db: Database):
         logger.error(f"⚠️ Lỗi xảy ra trong quá trình chạy proxy cleanup job: {e}")
 
 async def start_proxy_management_loop(app, db: Database, interval: int = 3600):
-    """
-    Vòng lặp quản lý proxy định kỳ.
-    1. Xóa proxy chết.
-    2. Thử nạp proxy mới (thử lại 3 lần).
-    """
+    # Vòng lặp quản lý proxy định kỳ.
+    # 1. Xóa proxy chết.
+    # 2. Thử nạp proxy mới (thử lại 3 lần).
     logger.info(f"🕒 Bắt đầu khởi chạy vòng lặp quản lý proxy ({interval}s/lần)")
     
     while True:

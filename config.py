@@ -1,4 +1,4 @@
-"""Tệp cấu hình toàn cục"""
+# Tệp cấu hình toàn cục
 import os
 
 from dotenv import load_dotenv

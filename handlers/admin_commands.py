@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from config import ADMIN_USER_ID
 from database import Database
 from utils.checks import reject_group_command
-from utils.i18n import DEFAULT_LANGUAGE, get_user_language
+from utils.i18n import DEFAULT_LANGUAGE, get_user_language, tr
 from utils.messages import get_back_admin_button_label, get_back_button_label
 from utils.proxy_helper import get_proxy_geoip
 
@@ -28,7 +28,7 @@ def build_broadcast_wrapper(language: str, text: str) -> str:
 
 
 async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /addbalance - Admin cộng điểm."""
+    # Xử lý lệnh /addbalance - Admin cộng điểm.
     if await reject_group_command(update, db):
         return
 
@@ -36,7 +36,7 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
     if user_id != ADMIN_USER_ID:
         if update.effective_message:
-            await update.effective_message.reply_text(pick_text(language, "Bạn không có quyền sử dụng lệnh này.", "You are not allowed to use this command."))
+            await update.effective_message.reply_text(tr(language, "admin.no_permission"))
         return
 
     if not context.args or len(context.args) < 2:
@@ -87,7 +87,7 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 
 async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /block - Admin chặn người dùng."""
+    # Xử lý lệnh /block - Admin chặn người dùng.
     if await reject_group_command(update, db):
         return
 
@@ -117,13 +117,10 @@ async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
                 await update.effective_message.reply_text(pick_text(language, f"✅ Đã chặn người dùng {target_user_id}.", f"✅ User {target_user_id} has been blocked."))
 
             try:
+                target_language = get_user_language(db, target_user_id, default=DEFAULT_LANGUAGE)
                 await context.bot.send_message(
                     chat_id=target_user_id,
-                    text=pick_text(
-                        get_user_language(db, target_user_id, default=DEFAULT_LANGUAGE),
-                        "❌ <b>Thông báo:</b> Tài khoản của bạn đã bị quản trị viên khóa. Liên hệ @hcongdev để biết thêm chi tiết.",
-                        "❌ <b>Notice:</b> Your account has been blocked by the admin. Contact @hcongdev for more details.",
-                    ),
+                    text=tr(target_language, "admin.user.block_notified"),
                     parse_mode='HTML',
                 )
             except Exception as e:
@@ -141,7 +138,7 @@ async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
 
 
 async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /white - Admin hủy chặn người dùng."""
+    # Xử lý lệnh /white - Admin hủy chặn người dùng.
     if await reject_group_command(update, db):
         return
 
@@ -173,13 +170,10 @@ async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
                 )
 
             try:
+                target_language = get_user_language(db, target_user_id, default=DEFAULT_LANGUAGE)
                 await context.bot.send_message(
                     chat_id=target_user_id,
-                    text=pick_text(
-                        get_user_language(db, target_user_id, default=DEFAULT_LANGUAGE),
-                        "✅ <b>Thông báo:</b> Tài khoản của bạn đã được quản trị viên bỏ chặn. Bạn đã có thể sử dụng lại hệ thống.",
-                        "✅ <b>Notice:</b> Your account has been unblocked by the admin. You can use the system again.",
-                    ),
+                    text=tr(target_language, "admin.user.unblock_notified"),
                     parse_mode='HTML',
                 )
             except Exception as e:
@@ -197,7 +191,7 @@ async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
 
 
 async def blacklist_command(update: Update, db: Database):
-    """Xử lý lệnh /blacklist - Xem danh sách đen."""
+    # Xử lý lệnh /blacklist - Xem danh sách đen.
     if await reject_group_command(update, db):
         return
 
@@ -227,7 +221,7 @@ async def blacklist_command(update: Update, db: Database):
 
 
 async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /genkey - Admin tạo mã thẻ."""
+    # Xử lý lệnh /genkey - Admin tạo mã thẻ.
     if await reject_group_command(update, db):
         return False
 
@@ -298,7 +292,7 @@ async def genkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
 
 
 async def listkeys_command(update: Update, db: Database):
-    """Xử lý lệnh /listkeys - Admin xem danh sách mã thẻ."""
+    # Xử lý lệnh /listkeys - Admin xem danh sách mã thẻ.
     if await reject_group_command(update, db):
         return
 
@@ -351,7 +345,7 @@ async def listkeys_command(update: Update, db: Database):
 
 
 async def list_live_cc_command(update: Update, db: Database):
-    """Xử lý lệnh xem danh sách CC live."""
+    # Xử lý lệnh xem danh sách CC live.
     if await reject_group_command(update, db):
         return
 
@@ -400,7 +394,7 @@ async def list_live_cc_command(update: Update, db: Database):
 
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh /broadcast - Admin gửi thông báo hàng loạt."""
+    # Xử lý lệnh /broadcast - Admin gửi thông báo hàng loạt.
     if await reject_group_command(update, db):
         return
 
@@ -461,7 +455,7 @@ async def handle_admin_search_result(
         user_info: dict,
         db: Database | None = None,
 ):
-    """Hiển thị thông tin người dùng cho Admin và cung cấp các nút thao tác nhanh."""
+    # Hiển thị thông tin người dùng cho Admin và cung cấp các nút thao tác nhanh.
     language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE) if db else DEFAULT_LANGUAGE
     uid = user_info['user_id']
     username = user_info.get('username', 'N/A')
@@ -505,7 +499,7 @@ async def handle_admin_search_result(
 
 
 async def list_proxies_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Hiển thị danh sách Proxy cho Admin trong giao diện nút bấm."""
+    # Hiển thị danh sách Proxy cho Admin trong giao diện nút bấm.
     query = update.callback_query
     if query:
         await query.answer()
@@ -542,7 +536,7 @@ async def list_proxies_admin(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 
 async def handle_proxy_file_upload(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database, file_content: str):
-    """Xử lý file .txt proxy được gửi lên bởi Admin."""
+    # Xử lý file .txt proxy được gửi lên bởi Admin.
     user_id = update.effective_user.id
     if user_id != ADMIN_USER_ID:
         return
@@ -612,7 +606,7 @@ async def handle_proxy_file_upload(update: Update, context: ContextTypes.DEFAULT
 
 
 async def export_all_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: Database):
-    """Xử lý lệnh in toàn bộ user ra file .txt"""
+    # Xử lý lệnh in toàn bộ user ra file .txt
     user_id = update.effective_user.id
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
 

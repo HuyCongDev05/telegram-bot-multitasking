@@ -1,4 +1,4 @@
-"""Helpers cho đa ngôn ngữ của bot."""
+# Helpers cho đa ngôn ngữ của bot.
 
 from typing import Optional
 
@@ -23,7 +23,7 @@ TRANSLATIONS = {
         "ui.discord_quest_auto": "🚀 Discord Quest Auto",
         "ui.invite": "👥 Mời bạn bè",
         "ui.checkin": "📅 Điểm danh",
-        "ui.to_up": "💰 Nạp điểm",
+        "ui.to_up": "🔑 Nhập Key",
         "ui.help": "💡 Trợ giúp",
         "ui.admin_menu": "🛠 Quản trị viên",
         "ui.admin_users": "👤 Users",
@@ -165,8 +165,11 @@ TRANSLATIONS = {
         "help.title": "💡 HƯỚNG DẪN SỬ DỤNG\n━━━━━━━━━━━━━━━━━━━━\n",
         "help.support": "💬 <i>Hỗ trợ trực tiếp: @hcongdev</i>",
         "invite.message": (
-            "💰 Link mời của bạn:\n{invite_link}\n\n"
-            "Mời thành công 1 người bạn sẽ nhận được 1 điểm."
+            "💰 <b>LINK MỜI BẠN BÈ</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Nhấn vào link bên dưới để tự động sao chép:\n"
+            "<code>{invite_link}</code>\n\n"
+            "🎁 <i>Mỗi người bạn tham gia qua link này, bạn sẽ nhận được 1 điểm!</i>"
         ),
         "checkin.success": "✅ Điểm danh thành công! +1 điểm\n💰 Số dư hiện tại: {balance} điểm.",
         "checkin.already": "❌ Hôm nay bạn đã điểm danh rồi.",
@@ -211,6 +214,14 @@ TRANSLATIONS = {
         ),
         "netflix.no_cookies_available": "❌ Hiện tại không có cookie Netflix nào khả dụng trong hệ thống. Vui lòng quay lại sau!",
         "netflix.random_login.processing": "⏳ Đang lấy cookie ngẫu nhiên và tạo link đăng nhập Netflix cho bạn...",
+        "netflix.maintenance.check_cookie": "❌ <b>Thông báo:</b> Dịch vụ Check Cookie Netflix hiện đang bảo trì. Vui lòng quay lại sau!",
+        "netflix.maintenance.get_cookie": "❌ <b>Thông báo:</b> Dịch vụ Lấy Cookie Netflix hiện đang bảo trì. Vui lòng quay lại sau!",
+        "netflix.maintenance.login_tv": "❌ <b>Thông báo:</b> Dịch vụ Đăng nhập Netflix TV hiện đang bảo trì. Vui lòng quay lại sau!",
+        "netflix.balance.insufficient": "❌ Số dư không đủ! Mỗi lần thực hiện tốn <b>{verify_cost} điểm</b>. Hiện có: {current_balance} điểm.",
+        "admin.no_permission": "Bạn không có quyền sử dụng lệnh này.",
+        "admin.user.block_notified": "❌ <b>Thông báo:</b> Tài khoản của bạn đã bị quản trị viên khóa. Liên hệ @hcongdev để biết thêm chi tiết.",
+        "admin.user.unblock_notified": "✅ <b>Thông báo:</b> Tài khoản của bạn đã được quản trị viên bỏ chặn. Bạn đã có thể sử dụng lại hệ thống.",
+        "cc.prompt.text": "Vui lòng nhập danh sách CC vào tin nhắn trả lời bên dưới (hoặc gửi file .txt).\nĐịnh dạng: <code>Số thẻ|Tháng|Năm|CVV</code>\nLưu ý: Phí mỗi lần check là 💰 {verify_cost} điểm (tối đa {max_cc} CC).",
         "maintenance.menu": (
             "🛠 <b>QUẢN LÝ BẢO TRÌ DỊCH VỤ</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -244,7 +255,7 @@ TRANSLATIONS = {
         "ui.discord_quest_auto": "🚀 Discord Quest Auto",
         "ui.invite": "👥 Invite Friends",
         "ui.checkin": "📅 Daily Check-in",
-        "ui.to_up": "💰 Top Up",
+        "ui.to_up": "🔑 Enter Key",
         "ui.help": "💡 Help",
         "ui.admin_menu": "🛠 Admin",
         "ui.admin_users": "👤 Users",
@@ -386,8 +397,11 @@ TRANSLATIONS = {
         "help.title": "💡 HOW TO USE\n━━━━━━━━━━━━━━━━━━━━\n",
         "help.support": "💬 <i>Direct support: @hcongdev</i>",
         "invite.message": (
-            "💰 Your invite link:\n{invite_link}\n\n"
-            "You will receive 1 point for each successful invite."
+            "💰 <b>REFERRAL LINK</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Tap the link below to auto-copy:\n"
+            "<code>{invite_link}</code>\n\n"
+            "🎁 <i>For each friend who joins via this link, you will receive 1 point!</i>"
         ),
         "checkin.success": "✅ Check-in successful! +1 point\n💰 Current balance: {balance} points.",
         "checkin.already": "❌ You have already checked in today.",
@@ -432,6 +446,14 @@ TRANSLATIONS = {
         ),
         "netflix.no_cookies_available": "❌ No Netflix cookies are currently available in the system. Please check back later!",
         "netflix.random_login.processing": "⏳ Picking a random cookie and generating your Netflix login link...",
+        "netflix.maintenance.check_cookie": "❌ <b>Notice:</b> The Netflix Cookie Check service is currently under maintenance. Please try again later!",
+        "netflix.maintenance.get_cookie": "❌ <b>Notice:</b> The Get Netflix Cookie service is currently under maintenance. Please try again later!",
+        "netflix.maintenance.login_tv": "❌ <b>Notice:</b> The Netflix TV Login service is currently under maintenance. Please try again later!",
+        "netflix.balance.insufficient": "❌ Insufficient balance! Each request costs <b>{verify_cost} points</b>. Current balance: {current_balance} points.",
+        "admin.no_permission": "You are not allowed to use this command.",
+        "admin.user.block_notified": "❌ <b>Notice:</b> Your account has been blocked by the admin. Contact @hcongdev for more details.",
+        "admin.user.unblock_notified": "✅ <b>Notice:</b> Your account has been unblocked by the admin. You can use the system again.",
+        "cc.prompt.text": "Please enter the CC list in the reply message below (or upload a .txt file).\nFormat: <code>Card Number|Month|Year|CVV</code>\nNote: Each check costs 💰 {verify_cost} points (up to {max_cc} CCs).",
         "maintenance.menu": (
             "🛠 <b>SERVICE MAINTENANCE</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -458,7 +480,7 @@ TRANSLATIONS = {
 
 
 def normalize_language(language: Optional[str], default: Optional[str] = DEFAULT_LANGUAGE) -> Optional[str]:
-    """Chuẩn hóa mã ngôn ngữ."""
+    # Chuẩn hóa mã ngôn ngữ.
     if not language:
         return default
 
@@ -469,14 +491,14 @@ def normalize_language(language: Optional[str], default: Optional[str] = DEFAULT
 
 
 def has_selected_language(language: Optional[str]) -> bool:
-    """Kiểm tra user đã chọn ngôn ngữ hợp lệ hay chưa."""
+    # Kiểm tra user đã chọn ngôn ngữ hợp lệ hay chưa.
     if not language:
         return False
     return language.lower().strip() in SUPPORTED_LANGUAGE_SET
 
 
 def tr(language: Optional[str], key: str, **kwargs) -> str:
-    """Lấy chuỗi theo ngôn ngữ."""
+    # Lấy chuỗi theo ngôn ngữ, fallback về vi nếu không tìm thấy.
     normalized = normalize_language(language, default=DEFAULT_LANGUAGE)
     text = TRANSLATIONS.get(normalized, {}).get(key)
     if text is None:
@@ -485,7 +507,7 @@ def tr(language: Optional[str], key: str, **kwargs) -> str:
 
 
 def get_user_language(db, user_id: int, default: Optional[str] = DEFAULT_LANGUAGE) -> Optional[str]:
-    """Lấy ngôn ngữ user từ database."""
+    # Lấy ngôn ngữ user từ database.
     language = None
     if hasattr(db, "get_user_language"):
         language = db.get_user_language(user_id)

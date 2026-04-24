@@ -1,7 +1,6 @@
-"""Triển khai cơ sở dữ liệu PostgreSQL (Supabase)
-
-Sử dụng máy chủ PostgreSQL để lưu trữ dữ liệu
-"""
+## Triển khai cơ sở dữ liệu PostgreSQL (Supabase)
+#
+# Sử dụng máy chủ PostgreSQL để lưu trữ dữ liệu
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
@@ -23,10 +22,10 @@ _BUILD_SIG = "687579636f6e676465763035"
 
 
 class MySQLDatabase:
-    """Lớp quản lý cơ sở dữ liệu PostgreSQL"""
+    # Lớp quản lý cơ sở dữ liệu PostgreSQL
 
     def __init__(self):
-        """Khởi tạo kết nối cơ sở dữ liệu"""
+        # Khởi tạo kết nối cơ sở dữ liệu
         import os
 
         # Ưu tiên sử dụng Connection String (DATABASE_URL) từ Supabase
@@ -63,7 +62,7 @@ class MySQLDatabase:
 
     @contextmanager
     def get_db_connection(self):
-        """Context manager để lấy và trả kết nối về pool."""
+        # Context manager để lấy và trả kết nối về pool.
         conn = self.pool.getconn()
         conn.autocommit = True
         try:
@@ -72,16 +71,16 @@ class MySQLDatabase:
             self.pool.putconn(conn)
 
     def get_connection(self):
-        """Lấy kết nối lẻ từ pool (để duy trì tính tương thích)"""
+        # Lấy kết nối lẻ từ pool (để duy trì tính tương thích)
         return self.pool.getconn()
 
     def put_connection(self, conn):
-        """Trả kết nối về pool"""
+        # Trả kết nối về pool
         self.pool.putconn(conn)
 
     @staticmethod
     def _column_exists(cursor, table_name: str, column_name: str) -> bool:
-        """Kiểm tra cột đã tồn tại trong bảng chưa."""
+        # Kiểm tra cột đã tồn tại trong bảng chưa.
         cursor.execute(
             "SELECT 1 FROM information_schema.columns WHERE table_name = %s AND column_name = %s",
             (table_name, column_name)
@@ -90,7 +89,7 @@ class MySQLDatabase:
 
     @staticmethod
     def _index_exists(cursor, table_name: str, index_name: str) -> bool:
-        """Kiểm tra index đã tồn tại trong bảng chưa."""
+        # Kiểm tra index đã tồn tại trong bảng chưa.
         cursor.execute(
             "SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s",
             (table_name, index_name)
@@ -98,7 +97,7 @@ class MySQLDatabase:
         return cursor.fetchone() is not None
 
     def _backfill_netflix_cookie_fingerprints(self, cursor) -> None:
-        """Điền dấu vân tay cookie và xóa các bản ghi trùng lặp, giữ lại bản ghi cũ nhất."""
+        # Điền dấu vân tay cookie và xóa các bản ghi trùng lặp, giữ lại bản ghi cũ nhất.
         cursor.execute(
             """
             SELECT id, cookie_text
@@ -125,7 +124,7 @@ class MySQLDatabase:
             )
 
     def init_database(self):
-        """Khởi tạo cấu trúc các bảng trong cơ sở dữ liệu"""
+        # Khởi tạo cấu trúc các bảng trong cơ sở dữ liệu
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -389,7 +388,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def update_user_profile(self, user_id: int, username: str, full_name: str) -> bool:
-        """Cập nhật username/full name mới nhất của người dùng."""
+        # Cập nhật username/full name mới nhất của người dùng.
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -409,7 +408,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def set_user_language(self, user_id: int, language: str) -> bool:
-        """Lưu ngôn ngữ người dùng đã chọn."""
+        # Lưu ngôn ngữ người dùng đã chọn.
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -425,7 +424,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_user(self, user_id: int) -> Optional[Dict]:
-        """Lấy thông tin người dùng"""
+        # Lấy thông tin người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -444,7 +443,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_user_by_username(self, username: str) -> Optional[Dict]:
-        """Lấy thông tin người dùng bằng username"""
+        # Lấy thông tin người dùng bằng username
         if username.startswith('@'):
             username = username[1:]
 
@@ -466,23 +465,23 @@ class MySQLDatabase:
                 cursor.close()
 
     def user_exists(self, user_id: int) -> bool:
-        """Kiểm tra người dùng có tồn tại không"""
+        # Kiểm tra người dùng có tồn tại không
         return self.get_user(user_id) is not None
 
     def get_user_language(self, user_id: int) -> Optional[str]:
-        """Lấy ngôn ngữ đã lưu của người dùng."""
+        # Lấy ngôn ngữ đã lưu của người dùng.
         user = self.get_user(user_id)
         if not user:
             return None
         return user.get("language")
 
     def is_user_blocked(self, user_id: int) -> bool:
-        """Kiểm tra người dùng có bị chặn (blacklisted) không"""
+        # Kiểm tra người dùng có bị chặn (blacklisted) không
         user = self.get_user(user_id)
         return user and user["is_blocked"] == 1
 
     def block_user(self, user_id: int) -> bool:
-        """Chặn người dùng"""
+        # Chặn người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -495,7 +494,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def unblock_user(self, user_id: int) -> bool:
-        """Hủy chặn người dùng"""
+        # Hủy chặn người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -508,7 +507,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_blacklist(self) -> List[Dict]:
-        """Lấy danh sách đen"""
+        # Lấy danh sách đen
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -518,7 +517,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def add_balance(self, user_id: int, amount: int) -> bool:
-        """Cộng điểm cho người dùng"""
+        # Cộng điểm cho người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -534,7 +533,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def deduct_balance(self, user_id: int, amount: int) -> bool:
-        """Trừ điểm của người dùng"""
+        # Trừ điểm của người dùng
         user = self.get_user(user_id)
         if not user or user["balance"] < amount:
             return False
@@ -554,7 +553,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def checkin(self, user_id: int) -> bool:
-        """Người dùng điểm danh"""
+        # Người dùng điểm danh
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -604,7 +603,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_user_verifications(self, user_id: int) -> List[Dict]:
-        """Lấy danh sách ghi chép xác thực của người dùng"""
+        # Lấy danh sách ghi chép xác thực của người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -656,7 +655,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def use_card_key(self, key_code: str, user_id: int) -> Optional[int]:
-        """Sử dụng thẻ nạp, trả về số điểm nhận được"""
+        # Sử dụng thẻ nạp, trả về số điểm nhận được
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -707,7 +706,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_card_key_info(self, key_code: str) -> Optional[Dict]:
-        """Lấy thông tin thẻ nạp"""
+        # Lấy thông tin thẻ nạp
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -717,7 +716,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_all_card_keys(self, created_by: Optional[int] = None) -> List[Dict]:
-        """Lấy tất cả thẻ nạp"""
+        # Lấy tất cả thẻ nạp
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -734,7 +733,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_all_user_ids(self) -> List[int]:
-        """Lấy tất cả ID người dùng"""
+        # Lấy tất cả ID người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -745,7 +744,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_all_users(self) -> List[Dict]:
-        """Lấy tất cả thông tin người dùng"""
+        # Lấy tất cả thông tin người dùng
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -787,7 +786,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_live_ccs(self, limit: int = 100) -> List[Dict]:
-        """Lấy danh sách CC Live"""
+        # Lấy danh sách CC Live
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -800,7 +799,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def save_netflix_cookie(self, cookie_text: str) -> str:
-        """Lưu một cookie Netflix vào kho"""
+        # Lưu một cookie Netflix vào kho
         normalized_cookie_text = sanitize_cookie_text(cookie_text)
         if not normalized_cookie_text:
             return "invalid"
@@ -836,11 +835,11 @@ class MySQLDatabase:
                 cursor.close()
 
     def add_netflix_cookie(self, cookie_text: str) -> bool:
-        """Lưu một cookie Netflix vào kho."""
+        # Lưu một cookie Netflix vào kho.
         return self.save_netflix_cookie(cookie_text) == "stored"
 
     def get_netflix_cookies(self, limit: int = 20, randomize: bool = False) -> List[Dict]:
-        """Lấy danh sách cookie Netflix."""
+        # Lấy danh sách cookie Netflix.
         order_clause = "ORDER BY RANDOM()" if randomize else "ORDER BY created_at ASC, id ASC"
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -859,12 +858,12 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_random_netflix_cookie(self) -> Optional[Dict]:
-        """Lấy một cookie Netflix ngẫu nhiên"""
+        # Lấy một cookie Netflix ngẫu nhiên
         cookies = self.get_netflix_cookies(limit=1, randomize=True)
         return cookies[0] if cookies else None
 
     def delete_netflix_cookie(self, cookie_id: int) -> bool:
-        """Xóa một cookie Netflix"""
+        # Xóa một cookie Netflix
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -877,7 +876,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def count_netflix_cookies(self) -> int:
-        """Đếm số cookie Netflix"""
+        # Đếm số cookie Netflix
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -888,7 +887,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_all_service_status(self) -> Dict[str, bool]:
-        """Lấy trạng thái bảo trì"""
+        # Lấy trạng thái bảo trì
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -899,7 +898,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def toggle_service_maintenance(self, service_id: str) -> Optional[bool]:
-        """Đảo ngược trạng thái bảo trì"""
+        # Đảo ngược trạng thái bảo trì
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -921,7 +920,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def is_service_maintenance(self, service_id: str) -> bool:
-        """Kiểm tra dịch vụ bảo trì"""
+        # Kiểm tra dịch vụ bảo trì
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -954,7 +953,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_random_proxy(self) -> Optional[Dict]:
-        """Lấy một proxy ngẫu nhiên"""
+        # Lấy một proxy ngẫu nhiên
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -964,7 +963,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def get_all_proxies(self) -> List[Dict]:
-        """Lấy tất cả proxy"""
+        # Lấy tất cả proxy
         with self.get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
@@ -974,7 +973,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def update_proxy_info(self, proxy_id: int, city: str, country: str) -> bool:
-        """Cập nhật thông tin proxy"""
+        # Cập nhật thông tin proxy
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -990,7 +989,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def delete_proxy(self, proxy_id: int) -> bool:
-        """Xóa proxy"""
+        # Xóa proxy
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -1003,7 +1002,7 @@ class MySQLDatabase:
                 cursor.close()
 
     def proxy_exists(self, address, port, username, password) -> bool:
-        """Kiểm tra proxy tồn tại"""
+        # Kiểm tra proxy tồn tại
         with self.get_db_connection() as conn:
             cursor = conn.cursor()
             try:
