@@ -199,9 +199,9 @@ class AsyncQuestAutocompleter:
                     data = await r.json()
                     if isinstance(data, dict):
                         if data.get("quest_enrollment_blocked_until"):
-                        msg_en = f"⚠️ Enrollment blocked until: {data['quest_enrollment_blocked_until']}"
-                        msg_vi = f"⚠️ Bị chặn nhận quest đến: {data['quest_enrollment_blocked_until']}"
-                        await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "warn")
+                            msg_en = f"⚠️ Enrollment blocked until: {data['quest_enrollment_blocked_until']}"
+                            msg_vi = f"⚠️ Bị chặn nhận quest đến: {data['quest_enrollment_blocked_until']}"
+                            await self.log_to_bot(msg_en if self.language == 'en' else msg_vi, "warn")
                         return data.get("quests", [])
                     return data if isinstance(data, list) else []
                 elif r.status == 429:

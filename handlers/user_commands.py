@@ -691,7 +691,8 @@ async def invite_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db:
     invite_link = f"https://t.me/{bot_username}?start={user_id}"
     language = get_current_language(context, db, user_id)
     await send_or_reply(update, context,
-                        tr(language, "invite.message", invite_link=invite_link))
+                        tr(language, "invite.message", invite_link=invite_link),
+                        parse_mode='HTML')
 
 
 @is_not_blocked
@@ -705,7 +706,8 @@ async def checkin_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     if db.checkin(user_id):
         user = db.get_user(user_id)
         await send_or_reply(update, context,
-                            tr(language, "checkin.success", balance=user['balance']))
+                            tr(language, "checkin.success", balance=user['balance']),
+                            parse_mode='HTML')
     else:
         await send_or_reply(update, context, tr(language, "checkin.already"))
 
@@ -720,7 +722,7 @@ async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db
     language = get_current_language(context, db, user_id)
     user_data = db.get_user(user_id)
     balance = user_data['balance'] if user_data else 0
-    await send_or_reply(update, context, tr(language, "balance.current", balance=balance))
+    await send_or_reply(update, context, tr(language, "balance.current", balance=balance), parse_mode='HTML')
 
 
 @is_not_blocked

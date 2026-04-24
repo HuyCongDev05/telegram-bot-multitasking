@@ -174,13 +174,13 @@ TRANSLATIONS = {
         "checkin.success": "✅ Điểm danh thành công! +1 điểm\n💰 Số dư hiện tại: {balance} điểm.",
         "checkin.already": "❌ Hôm nay bạn đã điểm danh rồi.",
         "balance.current": "💰 Số dư hiện tại của bạn: {balance} điểm.",
-        "topup.prompt": "Vui lòng nhập mã thẻ:",
-        "key.not_found": "Mã thẻ không tồn tại.",
+        "topup.prompt": "Vui lòng nhập Key:",
+        "key.not_found": "Key không tồn tại.",
         "key.used_up": "Mã đã hết lượt sử dụng.",
         "key.expired": "Mã đã hết hạn.",
         "key.already_used": "Bạn đã dùng mã này rồi.",
         "common.unknown_error": "Lỗi không xác định.",
-        "key.success": "Sử dụng mã thẻ thành công! +{amount} điểm.\n💰 Số dư hiện tại: {balance} điểm.",
+        "key.success": "Sử dụng Key thành công! +{amount} điểm.\n💰 Số dư hiện tại: {balance} điểm.",
         "key.one_use_per_user_hint": "Lưu ý: Mỗi người dùng chỉ có thể sử dụng mã này một lần duy nhất.",
         "verify.usage": (
             "Bạn đã chọn xác thực: {service_name}\n\n"
@@ -406,13 +406,13 @@ TRANSLATIONS = {
         "checkin.success": "✅ Check-in successful! +1 point\n💰 Current balance: {balance} points.",
         "checkin.already": "❌ You have already checked in today.",
         "balance.current": "💰 Your current balance: {balance} points.",
-        "topup.prompt": "Please enter your card key:",
-        "key.not_found": "Card key not found.",
+        "topup.prompt": "Please enter your Key:",
+        "key.not_found": "Key not found.",
         "key.used_up": "This key has no remaining uses.",
         "key.expired": "This key has expired.",
         "key.already_used": "You have already used this key.",
         "common.unknown_error": "Unknown error.",
-        "key.success": "Card key used successfully! +{amount} points.\n💰 Current balance: {balance} points.",
+        "key.success": "Key used successfully! +{amount} points.\n💰 Current balance: {balance} points.",
         "key.one_use_per_user_hint": "Note: Each user can only use this key once.",
         "verify.usage": (
             "You selected verification: {service_name}\n\n"
