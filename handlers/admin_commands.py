@@ -42,7 +42,8 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if not context.args or len(context.args) < 2:
         if update.effective_message:
             await update.effective_message.reply_text(
-                pick_text(language, "Cách sử dụng: /addbalance <User ID> <Số lượng điểm>\n\nVí dụ: /addbalance 123456789 10", "Usage: /addbalance <User ID> <Amount>\n\nExample: /addbalance 123456789 10")
+                pick_text(language, "Cách sử dụng: /addbalance <User ID> <Số lượng điểm>\n\nVí dụ: /addbalance 123456789 10", "Usage: /addbalance <User ID> <Amount>\n\nExample: /addbalance 123456789 10"),
+                parse_mode='HTML'
             )
         return
 
@@ -66,7 +67,8 @@ async def addbalance_command(update: Update, context: ContextTypes.DEFAULT_TYPE,
                         language,
                         f"✅ Thành công cộng {amount} điểm cho người dùng {target_user_id}.\n💰 Số điểm hiện tại: {user['balance']}",
                         f"✅ Successfully added {amount} points to user {target_user_id}.\n💰 Current balance: {user['balance']}",
-                    )
+                    ),
+                    parse_mode='HTML'
                 )
         else:
             if update.effective_message:
@@ -101,7 +103,8 @@ async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
     if not context.args or context.args[0] is None:
         if update.effective_message:
             await update.effective_message.reply_text(
-                pick_text(language, "Cách sử dụng: /block <User ID>\n\nVí dụ: /block 123456789", "Usage: /block <User ID>\n\nExample: /block 123456789")
+                pick_text(language, "Cách sử dụng: /block <User ID>\n\nVí dụ: /block 123456789", "Usage: /block <User ID>\n\nExample: /block 123456789"),
+                parse_mode='HTML'
             )
         return
 
@@ -114,7 +117,7 @@ async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
 
         if db.block_user(target_user_id):
             if update.effective_message:
-                await update.effective_message.reply_text(pick_text(language, f"✅ Đã chặn người dùng {target_user_id}.", f"✅ User {target_user_id} has been blocked."))
+                await update.effective_message.reply_text(pick_text(language, f"✅ Đã chặn người dùng {target_user_id}.", f"✅ User {target_user_id} has been blocked."), parse_mode='HTML')
 
             try:
                 target_language = get_user_language(db, target_user_id, default=DEFAULT_LANGUAGE)
@@ -152,7 +155,8 @@ async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
     if not context.args or context.args[0] is None:
         if update.effective_message:
             await update.effective_message.reply_text(
-                pick_text(language, "Cách sử dụng: /white <User ID>\n\nVí dụ: /white 123456789", "Usage: /white <User ID>\n\nExample: /white 123456789")
+                pick_text(language, "Cách sử dụng: /white <User ID>\n\nVí dụ: /white 123456789", "Usage: /white <User ID>\n\nExample: /white 123456789"),
+                parse_mode='HTML'
             )
         return
 
@@ -166,7 +170,8 @@ async def white_command(update: Update, context: ContextTypes.DEFAULT_TYPE, db: 
         if db.unblock_user(target_user_id):
             if update.effective_message:
                 await update.effective_message.reply_text(
-                    pick_text(language, f"✅ Đã đưa người dùng {target_user_id} ra khỏi danh sách đen.", f"✅ User {target_user_id} has been removed from the blacklist.")
+                    pick_text(language, f"✅ Đã đưa người dùng {target_user_id} ra khỏi danh sách đen.", f"✅ User {target_user_id} has been removed from the blacklist."),
+                    parse_mode='HTML'
                 )
 
             try:
@@ -205,7 +210,7 @@ async def blacklist_command(update: Update, db: Database):
     blacklist = db.get_blacklist()
     if not blacklist:
         if update.effective_message:
-            await update.effective_message.reply_text(pick_text(language, "Danh sách đen hiện đang trống.", "The blacklist is currently empty."))
+            await update.effective_message.reply_text(pick_text(language, "Danh sách đen hiện đang trống.", "The blacklist is currently empty."), parse_mode='HTML')
         return
 
     msg = "📋 Blocked users:\n\n" if language == 'en' else "📋 Danh sách người dùng bị chặn:\n\n"
@@ -422,7 +427,8 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     status_msg = None
     if update.effective_message:
         status_msg = await update.effective_message.reply_text(
-            f"📢 Starting broadcast to {len(user_ids)} users..." if language == 'en' else f"📢 Bắt đầu phát sóng, tổng cộng {len(user_ids)} người dùng..."
+            (f"📢 Starting broadcast to {len(user_ids)} users..." if language == 'en' else f"📢 Bắt đầu phát sóng, tổng cộng {len(user_ids)} người dùng..."),
+            parse_mode='HTML'
         )
 
     for uid in user_ids:
@@ -441,7 +447,8 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
     if status_msg:
         await status_msg.edit_text(
-            f"✅ Broadcast completed!\nSuccess: {success}\nFailed: {failed}" if language == 'en' else f"✅ Phát sóng hoàn tất!\nThành công: {success}\nThất bại: {failed}"
+            (f"✅ Broadcast completed!\nSuccess: {success}\nFailed: {failed}" if language == 'en' else f"✅ Phát sóng hoàn tất!\nThành công: {success}\nThất bại: {failed}"),
+            parse_mode='HTML'
         )
 
     from handlers.user_commands import show_admin_dashboard_after_delay
@@ -542,7 +549,7 @@ async def handle_proxy_file_upload(update: Update, context: ContextTypes.DEFAULT
         return
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
 
-    processing_msg = await update.message.reply_text("⏳ Processing the proxy list, please wait..." if language == 'en' else "⏳ Đang xử lý danh sách proxy, vui lòng đợi...")
+    processing_msg = await update.message.reply_text(("⏳ Processing the proxy list, please wait..." if language == 'en' else "⏳ Đang xử lý danh sách proxy, vui lòng đợi..."), parse_mode='HTML')
 
     lines = file_content.splitlines()
     total = 0

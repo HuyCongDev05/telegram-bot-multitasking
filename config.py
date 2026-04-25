@@ -21,7 +21,7 @@ WEBSHARE_TOKEN = os.getenv("WEBSHARE_TOKEN", "").strip()
 VERIFY_COST = 2  # Số điểm tiêu tốn khi xác thực
 DISCORD_QUEST_COST = 5  # Số điểm tiêu tốn khi dùng Discord Quest Auto
 CHECKIN_REWARD = 1  # Điểm thưởng khi điểm danh
-INVITE_REWARD = 1  # Điểm thưởng khi mời bạn bè
+INVITE_REWARD = 2  # Điểm thưởng khi mời bạn bè
 REGISTER_REWARD = 1  # Điểm thưởng khi đăng ký
 
 # Chữ ký siêu dữ liệu

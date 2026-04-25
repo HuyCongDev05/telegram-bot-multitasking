@@ -379,7 +379,7 @@ COUNTRY_MAP = {
     },
 }
 
-MAX_UPLOAD_COOKIES = 50
+MAX_UPLOAD_COOKIES = 10000
 MAX_FETCH_RECHECKS = 20
 FETCH_BATCH_SIZE = 5
 
@@ -650,9 +650,10 @@ def _build_admin_upload_summary(result_summary: dict, ignored_count: int, langua
             f"📥 Stored: <code>{stored}</code>\n"
             f"🚫 Rejected: <code>{rejected}</code>\n"
             f"❌ File errors: <code>{errors}</code>\n"
-            f"⏭️ Skipped due to limit: <code>{ignored_count}</code>\n"
-            f"📦 Current inventory: <code>{inventory}</code>"
         )
+        if ignored_count > 0:
+            summary += f"⏭️ Skipped due to limit: <code>{ignored_count}</code>\n"
+        summary += f"📦 Current inventory: <code>{inventory}</code>"
     else:
         summary = (
             "✅ <b>HOÀN TẤT NẠP COOKIE NETFLIX</b>\n"
@@ -660,9 +661,10 @@ def _build_admin_upload_summary(result_summary: dict, ignored_count: int, langua
             f"📥 Lưu vào kho: <code>{stored}</code>\n"
             f"🚫 Bị loại: <code>{rejected}</code>\n"
             f"❌ Lỗi file: <code>{errors}</code>\n"
-            f"⏭️ Bỏ qua do vượt giới hạn: <code>{ignored_count}</code>\n"
-            f"📦 Tồn kho hiện tại: <code>{inventory}</code>"
         )
+        if ignored_count > 0:
+            summary += f"⏭️ Bỏ qua do vượt giới hạn: <code>{ignored_count}</code>\n"
+        summary += f"📦 Tồn kho hiện tại: <code>{inventory}</code>"
 
     if rejected_details:
         summary += (
@@ -718,6 +720,7 @@ async def _run_admin_cookie_upload_task(
                 chat_id=chat_id,
                 message_id=progress_message_id,
                 text=error_text,
+                parse_mode='HTML',
             )
         except Exception:
             pass
@@ -780,20 +783,18 @@ async def upload_netflix_cookies_command(update: Update, context: ContextTypes.D
         "📥 <b>UPLOAD NETFLIX COOKIES</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "You can send cookies in 3 ways:\n"
-        "• <b>Paste cookie text</b> directly (1 cookie)\n"
+        "• <b>Paste cookie text</b> directly\n"
         "• <b>Send a .txt file</b> (1 cookie per file)\n"
-        "• <b>Send a .zip file</b> containing multiple .txt files\n"
-        f"The system reads up to <b>{MAX_UPLOAD_COOKIES}</b> cookies per upload.\n"
-        "Only cookies that can actually watch Netflix will be stored."
+        "• <b>Send a .zip file</b> containing multiple .txt files\n\n"
+        "🚀 <i>The system will automatically verify and store only live cookies.</i>"
         if language == 'en' else
         "📥 <b>NẠP COOKIE NETFLIX</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "Bạn có thể gửi cookie theo 3 cách:\n"
-        "• <b>Dán trực tiếp nội dung cookie</b> (1 cookie)\n"
+        "• <b>Dán trực tiếp nội dung cookie</b>\n"
         "• <b>Gửi file .txt</b> (1 file = 1 cookie)\n"
-        "• <b>Gửi file .zip</b> chứa nhiều file .txt\n"
-        f"Hệ thống chỉ đọc tối đa <b>{MAX_UPLOAD_COOKIES}</b> cookie mỗi lần nạp.\n"
-        "Chỉ cookie nào xem được Netflix thật sự mới được lưu vào kho."
+        "• <b>Gửi file .zip</b> chứa nhiều file .txt\n\n"
+        "🚀 <i>Hệ thống sẽ tự động kiểm tra và chỉ lưu lại những cookie còn sống.</i>"
     )
     await start_input_flow(
         update,
@@ -818,8 +819,9 @@ async def process_admin_netflix_cookie_upload(
     message = update.effective_message
     language = get_user_language(db, update.effective_user.id, default=DEFAULT_LANGUAGE)
     processing_msg = await message.reply_text(
-        "⏳ Checking and uploading Netflix cookies to the inventory..." if language == 'en'
-        else "⏳ Đang kiểm tra và nạp cookie Netflix vào kho..."
+        ("⏳ Checking and uploading Netflix cookies to the inventory..." if language == 'en'
+        else "⏳ Đang kiểm tra và nạp cookie Netflix vào kho..."),
+        parse_mode='HTML'
     )
 
     entries, ignored_count, error_message = _extract_cookie_entries(file_name, file_bytes)
@@ -870,8 +872,9 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
 
     message = update.effective_message
     processing_msg = await message.reply_text(
-        "⏳ Finding a live Netflix cookie for you..." if language == 'en'
-        else "⏳ Đang tìm cookie Netflix live cho bạn..."
+        ("⏳ Finding a live Netflix cookie for you..." if language == 'en'
+        else "⏳ Đang tìm cookie Netflix live cho bạn..."),
+        parse_mode='HTML'
     )
 
     checked_count = 0
@@ -895,7 +898,8 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
                         "❌ Failed to deduct points. Please try again later."
                         if language == 'en'
                         else "❌ Không thể trừ điểm. Vui lòng thử lại sau."
-                    )
+                    ),
+                    parse_mode='HTML'
                 )
                 await show_main_menu_after_delay(update, context, db)
                 return
@@ -913,7 +917,8 @@ async def get_cookie_netflix_command(update: Update, context: ContextTypes.DEFAU
                     f"✅ Sent 1 live Netflix cookie.\n💰 Deducted: {VERIFY_COST} points\n💰 Remaining balance: {db.get_user(user_id)['balance']} points"
                     if language == 'en'
                     else f"✅ Đã gửi 1 cookie Netflix live.\n💰 Đã trừ: {VERIFY_COST} điểm\n💰 Số dư còn lại: {db.get_user(user_id)['balance']} điểm"
-                )
+                ),
+                parse_mode='HTML'
             )
             await show_main_menu_after_delay(update, context, db)
             return
@@ -939,7 +944,10 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
     user_id = update.effective_user.id
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
     message = update.effective_message
-    processing_msg = await message.reply_text("⏳ Checking the cookie, please wait..." if language == 'en' else "⏳ Đang kiểm tra cookie, vui lòng đợi...")
+    processing_msg = await message.reply_text(
+        ("⏳ Checking the cookie, please wait..." if language == 'en' else "⏳ Đang kiểm tra cookie, vui lòng đợi..."),
+        parse_mode='HTML'
+    )
 
     try:
         success, result, _, _ = await asyncio.to_thread(_check_cookie_content, db, cookie_content)
@@ -947,9 +955,10 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
         if not success and result.get("error") and not result.get("error_code"):
             # Lỗi proxy sau tất cả các lần thử lại
             await processing_msg.edit_text(
-                "❌ Không thể kết nối để kiểm tra cookie. Vui lòng thử lại sau!"
+                ("❌ Không thể kết nối để kiểm tra cookie. Vui lòng thử lại sau!"
                 if language != 'en'
-                else "❌ Could not connect to verify the cookie. Please try again later!"
+                else "❌ Could not connect to verify the cookie. Please try again later!"),
+                parse_mode='HTML'
             )
             await show_main_menu_after_delay(update, context, db)
             return
@@ -980,7 +989,10 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
                 )
                 await processing_msg.edit_text(res_msg, parse_mode='HTML')
             else:
-                await processing_msg.edit_text("❌ System error while deducting points. Please try again!" if language == 'en' else "❌ Lỗi hệ thống khi trừ điểm. Vui lòng thử lại!")
+                await processing_msg.edit_text(
+                    ("❌ System error while deducting points. Please try again!" if language == 'en' else "❌ Lỗi hệ thống khi trừ điểm. Vui lòng thử lại!"),
+                    parse_mode='HTML'
+                )
         else:
             error_text = escape(_get_cookie_error_message(result, language))
             is_watchability_failure = _is_watchability_failure(result)
@@ -1001,7 +1013,10 @@ async def process_netflix_cookie(update: Update, context: ContextTypes.DEFAULT_T
         await show_main_menu_after_delay(update, context, db)
     except Exception as exc:
         logger.error("Lỗi khi xử lý Netflix Cookie cho user %s: %s", user_id, exc)
-        await processing_msg.edit_text("❌ An error occurred while processing your request. Please try again later!" if language == 'en' else "❌ Có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau!")
+        await processing_msg.edit_text(
+            ("❌ An error occurred while processing your request. Please try again later!" if language == 'en' else "❌ Có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau!"),
+            parse_mode='HTML'
+        )
         await show_main_menu_after_delay(update, context, db)
 
 

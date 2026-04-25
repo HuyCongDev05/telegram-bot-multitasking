@@ -169,7 +169,7 @@ TRANSLATIONS = {
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Nhấn vào link bên dưới để tự động sao chép:\n"
             "<code>{invite_link}</code>\n\n"
-            "🎁 <i>Mỗi người bạn tham gia qua link này, bạn sẽ nhận được 1 điểm!</i>"
+            "🎁 <i>Mỗi người bạn tham gia qua link này, bạn sẽ nhận được 2 điểm!</i>"
         ),
         "checkin.success": "✅ Điểm danh thành công! +1 điểm\n💰 Số dư hiện tại: {balance} điểm.",
         "checkin.already": "❌ Hôm nay bạn đã điểm danh rồi.",
@@ -401,7 +401,7 @@ TRANSLATIONS = {
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Tap the link below to auto-copy:\n"
             "<code>{invite_link}</code>\n\n"
-            "🎁 <i>For each friend who joins via this link, you will receive 1 point!</i>"
+            "🎁 <i>For each friend who joins via this link, you will receive 2 points!</i>"
         ),
         "checkin.success": "✅ Check-in successful! +1 point\n💰 Current balance: {balance} points.",
         "checkin.already": "❌ You have already checked in today.",

@@ -1183,6 +1183,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             error_msg = await update.message.reply_text(
                 "Invalid link. Please try again." if language == 'en' else "Link không hợp lệ, vui lòng thử lại.",
                 reply_markup=ForceReply(selective=True),
+                parse_mode='HTML'
             )
             register_cleanup_message(context, error_msg.message_id)
             return
@@ -1788,7 +1789,7 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         file_bytes = await file.download_as_bytearray()
     except Exception as e:
         logger.warning(f"Không thể đọc file: {e}")
-        await update.message.reply_text("❌ Unable to read the file. Please try again." if language == 'en' else "❌ Không thể đọc file, vui lòng thử lại.")
+        await update.message.reply_text("❌ Unable to read the file. Please try again." if language == 'en' else "❌ Không thể đọc file, vui lòng thử lại.", parse_mode='HTML')
         return
 
     content = ""
@@ -1797,11 +1798,11 @@ async def handle_file_input(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             content = file_bytes.decode('utf-8').strip()
         except Exception as e:
             logger.warning(f"Khong the giai ma file: {e}")
-            await update.message.reply_text("❌ Unable to read the file content. Please try again." if language == 'en' else "❌ Khong the doc noi dung file, vui long thu lai.")
+            await update.message.reply_text("❌ Unable to read the file content. Please try again." if language == 'en' else "❌ Khong the doc noi dung file, vui long thu lai.", parse_mode='HTML')
             return
 
     if not supports_zip and not content:
-        await update.message.reply_text("❌ The file is empty. Please check it again." if language == 'en' else "❌ File trống, vui lòng kiểm tra lại.")
+        await update.message.reply_text("❌ The file is empty. Please check it again." if language == 'en' else "❌ File trống, vui lòng kiểm tra lại.", parse_mode='HTML')
         return
 
     # Dọn dẹp tin nhắn prompt và cancel

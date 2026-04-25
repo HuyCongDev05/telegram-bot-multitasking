@@ -73,7 +73,7 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_data = db.get_user(user_id)
     if not user_data or user_data['balance'] < VERIFY_COST:
         from utils.messages import get_insufficient_balance_message
-        await reply(get_insufficient_balance_message(user_data['balance'] if user_data else 0, language))
+        await reply(get_insufficient_balance_message(user_data['balance'] if user_data else 0, language), parse_mode='HTML')
         await show_main_menu_after_delay(
             update,
             context,
@@ -86,14 +86,15 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     lines = [line.strip() for line in cc_text.split('\n') if line.strip()]
     if len(lines) > MAX_CC_PER_REQUEST:
         await reply(
-            f"⚠️ The system only supports up to {MAX_CC_PER_REQUEST} lines per request. Only the first {MAX_CC_PER_REQUEST} lines will be checked."
+            (f"⚠️ The system only supports up to {MAX_CC_PER_REQUEST} lines per request. Only the first {MAX_CC_PER_REQUEST} lines will be checked."
             if language == 'en'
-            else f"⚠️ Hệ thống chỉ hỗ trợ tối đa {MAX_CC_PER_REQUEST} dòng trong 1 lần gửi. Tôi sẽ chỉ check {MAX_CC_PER_REQUEST} dòng đầu tiên."
+            else f"⚠️ Hệ thống chỉ hỗ trợ tối đa {MAX_CC_PER_REQUEST} dòng trong 1 lần gửi. Tôi sẽ chỉ check {MAX_CC_PER_REQUEST} dòng đầu tiên."),
+            parse_mode='HTML'
         )
         lines = lines[:MAX_CC_PER_REQUEST]
 
     if not lines:
-        await reply("❌ The file/message has no content. Please check it again." if language == 'en' else "❌ File/Tin nhắn không có nội dung. Vui lòng kiểm tra lại.")
+        await reply(("❌ The file/message has no content. Please check it again." if language == 'en' else "❌ File/Tin nhắn không có nội dung. Vui lòng kiểm tra lại."), parse_mode='HTML')
         return
 
     total_cards = len(lines)
@@ -109,9 +110,10 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     status_msg = await reply(
-        f"⏳ Checking {len(lines)} lines... Please do not spam the bot."
+        (f"⏳ Checking {len(lines)} lines... Please do not spam the bot."
         if language == 'en'
-        else f"⏳ Đang kiểm tra {len(lines)} dòng... Vui lòng không spam bot."
+        else f"⏳ Đang kiểm tra {len(lines)} dòng... Vui lòng không spam bot."),
+        parse_mode='HTML'
     )
 
     cc_pattern = re.compile(r'(\d{15,16})[|/ ](\d{1,2})[|/ ](\d{2,4})[|/ ](\d{3,4})')
@@ -130,9 +132,10 @@ async def _process_cc_request(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Cập nhật trạng thái định kỳ
         if (i + 1) % 5 == 0:
             await status_msg.edit_text(
-                f"⏳ Processing: {i+1}/{len(lines)} lines..."
+                (f"⏳ Processing: {i+1}/{len(lines)} lines..."
                 if language == 'en'
-                else f"⏳ Đang xử lý: {i+1}/{len(lines)} dòng..."
+                else f"⏳ Đang xử lý: {i+1}/{len(lines)} dòng..."),
+                parse_mode='HTML'
             )
             
         if not match:

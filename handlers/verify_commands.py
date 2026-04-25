@@ -98,7 +98,7 @@ async def verifyChatGPTTeacherK12_command(update: Update, context: ContextTypes.
         return
 
     if not db.deduct_balance(user_id, VERIFY_COST):
-        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
+        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.", parse_mode='HTML')
         await show_main_menu_after_delay(update, context, db, "Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
         return
 
@@ -219,13 +219,13 @@ async def verifySpotifyStudent_command(update: Update, context: ContextTypes.DEF
 
     verification_id = SpotifyVerifier.parse_verification_id(url)
     if not verification_id:
-        await update.message.reply_text("Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.")
+        await update.message.reply_text("Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.", parse_mode='HTML')
         await _delete_source_message(update)
         await show_main_menu_after_delay(update, context, db, "Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.")
         return
 
     if not db.deduct_balance(user_id, VERIFY_COST):
-        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
+        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.", parse_mode='HTML')
         await show_main_menu_after_delay(update, context, db, "Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
         return
 
@@ -345,13 +345,13 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
     external_user_id = BoltnewVerifier.parse_external_user_id(url)
     verification_id = BoltnewVerifier.parse_verification_id(url)
     if not external_user_id and not verification_id:
-        await update.message.reply_text("Invalid SheerID link. Please check it and try again." if language == 'en' else "Liên kết SheerID không hợp lệ, vui lòng kiểm tra và thử lại.")
+        await update.message.reply_text("Invalid SheerID link. Please check it and try again." if language == 'en' else "Liên kết SheerID không hợp lệ, vui lòng kiểm tra và thử lại.", parse_mode='HTML')
         await _delete_source_message(update)
         await show_main_menu_after_delay(update, context, db, "Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.")
         return
 
     if not db.deduct_balance(user_id, VERIFY_COST):
-        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
+        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.", parse_mode='HTML')
         await show_main_menu_after_delay(update, context, db, "Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
         return
 
@@ -386,7 +386,8 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
                     if language == 'en'
                     else f"❌ Gửi tài liệu thất bại: {result.get('message', 'Lỗi không xác định')}\n\n"
                     f"Đã hoàn trả {VERIFY_COST} điểm. 💰 Số dư hiện tại: {updated_balance} điểm."
-                )
+                ),
+                parse_mode='HTML'
             )
             await show_main_menu_after_delay(update, context, db)
             return
@@ -403,7 +404,8 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
                     if language == 'en'
                     else "❌ Không lấy được ID xác thực\n\n"
                     f"Đã hoàn trả {VERIFY_COST} điểm. 💰 Số dư hiện tại: {updated_balance} điểm."
-                )
+                ),
+                parse_mode='HTML'
             )
             await show_main_menu_after_delay(update, context, db)
             return
@@ -491,7 +493,8 @@ async def verifyBoltNewTeacher_command(update: Update, context: ContextTypes.DEF
                 if language == 'en'
                 else f"❌ Đã xảy ra lỗi trong quá trình xử lý: {str(e)}\n\n"
                 f"Đã hoàn trả {VERIFY_COST} điểm. 💰 Số dư hiện tại: {updated_balance} điểm."
-            )
+            ),
+            parse_mode='HTML'
         )
         await show_main_menu_after_delay(update, context, db)
 
@@ -564,19 +567,19 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
     url = context.args[0]
     user = db.get_user(user_id)
     if user["balance"] < VERIFY_COST:
-        await update.message.reply_text(get_insufficient_balance_message(user["balance"], language))
+        await update.message.reply_text(get_insufficient_balance_message(user["balance"], language), parse_mode='HTML')
         await show_main_menu_after_delay(update, context, db, "Insufficient balance for this feature." if language == 'en' else "Số dư không đủ để thực hiện chức năng này.")
         return
 
     verification_id = YouTubeVerifier.parse_verification_id(url)
     if not verification_id:
-        await update.message.reply_text("Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.")
+        await update.message.reply_text("Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.", parse_mode='HTML')
         await _delete_source_message(update)
         await show_main_menu_after_delay(update, context, db, "Invalid SheerID link." if language == 'en' else "Liên kết SheerID không hợp lệ.")
         return
 
     if not db.deduct_balance(user_id, VERIFY_COST):
-        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
+        await update.message.reply_text("Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.", parse_mode='HTML')
         await show_main_menu_after_delay(update, context, db, "Failed to deduct points." if language == 'en' else "Trừ điểm thất bại.")
         return
 
@@ -621,7 +624,7 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
             updated_user = db.get_user(user_id)
             updated_balance = updated_user['balance'] if updated_user else 0
             result_msg += f"\n💰 Your current balance: {updated_balance} points." if language == 'en' else f"\n💰 Số dư hiện tại của bạn: {updated_balance} điểm."
-            await processing_msg.edit_text(result_msg)
+            await processing_msg.edit_text(result_msg, parse_mode='HTML')
         else:
             db.add_balance(user_id, VERIFY_COST)
             updated_user = db.get_user(user_id)
@@ -633,7 +636,8 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
                     if language == 'en'
                     else f"❌ Xác thực thất bại: {result.get('message', 'Lỗi không xác định')}\n\n"
                     f"Đã hoàn trả {VERIFY_COST} điểm. 💰 Số dư hiện tại: {updated_balance} điểm."
-                )
+                ),
+                parse_mode='HTML'
             )
 
         await show_main_menu_after_delay(update, context, db)
@@ -649,7 +653,8 @@ async def verifyYouTubePremiumStudent_command(update: Update, context: ContextTy
                 if language == 'en'
                 else f"❌ Đã xảy ra lỗi trong quá trình xử lý: {str(e)}\n\n"
                 f"Đã hoàn trả {VERIFY_COST} điểm. 💰 Số dư hiện tại: {updated_balance} điểm."
-            )
+            ),
+            parse_mode='HTML'
         )
         await show_main_menu_after_delay(update, context, db)
 
@@ -661,7 +666,7 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
     language = get_user_language(db, user_id, default=DEFAULT_LANGUAGE)
 
     if not db.user_exists(user_id):
-        await update.message.reply_text("Please use /start to register first." if language == 'en' else "Vui lòng sử dụng /start để đăng ký trước.")
+        await update.message.reply_text("Please use /start to register first." if language == 'en' else "Vui lòng sử dụng /start để đăng ký trước.", parse_mode='HTML')
         return
 
     if not context.args:
@@ -674,12 +679,13 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                 else "Cách sử dụng: /getV4Code <verification_id>\n\n"
                 "Ví dụ: /getV4Code 6929436b50d7dc18638890d0\n\n"
                 "verification_id sẽ được gửi cho bạn sau khi sử dụng lệnh /verify4."
-            )
+            ),
+            parse_mode='HTML'
         )
         return
 
     verification_id = context.args[0].strip()
-    processing_msg = await update.message.reply_text("🔍 Querying the reward code, please wait..." if language == 'en' else "🔍 Đang truy vấn mã xác thực, vui lòng chờ...")
+    processing_msg = await update.message.reply_text("🔍 Querying the reward code, please wait..." if language == 'en' else "🔍 Đang truy vấn mã xác thực, vui lòng chờ...", parse_mode='HTML')
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -695,7 +701,8 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                         if language == 'en'
                         else f"❌ Truy vấn thất bại, mã trạng thái: {response.status_code}\n\n"
                         "Vui lòng thử lại sau hoặc liên hệ quản trị viên."
-                    )
+                    ),
+                    parse_mode='HTML'
                 )
                 return
 
@@ -715,7 +722,8 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                     "⏳ Verification is still under review. Please try again later.\n\nIt usually takes 1-5 minutes."
                     if language == 'en'
                     else "⏳ Xác thực vẫn đang trong quá trình xét duyệt, vui lòng thử lại sau.\n\n"
-                    "Thường mất từ 1-5 phút, vui lòng kiên nhẫn chờ đợi."
+                    "Thường mất từ 1-5 phút, vui lòng kiên nhẫn chờ đợi.",
+                    parse_mode='HTML'
                 )
             elif current_step == "error":
                 error_ids = data.get("errorIds", [])
@@ -726,7 +734,8 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                         if language == 'en'
                         else "❌ Xác thực thất bại\n\n"
                         f"Thông tin lỗi: {', '.join(error_ids) if error_ids else 'Lỗi không xác định'}"
-                    )
+                    ),
+                    parse_mode='HTML'
                 )
             else:
                 await processing_msg.edit_text(
@@ -736,7 +745,8 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                         if language == 'en'
                         else f"⚠️ Trạng thái hiện tại: {current_step}\n\n"
                         "Mã xác thực chưa được tạo, vui lòng thử lại sau."
-                    )
+                    ),
+                    parse_mode='HTML'
                 )
     except Exception as e:
         logger.error("Lấy mã xác thực Bolt.new thất bại: %s", e)
@@ -747,7 +757,8 @@ async def getBoltNewTeacherCode_command(update: Update, context: ContextTypes.DE
                 if language == 'en'
                 else f"❌ Đã xảy ra lỗi trong quá trình truy vấn: {str(e)}\n\n"
                 "Vui lòng thử lại sau hoặc liên hệ quản trị viên."
-            )
+            ),
+            parse_mode='HTML'
         )
     finally:
         await show_main_menu_after_delay(update, context, db)
@@ -779,5 +790,6 @@ async def verifyGeminiOnePro_command(update: Update, context: ContextTypes.DEFAU
     await update.message.reply_text(
         "The Gemini One Pro verification feature is still under development. Please come back later!"
         if language == 'en'
-        else "Chức năng xác thực Gemini One Pro đang được phát triển. Vui lòng quay lại sau!"
+        else "Chức năng xác thực Gemini One Pro đang được phát triển. Vui lòng quay lại sau!",
+        parse_mode='HTML'
     )
